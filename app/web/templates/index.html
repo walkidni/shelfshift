@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ brand.app_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}" />
+    <style>
+      :root {
+        --brand-primary: {{ brand.brand_primary }};
+        --brand-secondary: {{ brand.brand_secondary }};
+        --brand-ink: {{ brand.brand_ink }};
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel hero">
+        <p class="eyebrow">Rebranded Import Workflow</p>
+        <h1>{{ brand.app_name }}</h1>
+        <p>{{ brand.app_tagline }}</p>
+      </section>
+
+      <section class="panel grid">
+        <form class="import-form" method="post" action="/import">
+          <label for="product_url">Product URL</label>
+          <input
+            id="product_url"
+            name="product_url"
+            type="url"
+            placeholder="https://store.com/products/example"
+            value="{{ form.product_url }}"
+            required
+          />
+
+          <button type="submit">Import Product</button>
+        </form>
+
+        <aside class="info">
+          <h2>Try URLs</h2>
+          <ul>
+            {% for example in examples %}
+            <li><code>{{ example }}</code></li>
+            {% endfor %}
+          </ul>
+          <p class="api-note">API endpoint: <code>POST /api/v1/import</code></p>
+        </aside>
+      </section>
+
+      {% if error %}
+      <section class="panel error">
+        <h2>Import Error</h2>
+        <p>{{ error }}</p>
+      </section>
+      {% endif %}
+
+      {% if result_json %}
+      <section class="panel result">
+        <h2>Result JSON</h2>
+        <pre>{{ result_json }}</pre>
+      </section>
+      {% endif %}
+    </main>
+  </body>
+</html>
