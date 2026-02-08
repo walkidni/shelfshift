@@ -10,3 +10,8 @@ class ImportRequest(BaseModel):
 class ExportShopifyCsvRequest(BaseModel):
     product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
     publish: bool = Field(default=False)
+
+
+class ExportWooCommerceCsvRequest(BaseModel):
+    product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
+    publish: bool = Field(default=False)

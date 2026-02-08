@@ -10,14 +10,14 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import requests
- 
+
 from .config import get_settings
-from .schemas import ExportShopifyCsvRequest, ImportRequest
-from .services.exporters import product_to_shopify_csv
+from .schemas import ExportShopifyCsvRequest, ExportWooCommerceCsvRequest, ImportRequest
+from .services.exporters import product_to_shopify_csv, product_to_woocommerce_csv
 from .services.importer import ApiConfig, ProductResult, detect_product_url, fetch_product_details, requires_rapidapi
 
 from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file if present
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_DIR = BASE_DIR / "web" / "templates"
@@ -99,6 +99,12 @@ def _shopify_csv_download_url(product_url: str, *, publish: bool = False) -> str
     return f"/api/v1/export/shopify.csv?url={quote_plus(normalized_url)}{publish_flag}"
 
 
+def _woocommerce_csv_download_url(product_url: str, *, publish: bool = False) -> str:
+    normalized_url = _normalize_url(product_url)
+    publish_flag = "&publish=true" if publish else ""
+    return f"/api/v1/export/woocommerce.csv?url={quote_plus(normalized_url)}{publish_flag}"
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "app": settings.app_name}
@@ -140,6 +146,31 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     )
 
 
+@app.get("/api/v1/export/woocommerce.csv")
+def export_woocommerce_csv_from_query(
+    url: str = Query(..., description="Product URL to import and convert to WooCommerce CSV"),
+    publish: bool = Query(False, description="If true, mark product as published"),
+) -> Response:
+    product = _run_import_product(url)
+    csv_text, filename = product_to_woocommerce_csv(product, publish=publish)
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.post("/api/v1/export/woocommerce.csv")
+def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Response:
+    product = _run_import_product(payload.product_url)
+    csv_text, filename = product_to_woocommerce_csv(product, publish=payload.publish)
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -149,6 +180,7 @@ def home(request: Request) -> HTMLResponse:
             "brand": settings,
             "result_json": None,
             "shopify_csv_url": None,
+            "woocommerce_csv_url": None,
             "error": None,
             "form": {"product_url": ""},
             "examples": [
@@ -167,12 +199,14 @@ def import_from_web(
 ) -> HTMLResponse:
     payload = None
     shopify_csv_url = None
+    woocommerce_csv_url = None
     error = None
     status_code = 200
     try:
         product = _run_import_product(product_url)
         payload = product.to_dict(include_raw=settings.debug)
         shopify_csv_url = _shopify_csv_download_url(product_url)
+        woocommerce_csv_url = _woocommerce_csv_download_url(product_url)
     except HTTPException as exc:
         error = exc.detail
         status_code = exc.status_code
@@ -185,6 +219,7 @@ def import_from_web(
             "brand": settings,
             "result_json": result_json,
             "shopify_csv_url": shopify_csv_url,
+            "woocommerce_csv_url": woocommerce_csv_url,
             "error": error,
             "form": {"product_url": product_url},
             "examples": [
