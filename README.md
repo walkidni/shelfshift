@@ -1,9 +1,11 @@
 # TradeMint Import Studio
 
 This app imports product data from supported ecommerce product URLs and returns a normalized JSON payload.
+It can also export the normalized product into a Shopify-importable CSV file.
 
 I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
+- FastAPI CSV export endpoint (`GET/POST /api/v1/export/shopify.csv`)
 - Simple web UI for manual testing (`/`)
 - Shared importer services for Shopify, Amazon, Etsy, and AliExpress
 
@@ -55,6 +57,13 @@ curl -X POST http://127.0.0.1:8000/api/v1/import \
   -d '{"product_url":"https://example.myshopify.com/products/item"}'
 ```
 
+Export Shopify CSV:
+
+```bash
+curl -L "http://127.0.0.1:8000/api/v1/export/shopify.csv?url=https://example.myshopify.com/products/item" \
+  -o product.csv
+```
+
 ## Response behavior (`raw` field)
 
 - Default (`DEBUG=false`): `raw` is omitted from response JSON.
@@ -81,6 +90,8 @@ app/
   schemas.py
   services/
     importer.py
+    exporters/
+      shopify_csv.py
   web/
     templates/index.html
     static/styles.css
