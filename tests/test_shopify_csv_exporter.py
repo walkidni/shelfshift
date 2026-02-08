@@ -32,6 +32,7 @@ def test_single_variant_uses_default_title_option() -> None:
     assert frame.loc[0, "Option1 Value"] == "Default Title"
     assert frame.loc[0, "Published"] == "FALSE"
     assert frame.loc[0, "Status"] == "draft"
+    assert frame.loc[0, "Variant Image"] == ""
 
 
 def test_multi_variant_maps_two_options() -> None:
@@ -51,6 +52,7 @@ def test_multi_variant_maps_two_options() -> None:
                 price_amount=19.99,
                 inventory_quantity=4,
                 weight=220,
+                image="https://cdn.example.com/tee-black-m.jpg",
             ),
             Variant(
                 id="v2",
@@ -59,6 +61,7 @@ def test_multi_variant_maps_two_options() -> None:
                 price_amount=21.99,
                 inventory_quantity=2,
                 weight=230,
+                image="https://cdn.example.com/tee-white-l.jpg",
             ),
         ],
         raw={},
@@ -78,6 +81,8 @@ def test_multi_variant_maps_two_options() -> None:
     assert frame.loc[0, "Variant Inventory Tracker"] == "shopify"
     assert frame.loc[0, "Variant Inventory Qty"] == "4"
     assert frame.loc[1, "Title"] == ""
+    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/tee-black-m.jpg"
+    assert frame.loc[1, "Variant Image"] == "https://cdn.example.com/tee-white-l.jpg"
     assert frame.loc[0, "Published"] == "TRUE"
     assert frame.loc[0, "Status"] == "active"
 
@@ -94,7 +99,14 @@ def test_multiple_images_create_extra_rows() -> None:
             "https://cdn.example.com/poster-2.jpg",
             "https://cdn.example.com/poster-3.jpg",
         ],
-        variants=[Variant(id="pv1", sku="POSTER-1", price_amount=10.0)],
+        variants=[
+            Variant(
+                id="pv1",
+                sku="POSTER-1",
+                price_amount=10.0,
+                image="https://cdn.example.com/poster-variant.jpg",
+            )
+        ],
         raw={},
     )
 
@@ -110,6 +122,9 @@ def test_multiple_images_create_extra_rows() -> None:
     assert frame.loc[1, "Title"] == ""
     assert frame.loc[2, "Image Src"] == "https://cdn.example.com/poster-3.jpg"
     assert frame.loc[2, "Image Position"] == "3"
+    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/poster-variant.jpg"
+    assert frame.loc[1, "Variant Image"] == ""
+    assert frame.loc[2, "Variant Image"] == ""
     assert frame.loc[1, "Variant SKU"] == ""
     assert frame.loc[2, "Variant SKU"] == ""
 
@@ -151,6 +166,7 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
     assert filename == "fancy-lamp-2-0.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert frame.loc[0, "Handle"] == "fancy-lamp-2-0"
+    assert frame.loc[0, "Variant Image"] == ""
     assert frame.loc[0, "Variant Inventory Tracker"] == ""
     assert frame.loc[0, "Variant Inventory Qty"] == ""
 
@@ -178,3 +194,4 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
     frame = _read_frame(csv_text)
 
     assert frame.loc[0, "Variant SKU"] == "AE:1005008518647948:12000055918704599"
+    assert frame.loc[0, "Variant Image"] == ""

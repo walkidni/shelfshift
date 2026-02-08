@@ -36,6 +36,7 @@ SHOPIFY_COLUMNS: list[str] = [
     "Image Src",
     "Image Position",
     "Image Alt Text",
+    "Variant Image",
     "Variant Weight Unit",
 ]
 
@@ -158,6 +159,7 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
         row["Variant Fulfillment Service"] = "manual"
         row["Variant Requires Shipping"] = _format_bool(bool(product.requires_shipping and not product.is_digital))
         row["Variant Taxable"] = _format_bool(not product.is_digital)
+        row["Variant Image"] = str(variant.image or "")
 
         weight = variant.weight if variant.weight is not None else product.weight
         grams = _format_grams(weight)

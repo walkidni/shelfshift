@@ -37,6 +37,7 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
                 price_amount=24.99,
                 inventory_quantity=10,
                 weight=200,
+                image="https://cdn.example.com/v-neck-tee-size-s.jpg",
             ),
             Variant(
                 id="v2",
@@ -45,6 +46,7 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
                 price_amount=24.99,
                 inventory_quantity=8,
                 weight=200,
+                image="https://cdn.example.com/v-neck-tee-size-m.jpg",
             ),
         ],
         vendor="Acme Apparel",
@@ -60,4 +62,3 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
 
     assert list(actual.columns) == SHOPIFY_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)
-

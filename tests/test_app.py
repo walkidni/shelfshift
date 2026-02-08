@@ -81,6 +81,7 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
                     price_amount=12.0,
                     inventory_quantity=10,
                     weight=250,
+                    image="https://cdn.example.com/mug-black.jpg",
                 )
             ],
             brand="Demo",
@@ -115,6 +116,7 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Option1 Name"] == "Color"
     assert frame.loc[0, "Option1 Value"] == "Black"
     assert frame.loc[0, "Variant SKU"] == "MUG-001"
+    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/mug-black.jpg"
     assert frame.loc[0, "Variant Inventory Qty"] == "10"
     assert frame.loc[0, "Image Src"] == "https://cdn.example.com/mug-front.jpg"
 
