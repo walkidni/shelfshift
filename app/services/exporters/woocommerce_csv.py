@@ -17,7 +17,6 @@ WOOCOMMERCE_COLUMNS: list[str] = [
     "Description",
     "Tax status",
     "In stock?",
-    "Manage stock?",
     "Stock",
     "Backorders allowed?",
     "Sold individually?",
@@ -199,7 +198,6 @@ def _apply_stock_fields(row: dict[str, str], variant: Variant) -> None:
             qty = max(0, int(variant.inventory_quantity))
         except (TypeError, ValueError):
             qty = 0
-        row["Manage stock?"] = "1"
         row["Stock"] = str(qty)
         row["In stock?"] = "1" if qty > 0 else "0"
         return

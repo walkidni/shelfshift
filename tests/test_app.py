@@ -180,7 +180,6 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Name"] == "Demo Mug"
     assert frame.loc[0, "Attribute 1 name"] == "Color"
     assert frame.loc[0, "Attribute 1 value(s)"] == "Black"
-    assert frame.loc[0, "Manage stock?"] == "1"
     assert frame.loc[0, "Stock"] == "10"
     assert frame.loc[0, "Images"] == "https://cdn.example.com/mug-front.jpg"
 

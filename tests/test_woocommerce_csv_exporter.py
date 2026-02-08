@@ -4,7 +4,7 @@ from app.services.importer import ProductResult, Variant
 from tests._csv_helpers import read_frame
 
 
-def test_simple_product_maps_qty_stock_with_manage_stock() -> None:
+def test_simple_product_maps_qty_stock() -> None:
     product = ProductResult(
         platform="amazon",
         id="B000111",
@@ -36,7 +36,6 @@ def test_simple_product_maps_qty_stock_with_manage_stock() -> None:
     assert frame.loc[0, "Published"] == "0"
     assert frame.loc[0, "Regular price"] == "12"
     assert frame.loc[0, "Weight (kg)"] == "0.25"
-    assert frame.loc[0, "Manage stock?"] == "1"
     assert frame.loc[0, "Stock"] == "0"
     assert frame.loc[0, "In stock?"] == "0"
 
@@ -88,15 +87,13 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
     assert frame.loc[1, "Attribute 1 name"] == "Color"
     assert frame.loc[1, "Attribute 1 value(s)"] == "Only Face mask"
     assert frame.loc[2, "Attribute 1 value(s)"] == "Only Neck White"
-    assert frame.loc[1, "Manage stock?"] == "1"
     assert frame.loc[1, "Stock"] == "10"
     assert frame.loc[1, "In stock?"] == "1"
-    assert frame.loc[2, "Manage stock?"] == "1"
     assert frame.loc[2, "Stock"] == "0"
     assert frame.loc[2, "In stock?"] == "0"
 
 
-def test_available_without_qty_does_not_emit_manage_stock_or_stock() -> None:
+def test_available_without_qty_does_not_emit_stock() -> None:
     product = ProductResult(
         platform="amazon",
         id="123456789",
@@ -117,7 +114,6 @@ def test_available_without_qty_does_not_emit_manage_stock_or_stock() -> None:
     assert frame.loc[0, "Type"] == "simple"
     assert frame.loc[0, "Tax status"] == "none"
     assert frame.loc[0, "In stock?"] == "0"
-    assert frame.loc[0, "Manage stock?"] == ""
     assert frame.loc[0, "Stock"] == ""
 
 
