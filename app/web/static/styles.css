@@ -151,6 +151,32 @@ code {
   color: #8f2116;
 }
 
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand-primary), white 55%);
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: color-mix(in srgb, var(--brand-primary), black 8%);
+  background: color-mix(in srgb, var(--brand-secondary), white 84%);
+}
+
+.download-link:hover {
+  border-color: color-mix(in srgb, var(--brand-primary), white 40%);
+  background: color-mix(in srgb, var(--brand-secondary), white 72%);
+}
+
 .result pre {
   margin: 0;
   overflow: auto;
@@ -170,5 +196,10 @@ code {
 @media (max-width: 860px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .result-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

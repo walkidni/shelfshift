@@ -62,7 +62,12 @@
 
       {% if result_json %}
       <section class="panel result">
-        <h2>Result JSON</h2>
+        <div class="result-head">
+          <h2>Result JSON</h2>
+          {% if shopify_csv_url %}
+          <a class="download-link" href="{{ shopify_csv_url }}">Download Shopify CSV</a>
+          {% endif %}
+        </div>
         <pre>{{ result_json }}</pre>
       </section>
       {% endif %}
