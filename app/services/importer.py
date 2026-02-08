@@ -1076,6 +1076,262 @@ class EtsyRapidApiClient(ProductClient):
 
 
 # ----------------------------- AliExpress (RapidAPI: aliexpress-datahub /item_detail_6) -----------------------------
+def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
+    result = resp.get("result", {}) if isinstance(resp, dict) else {}
+    item = result.get("item", {}) if isinstance(result, dict) else {}
+
+    # Extract basic product information
+    title = item.get("title") or ""
+    description = ""
+    if item.get("description") and item["description"].get("html"):
+        description = item["description"]["html"]
+
+    # Extract pricing from SKU data
+    sku_data = item.get("sku", {})
+    sku_def = sku_data.get("def", {})
+
+    price_amount = None
+    currency = (
+        result.get("settings", {}).get("currency")
+        if isinstance(result.get("settings"), dict)
+        else None
+    ) or "USD"
+
+    # Use promotion price if available, otherwise regular price
+    if sku_def.get("promotionPrice") is not None:
+        price_str = str(sku_def["promotionPrice"]).replace("$", "").split(" - ")[0]
+        price_amount = _parse_money_to_float(price_str)
+    elif sku_def.get("price") is not None:
+        price_str = str(sku_def["price"]).replace("$", "").split(" - ")[0]
+        price_amount = _parse_money_to_float(price_str)
+
+    price = {"amount": price_amount, "currency": currency}
+
+    def normalize_url(value: t.Any) -> t.Optional[str]:
+        if not isinstance(value, str) or not value:
+            return None
+        if value.startswith("//"):
+            return f"https:{value}"
+        return value
+
+    # Extract images and normalize URLs
+    images: list[str] = []
+    for raw_img in item.get("images", []) or []:
+        normalized = normalize_url(raw_img)
+        if normalized:
+            images.append(normalized)
+    images = _dedupe(images)
+
+    # Extract options and variants from SKU data
+    options: dict[str, list[str]] = {}
+    variants: list[Variant] = []
+
+    prop_lookup: dict[int, dict[str, t.Any]] = {}
+    for prop in sku_data.get("props", []) or []:
+        prop_name = prop.get("name")
+        prop_values = prop.get("values") or []
+        if not prop_name or not prop_values:
+            continue
+
+        option_values = [val.get("name") for val in prop_values if val.get("name")]
+        if option_values:
+            options[prop_name] = option_values
+
+        pid_raw = prop.get("pid")
+        try:
+            pid = int(pid_raw)
+        except (TypeError, ValueError):
+            continue
+
+        values_by_vid: dict[int, dict[str, t.Any]] = {}
+        for val in prop_values:
+            vid_raw = val.get("vid")
+            try:
+                vid = int(vid_raw)
+            except (TypeError, ValueError):
+                continue
+            values_by_vid[vid] = val
+
+        prop_lookup[pid] = {"name": prop_name, "values": values_by_vid}
+
+    sku_images = sku_data.get("skuImages", {}) if isinstance(sku_data.get("skuImages"), dict) else {}
+
+    for sku in sku_data.get("base", []) or []:
+        variant_options: dict[str, str] = {}
+        variant_image: t.Optional[str] = None
+
+        # propMap format: "14:771;5:100014066"
+        prop_map = str(sku.get("propMap") or "")
+        for pair in (prop_map.split(";") if prop_map else []):
+            if ":" not in pair:
+                continue
+            pid_str, vid_str = pair.split(":", 1)
+            try:
+                pid = int(pid_str)
+                vid = int(vid_str)
+            except ValueError:
+                continue
+
+            prop_data = prop_lookup.get(pid)
+            if not prop_data:
+                continue
+
+            prop_name = prop_data["name"]
+            val = prop_data["values"].get(vid)
+            if not val:
+                continue
+
+            value_name = val.get("name")
+            if isinstance(value_name, str) and value_name:
+                variant_options[prop_name] = value_name
+
+            if not variant_image:
+                map_key = f"{pid}:{vid}"
+                image_candidate = sku_images.get(map_key) or val.get("image")
+                variant_image = normalize_url(image_candidate)
+
+        # Extract variant pricing
+        variant_price = price_amount
+        if sku.get("promotionPrice") is not None:
+            variant_price = _parse_money_to_float(str(sku["promotionPrice"]).replace("$", ""))
+        elif sku.get("price") is not None:
+            variant_price = _parse_money_to_float(str(sku["price"]).replace("$", ""))
+
+        # Extract availability/inventory
+        quantity_raw = sku.get("quantity", 0)
+        try:
+            quantity = int(quantity_raw)
+        except (TypeError, ValueError):
+            quantity = 0
+        available = quantity > 0
+
+        sku_id = str(sku.get("skuId") or "").strip()
+        canonical_sku = f"AE:{item_id}:{sku_id}" if sku_id else None
+
+        variants.append(
+            Variant(
+                id=sku_id or None,
+                sku=canonical_sku,
+                options=variant_options,
+                price_amount=variant_price,
+                currency=currency,
+                available=available,
+                inventory_quantity=quantity,
+                image=variant_image,
+            )
+        )
+
+        if variant_image and variant_image not in images:
+            images.append(variant_image)
+
+    # If no variants, create a default one
+    if not variants and price_amount is not None:
+        variants.append(
+            Variant(
+                id=str(item_id),
+                price_amount=price_amount,
+                currency=currency,
+                available=item.get("available", True),
+            )
+        )
+
+    # Extract additional metadata from properties
+    properties = item.get("properties", {})
+    prop_list = properties.get("list", []) if properties else []
+
+    brand = None
+    weight_grams: t.Optional[int] = None
+    category = "Electronics"
+
+    def parse_weight_to_grams(raw_value: t.Any) -> t.Optional[int]:
+        if raw_value is None:
+            return None
+        text = str(raw_value).strip()
+        if not text:
+            return None
+        match = re.search(r"([0-9]+(?:\.[0-9]+)?)", text)
+        if not match:
+            return None
+        try:
+            value = float(match.group(1))
+        except ValueError:
+            return None
+
+        lowered = text.lower()
+        if "kg" in lowered:
+            return int(round(value * 1000))
+        if " g" in lowered or lowered.endswith("g"):
+            return int(round(value))
+
+        # Heuristic for unit-less values from this API.
+        if 0 < value <= 50:
+            return int(round(value * 1000))
+        return int(round(value))
+
+    for prop in prop_list:
+        prop_name = str(prop.get("name") or "").strip()
+        prop_value = str(prop.get("value") or "").strip()
+        if not prop_name or not prop_value:
+            continue
+
+        name_lower = prop_name.lower()
+        if name_lower in {"brand name", "brand"}:
+            brand = prop_value
+        elif name_lower == "type":
+            category = prop_value
+        elif name_lower == "weight" and weight_grams is None:
+            weight_grams = parse_weight_to_grams(prop_value)
+
+    # Extract vendor information
+    vendor = None
+    if result.get("seller") and result["seller"].get("storeTitle"):
+        vendor = result["seller"]["storeTitle"]
+
+    # Extract shipping/delivery package weight as fallback
+    if weight_grams is None and result.get("delivery") and result["delivery"].get("packageDetail"):
+        package = result["delivery"]["packageDetail"]
+        weight_grams = parse_weight_to_grams(package.get("weight"))
+
+    weight = float(weight_grams) if weight_grams is not None else None
+
+    # AliExpress products are typically new and require shipping
+    requires_shipping = True
+    track_quantity = True
+    is_digital = False
+
+    # Extract slug
+    slug = f"aliexpress-{item_id}"
+
+    # Extract meta information
+    meta_title = title
+    meta_description = None
+    if description and len(description) > 160:
+        clean_desc = re.sub(r"<[^>]+>", " ", description)
+        meta_description = clean_desc[:400].strip()
+
+    return ProductResult(
+        platform="aliexpress",
+        id=str(item_id),
+        title=title,
+        description=description,
+        price=price,
+        images=images,
+        options=options,
+        variants=variants,
+        brand=brand,
+        category=category,
+        meta_title=meta_title,
+        meta_description=meta_description,
+        slug=slug,
+        vendor=vendor,
+        weight=weight,
+        requires_shipping=requires_shipping,
+        track_quantity=track_quantity,
+        is_digital=is_digital,
+        raw=resp,
+    )
+
+
 class AliExpressClient(ProductClient):
     platform = "aliexpress"
 
@@ -1142,201 +1398,11 @@ class AliExpressClient(ProductClient):
                 fallback_item = fallback_result.get("item", {}) if isinstance(fallback_result, dict) else {}
                 if fallback_item and fallback_item.get("title"):
                     resp = fallback_resp
-                    result = fallback_result
-                    item = fallback_item
             except Exception:
                 # Ignore fallback errors and proceed with original response
                 pass
-        
-        # Extract basic product information
-        title = item.get("title") or ""
-        description = ""
-        if item.get("description") and item["description"].get("html"):
-            description = item["description"]["html"]
 
-        # Extract pricing from SKU data
-        sku_data = item.get("sku", {})
-        sku_def = sku_data.get("def", {})
-        
-        price_amount = None
-        currency = "USD"  # AliExpress typically shows USD in API
-        
-        # Use promotion price if available, otherwise regular price
-        if sku_def.get("promotionPrice") is not None:
-            price_str = str(sku_def["promotionPrice"]).replace("$", "").split(" - ")[0]
-            price_amount = _parse_money_to_float(price_str)
-        elif sku_def.get("price") is not None:
-            price_str = str(sku_def["price"]).replace("$", "").split(" - ")[0]
-            price_amount = _parse_money_to_float(price_str)
-        
-        price = {"amount": price_amount, "currency": currency}
-
-        # Extract images and normalize URLs
-        images = []
-        if item.get("images"):
-            for img in item["images"]:
-                if img.startswith("//"):
-                    img = "https:" + img
-                images.append(img)
-        images = _dedupe(images)
-
-        # Extract options and variants from SKU data
-        options = {}
-        variants = []
-        
-        if sku_data.get("props"):
-            # Build options from props
-            for prop in sku_data["props"]:
-                prop_name = prop.get("name")
-                if prop_name and prop.get("values"):
-                    option_values = [val.get("name") for val in prop["values"] if val.get("name")]
-                    if option_values:
-                        options[prop_name] = option_values
-            
-            # Build variants from base SKUs
-            if sku_data.get("base"):
-                for sku in sku_data["base"]:
-                    variant_options = {}
-                    variant_image = None
-                    
-                    # Parse skuAttr to map to prop names and values
-                    sku_attr = sku.get("propMap", "")
-                    if sku_attr:
-                        # skuAttr format: "200009209:200660850" (pid:vid)
-                        attr_pairs = sku_attr.split(";") if ";" in sku_attr else [sku_attr]
-                        
-                        for pair in attr_pairs:
-                            if ":" in pair:
-                                pid_str, vid_str = pair.split(":", 1)
-                                try:
-                                    pid = int(pid_str)
-                                    vid = int(vid_str)
-                                    
-                                    # Find matching prop and value
-                                    for prop in sku_data.get("props", []):
-                                        if prop.get("pid") == pid:
-                                            prop_name = prop.get("name")
-                                            for val in prop.get("values", []):
-                                                if val.get("vid") == vid:
-                                                    variant_options[prop_name] = val.get("name")
-                                                    if val.get("image"):
-                                                        variant_image = val["image"]
-                                                        if variant_image.startswith("//"):
-                                                            variant_image = "https:" + variant_image
-                                                        if variant_image not in images:
-                                                            images.append(variant_image)
-                                                    break
-                                            break
-                                except ValueError:
-                                    continue
-                    
-                    # Extract variant pricing
-                    variant_price = price_amount
-                    if sku.get("promotionPrice") is not None:
-                        variant_price = _parse_money_to_float(str(sku["promotionPrice"]).replace("$", ""))
-                    elif sku.get("price") is not None:
-                        variant_price = _parse_money_to_float(str(sku["price"]).replace("$", ""))
-                    
-                    # Extract availability
-                    quantity = sku.get("quantity", 0)
-                    available = quantity > 0
-                    
-                    variants.append(Variant(
-                        id=sku.get("skuId"),
-                        sku=sku.get("skuId"),
-                        options=variant_options,
-                        price_amount=variant_price,
-                        currency=currency,
-                        available=available,
-                        inventory_quantity=quantity,
-                        image=variant_image,
-                    ))
-
-        # If no variants, create a default one
-        if not variants and price_amount is not None:
-            variants.append(Variant(
-                id=str(item_id),
-                price_amount=price_amount,
-                currency=currency,
-                available=item.get("available", True),
-            ))
-
-        # Extract additional metadata from properties
-        properties = item.get("properties", {})
-        prop_list = properties.get("list", []) if properties else []
-        
-        brand = None
-        material = None
-        weight = None
-        
-        for prop in prop_list:
-            prop_name = prop.get("name")
-            prop_value = prop.get("value")
-            if prop_name and prop_value:
-                if prop_name.lower() in ["brand name", "brand"]:
-                    brand = prop_value
-                elif prop_name.lower() == "material":
-                    material = prop_value
-                elif prop_name.lower() == "weight" and prop_value:
-                    try:
-                        weight = float(prop_value)
-                    except (ValueError, TypeError):
-                        pass
-
-        category = "Electronics"  # Default category
-        
-        # Extract vendor information
-        vendor = None
-        if result.get("seller") and result["seller"].get("storeTitle"):
-            vendor = result["seller"]["storeTitle"]
-
-        # Extract shipping/delivery dimensions and weight
-        if result.get("delivery") and result["delivery"].get("packageDetail"):
-            package = result["delivery"]["packageDetail"]
-            if package.get("weight") and not weight:
-                try:
-                    weight = float(package["weight"])
-                except (ValueError, TypeError):
-                    pass
-
-        # AliExpress products are typically new and require shipping
-        requires_shipping = True
-        track_quantity = True
-        is_digital = False
-
-        # Extract slug
-        slug = f"aliexpress-{item_id}"
-
-        # Extract meta information
-        meta_title = title
-        meta_description = None
-        if description and len(description) > 160:
-            # Strip HTML for meta description
-            import re
-            clean_desc = re.sub(r'<[^>]+>', ' ', description)
-            meta_description = clean_desc[:400].strip()
-
-        return ProductResult(
-            platform=self.platform,
-            id=str(item_id),
-            title=title,
-            description=description,
-            price=price,
-            images=images,
-            options=options,
-            variants=variants,
-            brand=brand,
-            category=category,
-            meta_title=meta_title,
-            meta_description=meta_description,
-            slug=slug,
-            vendor=vendor,
-            weight=weight,
-            requires_shipping=requires_shipping,
-            track_quantity=track_quantity,
-            is_digital=is_digital,
-            raw=resp,
-        )
+        return _parse_aliexpress_result(resp, item_id)
 
 
 # ----------------------------- Factory + Facade -----------------------------
