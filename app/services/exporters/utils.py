@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import csv
+import io
+from datetime import datetime, timezone
+import re
+import typing as t
+
+_SAFE_DEST_RE = re.compile(r"[^a-z0-9-]+")
+
+
+def ordered_unique(items: t.Iterable[str]) -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        cleaned = (item or "").strip()
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        values.append(cleaned)
+    return values
+
+
+def format_number(value: t.Optional[float], *, decimals: int) -> str:
+    if value is None:
+        return ""
+    return f"{value:.{decimals}f}".rstrip("0").rstrip(".")
+
+
+def dict_rows_to_csv(rows: list[dict[str, str]], columns: list[str]) -> str:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=columns, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def utc_timestamp_compact(now: datetime | None = None) -> str:
+    dt = now or _utcnow()
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.strftime("%Y%m%dT%H%M%SZ")
+
+
+def make_export_filename(destination: str, *, now: datetime | None = None) -> str:
+    cleaned = (destination or "").strip().lower().replace("_", "-")
+    cleaned = _SAFE_DEST_RE.sub("-", cleaned).strip("-")
+    if not cleaned:
+        cleaned = "export"
+    return f"{cleaned}-{utc_timestamp_compact(now)}.csv"

@@ -57,7 +57,7 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
     )
 
     csv_text, filename = product_to_shopify_csv(product, publish=True)
-    assert filename == "v-neck-tee.csv"
+    assert filename == "shopify-20260208T000000Z.csv"
     actual = _read_frame(csv_text)
 
     assert list(actual.columns) == SHOPIFY_COLUMNS

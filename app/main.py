@@ -93,16 +93,18 @@ def _run_import(product_url: str) -> dict:
     return product.to_dict(include_raw=settings.debug)
 
 
-def _shopify_csv_download_url(product_url: str, *, publish: bool = False) -> str:
+def _export_csv_download_url(export_target: str, product_url: str, *, publish: bool = False) -> str:
     normalized_url = _normalize_url(product_url)
     publish_flag = "&publish=true" if publish else ""
-    return f"/api/v1/export/shopify.csv?url={quote_plus(normalized_url)}{publish_flag}"
+    return f"/api/v1/export/{export_target}?url={quote_plus(normalized_url)}{publish_flag}"
 
 
-def _woocommerce_csv_download_url(product_url: str, *, publish: bool = False) -> str:
-    normalized_url = _normalize_url(product_url)
-    publish_flag = "&publish=true" if publish else ""
-    return f"/api/v1/export/woocommerce.csv?url={quote_plus(normalized_url)}{publish_flag}"
+def _csv_attachment_response(csv_text: str, filename: str) -> Response:
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/health")
@@ -128,22 +130,14 @@ def export_shopify_csv_from_query(
 ) -> Response:
     product = _run_import_product(url)
     csv_text, filename = product_to_shopify_csv(product, publish=publish)
-    return Response(
-        content=csv_text,
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return _csv_attachment_response(csv_text, filename)
 
 
 @app.post("/api/v1/export/shopify.csv")
 def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
     csv_text, filename = product_to_shopify_csv(product, publish=payload.publish)
-    return Response(
-        content=csv_text,
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return _csv_attachment_response(csv_text, filename)
 
 
 @app.get("/api/v1/export/woocommerce.csv")
@@ -153,22 +147,14 @@ def export_woocommerce_csv_from_query(
 ) -> Response:
     product = _run_import_product(url)
     csv_text, filename = product_to_woocommerce_csv(product, publish=publish)
-    return Response(
-        content=csv_text,
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return _csv_attachment_response(csv_text, filename)
 
 
 @app.post("/api/v1/export/woocommerce.csv")
 def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
     csv_text, filename = product_to_woocommerce_csv(product, publish=payload.publish)
-    return Response(
-        content=csv_text,
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+    return _csv_attachment_response(csv_text, filename)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -205,8 +191,8 @@ def import_from_web(
     try:
         product = _run_import_product(product_url)
         payload = product.to_dict(include_raw=settings.debug)
-        shopify_csv_url = _shopify_csv_download_url(product_url)
-        woocommerce_csv_url = _woocommerce_csv_download_url(product_url)
+        shopify_csv_url = _export_csv_download_url("shopify.csv", product_url)
+        woocommerce_csv_url = _export_csv_download_url("woocommerce.csv", product_url)
     except HTTPException as exc:
         error = exc.detail
         status_code = exc.status_code

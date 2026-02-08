@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import csv
-import io
 import re
 import typing as t
 
 from slugify import slugify
 
 from ..importer import ProductResult, Variant
+from . import utils
 
 SHOPIFY_COLUMNS: list[str] = [
     "Handle",
@@ -51,12 +50,6 @@ def _format_bool(value: bool) -> str:
     return "TRUE" if value else "FALSE"
 
 
-def _format_number(value: t.Optional[float]) -> str:
-    if value is None:
-        return ""
-    return f"{value:.2f}".rstrip("0").rstrip(".")
-
-
 def _format_grams(value: t.Optional[float]) -> str:
     if value is None:
         return ""
@@ -86,23 +79,11 @@ def _resolve_handle(product: ProductResult) -> str:
     return handle or "product-item"
 
 
-def _ordered_unique(items: t.Iterable[str]) -> list[str]:
-    values: list[str] = []
-    seen: set[str] = set()
-    for item in items:
-        cleaned = (item or "").strip()
-        if not cleaned or cleaned in seen:
-            continue
-        seen.add(cleaned)
-        values.append(cleaned)
-    return values
-
-
 def _resolve_option_names(product: ProductResult) -> list[str]:
-    option_names = _ordered_unique(product.options.keys())
+    option_names = utils.ordered_unique(product.options.keys())
     if len(option_names) < 3:
         for variant in product.variants or []:
-            for key in _ordered_unique((variant.options or {}).keys()):
+            for key in utils.ordered_unique((variant.options or {}).keys()):
                 if key in option_names:
                     continue
                 option_names.append(key)
@@ -117,17 +98,17 @@ def _resolve_option_names(product: ProductResult) -> list[str]:
 
 
 def _resolve_tags(product: ProductResult) -> str:
-    tags = sorted(_ordered_unique(product.tags or []), key=str.lower)
+    tags = sorted(utils.ordered_unique(product.tags or []), key=str.lower)
     return ",".join(tags)
 
 
 def _resolve_price(product: ProductResult, variant: Variant) -> str:
     if variant.price_amount is not None:
-        return _format_number(variant.price_amount)
+        return utils.format_number(variant.price_amount, decimals=2)
     if isinstance(product.price, dict):
         amount = product.price.get("amount")
         if isinstance(amount, (int, float)):
-            return _format_number(float(amount))
+            return utils.format_number(float(amount), decimals=2)
     return ""
 
 
@@ -209,11 +190,4 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
 
 def product_to_shopify_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
     rows = product_to_shopify_rows(product, publish=publish)
-    handle = _resolve_handle(product)
-
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=SHOPIFY_COLUMNS, lineterminator="\n")
-    writer.writeheader()
-    writer.writerows(rows)
-
-    return output.getvalue(), f"{handle}.csv"
+    return utils.dict_rows_to_csv(rows, SHOPIFY_COLUMNS), utils.make_export_filename("shopify")

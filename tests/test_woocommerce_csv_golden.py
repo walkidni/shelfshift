@@ -57,7 +57,7 @@ def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
     )
 
     csv_text, filename = product_to_woocommerce_csv(product, publish=True)
-    assert filename == "v-neck-tee.csv"
+    assert filename == "woocommerce-20260208T000000Z.csv"
     actual = _read_frame(csv_text)
 
     assert list(actual.columns) == WOOCOMMERCE_COLUMNS

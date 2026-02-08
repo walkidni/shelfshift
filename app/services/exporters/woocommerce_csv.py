@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import csv
-import io
 import re
 import typing as t
 
 from slugify import slugify
 
 from ..importer import ProductResult, Variant
+from . import utils
 
 WOOCOMMERCE_COLUMNS: list[str] = [
     "Type",
@@ -58,36 +57,10 @@ def _empty_row() -> dict[str, str]:
     return {column: "" for column in WOOCOMMERCE_COLUMNS}
 
 
-def _format_number(value: t.Optional[float]) -> str:
-    if value is None:
-        return ""
-    return f"{value:.6f}".rstrip("0").rstrip(".")
-
-
-def _ordered_unique(values: t.Iterable[str]) -> list[str]:
-    out: list[str] = []
-    seen: set[str] = set()
-    for value in values:
-        cleaned = (value or "").strip()
-        if not cleaned or cleaned in seen:
-            continue
-        out.append(cleaned)
-        seen.add(cleaned)
-    return out
-
-
 def _slug(value: t.Optional[str]) -> str:
     if value is None:
         return ""
     return slugify(str(value).strip(), separator="-")
-
-
-def _resolve_filename_stem(product: ProductResult) -> str:
-    for candidate in (product.slug, product.title, f"{product.platform or 'product'}-{product.id or 'item'}"):
-        stem = _slug(candidate)
-        if stem:
-            return stem
-    return "product-item"
 
 
 def _platform_token(platform: t.Optional[str]) -> str:
@@ -131,10 +104,10 @@ def _resolve_variants(product: ProductResult) -> list[Variant]:
 
 
 def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
-    names = _ordered_unique((product.options or {}).keys())
+    names = utils.ordered_unique((product.options or {}).keys())
     if len(names) < 3:
         for variant in variants:
-            for option_name in _ordered_unique((variant.options or {}).keys()):
+            for option_name in utils.ordered_unique((variant.options or {}).keys()):
                 if option_name in names:
                     continue
                 names.append(option_name)
@@ -170,17 +143,17 @@ def _resolve_parent_attribute_values(
                 values.append(_fallback_option_value(variant, index))
             else:
                 values.append(str((variant.options or {}).get(option_name) or ""))
-        values_by_option[option_name] = _ordered_unique(values)
+        values_by_option[option_name] = utils.ordered_unique(values)
     return values_by_option
 
 
 def _resolve_price(product: ProductResult, variant: Variant | None = None) -> str:
     if variant and variant.price_amount is not None:
-        return _format_number(variant.price_amount)
+        return utils.format_number(variant.price_amount, decimals=6)
     if isinstance(product.price, dict):
         amount = product.price.get("amount")
         if isinstance(amount, (int, float)):
-            return _format_number(float(amount))
+            return utils.format_number(float(amount), decimals=6)
     return ""
 
 
@@ -192,16 +165,16 @@ def _resolve_weight_kg(product: ProductResult, variant: Variant | None = None) -
         kg = float(grams) / 1000.0
     except (TypeError, ValueError):
         return ""
-    return _format_number(kg)
+    return utils.format_number(kg, decimals=6)
 
 
 def _resolve_tags(product: ProductResult) -> str:
-    tags = sorted(_ordered_unique(product.tags or []), key=str.lower)
+    tags = sorted(utils.ordered_unique(product.tags or []), key=str.lower)
     return ",".join(tags)
 
 
 def _resolve_images(images: t.Iterable[str]) -> str:
-    return ",".join(_ordered_unique(str(image) for image in images))
+    return ",".join(utils.ordered_unique(str(image) for image in images))
 
 
 def _strip_html(text: t.Optional[str]) -> str:
@@ -278,7 +251,7 @@ def _is_variable_product(product: ProductResult, variants: list[Variant]) -> boo
             option_values = []
         else:
             option_values = [str(values)]
-        if len(_ordered_unique(option_values)) > 1:
+        if len(utils.ordered_unique(option_values)) > 1:
             return True
     return False
 
@@ -287,7 +260,7 @@ def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> lis
     variants = _resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
-    images = _ordered_unique(product.images or [])
+    images = utils.ordered_unique(product.images or [])
     parent_attribute_values = _resolve_parent_attribute_values(product, variants, option_names)
     is_variable = _is_variable_product(product, variants)
 
@@ -365,8 +338,4 @@ def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> lis
 
 def product_to_woocommerce_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
     rows = product_to_woocommerce_rows(product, publish=publish)
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=WOOCOMMERCE_COLUMNS, lineterminator="\n")
-    writer.writeheader()
-    writer.writerows(rows)
-    return output.getvalue(), f"{_resolve_filename_stem(product)}.csv"
+    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename("woocommerce")

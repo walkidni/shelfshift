@@ -34,7 +34,7 @@ def test_simple_product_maps_qty_stock_with_manage_stock() -> None:
     csv_text, filename = product_to_woocommerce_csv(product, publish=False)
     frame = _read_frame(csv_text)
 
-    assert filename == "demo-mug.csv"
+    assert filename == "woocommerce-20260208T000000Z.csv"
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
     assert len(frame) == 1
     assert frame.loc[0, "Type"] == "simple"

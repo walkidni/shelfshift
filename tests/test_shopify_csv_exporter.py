@@ -25,7 +25,7 @@ def test_single_variant_uses_default_title_option() -> None:
     csv_text, filename = product_to_shopify_csv(product, publish=False)
     frame = _read_frame(csv_text)
 
-    assert filename == "demo-mug.csv"
+    assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 1
     assert frame.loc[0, "Option1 Name"] == "Title"
@@ -163,7 +163,7 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
     csv_text, filename = product_to_shopify_csv(product, publish=False)
     frame = _read_frame(csv_text)
 
-    assert filename == "fancy-lamp-2-0.csv"
+    assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert frame.loc[0, "Handle"] == "fancy-lamp-2-0"
     assert frame.loc[0, "Variant Image"] == ""

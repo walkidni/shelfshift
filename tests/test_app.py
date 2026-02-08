@@ -108,7 +108,7 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-    assert response.headers["content-disposition"] == 'attachment; filename="demo-mug.csv"'
+    assert response.headers["content-disposition"] == 'attachment; filename="shopify-20260208T000000Z.csv"'
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 1
@@ -167,7 +167,7 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-    assert response.headers["content-disposition"] == 'attachment; filename="demo-mug.csv"'
+    assert response.headers["content-disposition"] == 'attachment; filename="woocommerce-20260208T000000Z.csv"'
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
     assert len(frame) == 1
