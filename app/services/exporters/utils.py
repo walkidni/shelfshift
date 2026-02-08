@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import re
 import typing as t
 
+from ..importer import ProductResult, Variant
+
 _SAFE_DEST_RE = re.compile(r"[^a-z0-9-]+")
 
 
@@ -54,3 +56,15 @@ def make_export_filename(destination: str, *, now: datetime | None = None) -> st
     if not cleaned:
         cleaned = "export"
     return f"{cleaned}-{utc_timestamp_compact(now)}.csv"
+
+
+def resolve_variants(product: ProductResult) -> list[Variant]:
+    variants = list(product.variants or [])
+    if variants:
+        return variants
+
+    default_price = None
+    if isinstance(product.price, dict) and isinstance(product.price.get("amount"), (int, float)):
+        default_price = float(product.price["amount"])
+
+    return [Variant(id=product.id, price_amount=default_price, weight=product.weight)]

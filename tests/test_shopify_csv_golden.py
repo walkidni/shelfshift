@@ -1,4 +1,3 @@
-import io
 from pathlib import Path
 
 import pandas as pd
@@ -6,19 +5,12 @@ import pandas as pd
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.importer import ProductResult, Variant
-
-
-def _read_frame(csv_text: str) -> pd.DataFrame:
-    return pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
-
-
-def _read_fixture_frame(path: Path) -> pd.DataFrame:
-    return pd.read_csv(path, dtype=str, keep_default_na=False)
+from tests._csv_helpers import read_fixture_frame, read_frame
 
 
 def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
     fixture_path = Path(__file__).resolve().parent / "fixtures" / "shopify_one_product_two_variants_full.csv"
-    expected = _read_fixture_frame(fixture_path)
+    expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == SHOPIFY_COLUMNS
 
     product = ProductResult(
@@ -58,7 +50,7 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
 
     csv_text, filename = product_to_shopify_csv(product, publish=True)
     assert filename == "shopify-20260208T000000Z.csv"
-    actual = _read_frame(csv_text)
+    actual = read_frame(csv_text)
 
     assert list(actual.columns) == SHOPIFY_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)

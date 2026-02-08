@@ -1,14 +1,7 @@
-import io
-
-import pandas as pd
-
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.services.importer import ProductResult, Variant
-
-
-def _read_frame(csv_text: str) -> pd.DataFrame:
-    return pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
+from tests._csv_helpers import read_frame
 
 
 def test_simple_product_maps_qty_stock_with_manage_stock() -> None:
@@ -32,7 +25,7 @@ def test_simple_product_maps_qty_stock_with_manage_stock() -> None:
     )
 
     csv_text, filename = product_to_woocommerce_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert filename == "woocommerce-20260208T000000Z.csv"
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
@@ -79,7 +72,7 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
     assert len(frame) == 3
@@ -105,7 +98,7 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
 
 def test_available_without_qty_does_not_emit_manage_stock_or_stock() -> None:
     product = ProductResult(
-        platform="etsy",
+        platform="amazon",
         id="123456789",
         title="Digital Template",
         description="PDF template",
@@ -117,7 +110,7 @@ def test_available_without_qty_does_not_emit_manage_stock_or_stock() -> None:
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
     assert len(frame) == 1
@@ -144,7 +137,7 @@ def test_multiple_variants_without_options_synthesizes_option_attribute() -> Non
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == WOOCOMMERCE_COLUMNS
     assert len(frame) == 3

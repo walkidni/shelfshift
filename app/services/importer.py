@@ -30,7 +30,6 @@ def http_session(timeout: int = 20) -> requests.Session:
 
 # ----------------------------- Detection regexes -----------------------------
 _AMAZON_ASIN_RE = re.compile(r"/(?:gp/product|dp)/([A-Z0-9]{10})(?:[/?#]|$)", re.I)
-_ETSY_LISTING_RE = re.compile(r"^/listing/(\d+)(?:[/-]|$)", re.I)
 _ALIEXPRESS_ITEM_RE = re.compile(r"/(?:item|i)/(\d+)\.html(?:[/?#]|$)", re.I)
 _ALIEXPRESS_X_OBJECT_RE = re.compile(
     r"x_object_id(?:%25)?(?:%3A|%3D|:|=)(\d{12,20})",
@@ -68,15 +67,6 @@ def detect_product_url(url: str) -> dict:
             if key in qs and qs[key] and re.fullmatch(r"[A-Z0-9]{10}", qs[key][0], re.I):
                 res.update(platform="amazon", is_product=True, product_id=qs[key][0]); return res
         res.update(platform="amazon"); return res
-
-    if "etsy.com" in host:
-        m = _ETSY_LISTING_RE.search(p.path)
-        if m:
-            res.update(platform="etsy", is_product=True, product_id=m.group(1)); return res
-        qs = parse_qs(p.query)
-        if "listing_id" in qs and qs["listing_id"]:
-            res.update(platform="etsy", is_product=True, product_id=qs["listing_id"][0]); return res
-        res.update(platform="etsy"); return res
 
     if "aliexpress." in host:
         m = _ALIEXPRESS_ITEM_RE.search(p.path)
@@ -234,6 +224,36 @@ def _parse_money_to_float(x: t.Any) -> t.Optional[float]:
         except Exception:
             return None
     return None
+
+
+def _append_default_variant_if_empty(variants: list[Variant], default_variant: Variant | None) -> None:
+    if variants or default_variant is None:
+        return
+    variants.append(default_variant)
+
+
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _strip_html(text: str) -> str:
+    cleaned = _HTML_TAG_RE.sub(" ", text or "")
+    return " ".join(cleaned.split())
+
+
+def _truncate(text: str, limit: int = 400) -> str:
+    return (text or "")[:limit].strip()
+
+
+def _meta_from_description(
+    title: str,
+    description: str | None,
+    *,
+    strip_html: bool,
+) -> tuple[str, str | None]:
+    if not description:
+        return title, None
+    base = _strip_html(description) if strip_html else description
+    return title, _truncate(base)
 
 
 # ----------------------------- Shopify (public JSON) -----------------------------
@@ -441,14 +461,13 @@ class ShopifyClient(ProductClient):
                     weight=variant.get("weight"),
                 ))
 
-        # If no variants, create a default one
-        if not variants:
-            variants.append(Variant(
-                id=str(data.get("id", "")),
-                price_amount=price_amount,
-                currency=currency,
-                available=True,
-            ))
+        default_variant = Variant(
+            id=str(data.get("id", "")),
+            price_amount=price_amount,
+            currency=currency,
+            available=True,
+        )
+        _append_default_variant_if_empty(variants, default_variant)
 
         # Extract additional metadata
         brand = data.get("vendor")
@@ -465,13 +484,7 @@ class ShopifyClient(ProductClient):
             weight = variants_list[0]["weight"]
 
         # Extract meta information
-        meta_title = title
-        meta_description = None
-        if description:
-            # Strip HTML for meta description
-            import re
-            clean_desc = re.sub(r'<[^>]+>', ' ', description)
-            meta_description = clean_desc[:400].strip() if clean_desc else None
+        meta_title, meta_description = _meta_from_description(title, description, strip_html=True)
         
         # Extract slug from handle
         slug = handle
@@ -691,14 +704,13 @@ class AmazonRapidApiClient(ProductClient):
                         available=is_available,
                     ))
 
-        # If no variants found, create a default one
-        if not variants:
-            variants.append(Variant(
-                id=asin,
-                price_amount=price_amount,
-                currency=currency,
-                available=data.get("product_availability", "").lower() == "in stock",
-            ))
+        default_variant = Variant(
+            id=asin,
+            price_amount=price_amount,
+            currency=currency,
+            available=data.get("product_availability", "").lower() == "in stock",
+        )
+        _append_default_variant_if_empty(variants, default_variant)
 
         # Extract brand from product_details or product_information
         brand = None
@@ -745,7 +757,6 @@ class AmazonRapidApiClient(ProductClient):
             weight_str = data["product_information"]["Item Weight"]
             try:
                 # Extract numeric value from weight string like "0.01 ounces"
-                import re
                 weight_match = re.search(r"([\d.]+)", weight_str)
                 if weight_match:
                     weight_val = float(weight_match.group(1))
@@ -781,295 +792,6 @@ class AmazonRapidApiClient(ProductClient):
             weight=weight,
             requires_shipping=requires_shipping,
             track_quantity=track_quantity,
-            is_digital=is_digital,
-            raw=resp,
-        )
-
-
-# ----------------------------- Etsy (RapidAPI: etsy-api3 /details) -----------------------------
-class EtsyRapidApiClient(ProductClient):
-    platform = "etsy"
-
-    def __init__(self, cfg: ApiConfig):
-        self.cfg = cfg
-        self._http = http_session()
-
-    def _extract_listing_id(self, url: str) -> t.Optional[str]:
-        p = urlparse(url)
-        m = _ETSY_LISTING_RE.search(p.path)
-        if m:
-            return m.group(1)
-        qs = parse_qs(p.query)
-        if "listing_id" in qs and qs["listing_id"]:
-            return qs["listing_id"][0]
-        return None
-
-    @staticmethod
-    def _parse_variations(payload: dict) -> tuple[dict[str, list[str]], list[Variant]]:
-        """
-        Etsy variations can have multiple independent option types:
-          [{"type": "Color / Size", "value": ["White / S ($23.97)", ...]},
-           {"type": "Add-on Sleeve Print?", "value": ["Yes ($28.95)", "No ($23.97)"]}]
-        
-        We'll parse all option types and create a flattened options dict.
-        For variants, we'll create combinations from the first major variant group.
-        """
-        options: dict[str, list[str]] = {}
-        variants: list[Variant] = []
-
-        var_blocks = payload.get("variations") or []
-        if not isinstance(var_blocks, list) or not var_blocks:
-            return options, variants
-
-        def parse_price_from_paren(s: str) -> t.Optional[float]:
-            # e.g. "White / S ($23.97 - $28.95)" -> extract min price
-            m = re.search(r"\(([^\)]*)\)$", s)
-            if not m:
-                return None
-            price_str = m.group(1)
-            # Handle ranges like "$23.97 - $28.95" by taking the first price
-            return _parse_money_to_float(price_str.split("-")[0] if "-" in price_str else price_str)
-
-        # Process all variation blocks to extract options
-        for block in var_blocks:
-            if not isinstance(block, dict):
-                continue
-                
-            type_str = block.get("type") or ""
-            vals = block.get("value") or []
-            
-            if not vals:
-                continue
-            
-            # Check if this is a compound type like "Color / Size"
-            if "/" in type_str:
-                dim_names = [s.strip() for s in type_str.split("/") if s.strip()]
-                for dn in dim_names:
-                    if dn not in options:
-                        options[dn] = []
-                
-                # Parse compound values
-                for entry in vals:
-                    if not isinstance(entry, str):
-                        continue
-                    # Strip price part
-                    clean = re.sub(r"\([^\)]*\)\s*$", "", entry).strip()
-                    parts = [p.strip() for p in clean.split("/")]
-                    
-                    vopts: dict[str, str] = {}
-                    for i, part in enumerate(parts):
-                        if i < len(dim_names):
-                            vopts[dim_names[i]] = part
-                            if part not in options[dim_names[i]]:
-                                options[dim_names[i]].append(part)
-                    
-                    vprice = parse_price_from_paren(entry)
-                    
-                    variants.append(Variant(
-                        id=None,
-                        sku=None,
-                        title=" / ".join([f"{k}: {v}" for k, v in vopts.items()]) or None,
-                        options=vopts,
-                        price_amount=vprice,
-                        currency=payload.get("currency"),
-                        image=None,
-                        available=None,
-                        raw={"value": entry}
-                    ))
-            else:
-                # Simple option type like "Add-on Sleeve Print?"
-                opt_name = type_str.strip()
-                if opt_name and opt_name not in options:
-                    options[opt_name] = []
-                
-                for entry in vals:
-                    if not isinstance(entry, str):
-                        continue
-                    clean = re.sub(r"\([^\)]*\)\s*$", "", entry).strip()
-                    if clean and clean not in options[opt_name]:
-                        options[opt_name].append(clean)
-
-        return options, variants
-
-    def fetch_product(self, url: str) -> ProductResult:
-        if not self.cfg.rapidapi_key:
-            raise ValueError("RapidAPI key not configured.")
-        listing_id = self._extract_listing_id(url)
-        if not listing_id:
-            raise ValueError("Etsy listing_id not found in URL.")
-
-        host = "etsy-api3.p.rapidapi.com"
-        endpoint = "/details"
-        params = {"url": url}
-        headers = {
-            "X-RapidAPI-Key": self.cfg.rapidapi_key,
-            "X-RapidAPI-Host": host,
-        }
-
-        r = self._http.get(f"https://{host}{endpoint}", headers=headers, params=params, timeout=self._http.request_timeout)
-        r.raise_for_status()
-        resp = r.json()
-        payload = resp.get("data") or {}
-
-        # Extract basic product information
-        title = payload.get("title") or ""
-        description = ""
-        if payload.get("item_details"):
-            if isinstance(payload["item_details"], list):
-                description = "<br>".join(payload["item_details"])
-            else:
-                description = str(payload["item_details"])
-        elif payload.get("item_details_html"):
-            description = payload["item_details_html"]
-
-        # Extract pricing
-        price_amount = payload.get("final_price") or payload.get("initial_price")
-        currency = payload.get("currency", "USD")
-        price = {"amount": price_amount, "currency": currency}
-
-        # Extract images
-        images = payload.get("images", [])
-        images = _dedupe(images)
-
-        # Extract options and variants using variations or product_specifications
-        options = {}
-        variants = []
-        
-        # Try variations first, then fallback to product_specifications
-        if payload.get("variations"):
-            options, variants = self._parse_variations(payload)
-        elif payload.get("product_specifications"):
-            # Parse from product_specifications format
-            for spec in payload["product_specifications"]:
-                spec_name = spec.get("specification_name", "")
-                spec_values = spec.get("specification_values", "")
-                
-                if "/" in spec_name:  # Compound option like "Color / Size"
-                    dim_names = [s.strip() for s in spec_name.split("/") if s.strip()]
-                    for dn in dim_names:
-                        if dn not in options:
-                            options[dn] = []
-                    
-                    # Parse values like "White / S ($23.97 - $28.95); Black / M ($26.97 - $29.37)"
-                    for entry in spec_values.split(";"):
-                        entry = entry.strip()
-                        if not entry:
-                            continue
-                        
-                        # Extract price
-                        price_match = re.search(r"\((\$[\d.,\-\s]+)\)", entry)
-                        variant_price = price_amount
-                        if price_match:
-                            price_str = price_match.group(1).replace("$", "").split("-")[0].strip()
-                            variant_price = _parse_money_to_float(price_str)
-                        
-                        # Remove price part and parse dimensions
-                        clean = re.sub(r"\([^\)]*\)\s*$", "", entry).strip()
-                        parts = [p.strip() for p in clean.split("/")]
-                        
-                        vopts = {}
-                        for i, part in enumerate(parts):
-                            if i < len(dim_names):
-                                vopts[dim_names[i]] = part
-                                if part not in options[dim_names[i]]:
-                                    options[dim_names[i]].append(part)
-                        
-                        if vopts:
-                            variants.append(Variant(
-                                id=None,
-                                sku=None,
-                                title=" / ".join([f"{k}: {v}" for k, v in vopts.items()]),
-                                options=vopts,
-                                price_amount=variant_price,
-                                currency=currency,
-                                available=True,
-                            ))
-                else:
-                    # Simple option
-                    if spec_name not in options:
-                        options[spec_name] = []
-                    
-                    for entry in spec_values.split(";"):
-                        entry = entry.strip()
-                        if entry:
-                            clean = re.sub(r"\([^\)]*\)\s*$", "", entry).strip()
-                            if clean and clean not in options[spec_name]:
-                                options[spec_name].append(clean)
-
-        # If no variants found, create a default one
-        if not variants:
-            variants.append(Variant(
-                id=listing_id,
-                price_amount=price_amount,
-                currency=currency,
-                available=True,
-            ))
-
-        # Extract additional metadata
-        brand = payload.get("seller_shop_name") or payload.get("seller_name")
-        
-        # Extract category from breadcrumbs
-        category = None
-        if payload.get("breadcrumbs"):
-            category = payload["breadcrumbs"][-1].get("name")
-        elif payload.get("category_tree"):
-            category = payload["category_tree"][-1] if payload["category_tree"] else None
-        
-        # Extract meta information
-        meta_title = title
-        meta_description = None
-        if description and len(description) > 160:
-            meta_description = description[:400]
-        
-        # Extract slug from URL or product_id
-        slug = f"etsy-{listing_id}"
-        
-        # Extract tags from highlights
-        tags = []
-        if payload.get("highlights"):
-            tags.extend(payload["highlights"])
-        
-        # Extract vendor information
-        vendor = payload.get("seller_shop_name")
-        
-        # Extract material from description
-        material = None
-        if description:
-            desc_lower = description.lower()
-            if "cotton" in desc_lower:
-                material = "Cotton"
-            elif "polyester" in desc_lower:
-                material = "Polyester"
-            elif "wool" in desc_lower:
-                material = "Wool"
-            elif "silk" in desc_lower:
-                material = "Silk"
-        
-        # Etsy products typically require shipping unless specified otherwise
-        requires_shipping = True
-        is_digital = False
-        if description and "digital" in description.lower():
-            is_digital = True
-            requires_shipping = False
-
-        return ProductResult(
-            platform=self.platform,
-            id=listing_id,
-            title=title,
-            description=description,
-            price=price,
-            images=images,
-            options=options,
-            variants=variants,
-            brand=brand,
-            category=category,
-            meta_title=meta_title,
-            meta_description=meta_description,
-            slug=slug,
-            tags=tags,
-            vendor=vendor,
-            requires_shipping=requires_shipping,
-            track_quantity=True,
             is_digital=is_digital,
             raw=resp,
         )
@@ -1224,16 +946,15 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
         if variant_image and variant_image not in images:
             images.append(variant_image)
 
-    # If no variants, create a default one
-    if not variants and price_amount is not None:
-        variants.append(
-            Variant(
-                id=str(item_id),
-                price_amount=price_amount,
-                currency=currency,
-                available=item.get("available", True),
-            )
+    default_variant = None
+    if price_amount is not None:
+        default_variant = Variant(
+            id=str(item_id),
+            price_amount=price_amount,
+            currency=currency,
+            available=item.get("available", True),
         )
+    _append_default_variant_if_empty(variants, default_variant)
 
     # Extract additional metadata from properties
     properties = item.get("properties", {})
@@ -1303,11 +1024,8 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
     slug = f"aliexpress-{item_id}"
 
     # Extract meta information
-    meta_title = title
-    meta_description = None
-    if description and len(description) > 160:
-        clean_desc = re.sub(r"<[^>]+>", " ", description)
-        meta_description = clean_desc[:400].strip()
+    description_for_meta = description if len(description) > 160 else None
+    meta_title, meta_description = _meta_from_description(title, description_for_meta, strip_html=True)
 
     return ProductResult(
         platform="aliexpress",
@@ -1410,7 +1128,7 @@ class ProductClientFactory:
     """
     Factory that wires clients. By default:
       - Shopify: public JSON
-      - Amazon/Etsy/AliExpress: RapidAPI (hardcoded providers)
+      - Amazon/AliExpress: RapidAPI (hardcoded providers)
     """
 
     def __init__(self, cfg: ApiConfig):
@@ -1418,7 +1136,6 @@ class ProductClientFactory:
         self._clients: dict[str, ProductClient] = {
             "shopify": ShopifyClient(),
             "amazon": AmazonRapidApiClient(cfg),
-            "etsy": EtsyRapidApiClient(cfg),
             "aliexpress": AliExpressClient(cfg),
         }
 
@@ -1439,7 +1156,7 @@ def fetch_product_details(url: str, cfg: ApiConfig) -> ProductResult:
 
 def requires_rapidapi(url: str) -> bool:
     info = detect_product_url(url)
-    return info.get("platform") in {"amazon", "etsy", "aliexpress"}
+    return info.get("platform") in {"amazon", "aliexpress"}
 
 def import_product(url: str, cfg: ApiConfig, include_raw: bool = False) -> dict:
     product = fetch_product_details(url, cfg)

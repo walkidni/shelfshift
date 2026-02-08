@@ -46,7 +46,6 @@ WOOCOMMERCE_COLUMNS: list[str] = [
 _PLATFORM_TOKEN = {
     "shopify": "SH",
     "amazon": "AMZ",
-    "etsy": "ETSY",
     "aliexpress": "AE",
 }
 
@@ -85,22 +84,6 @@ def _resolve_variant_key(variant: Variant, index: int) -> str:
         if key:
             return key
     return str(index)
-
-
-def _resolve_variants(product: ProductResult) -> list[Variant]:
-    variants = list(product.variants or [])
-    if variants:
-        return variants
-    default_price = None
-    if isinstance(product.price, dict) and isinstance(product.price.get("amount"), (int, float)):
-        default_price = float(product.price["amount"])
-    return [
-        Variant(
-            id=product.id,
-            price_amount=default_price,
-            weight=product.weight,
-        )
-    ]
 
 
 def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
@@ -257,7 +240,7 @@ def _is_variable_product(product: ProductResult, variants: list[Variant]) -> boo
 
 
 def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
-    variants = _resolve_variants(product)
+    variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
     images = utils.ordered_unique(product.images or [])

@@ -112,25 +112,12 @@ def _resolve_price(product: ProductResult, variant: Variant) -> str:
     return ""
 
 
-def _resolve_variants(product: ProductResult) -> list[Variant]:
-    variants = list(product.variants or [])
-    if variants:
-        return variants
-    return [
-        Variant(
-            id=product.id,
-            price_amount=(product.price or {}).get("amount") if isinstance(product.price, dict) else None,
-            weight=product.weight,
-        )
-    ]
-
-
 def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
     rows: list[dict[str, str]] = []
-    variants = _resolve_variants(product)
+    variants = utils.resolve_variants(product)
 
     for index, variant in enumerate(variants):
         row = _empty_row()

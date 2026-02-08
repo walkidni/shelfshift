@@ -1,14 +1,7 @@
-import io
-
-import pandas as pd
-
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.importer import ProductResult, Variant
-
-
-def _read_frame(csv_text: str) -> pd.DataFrame:
-    return pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
+from tests._csv_helpers import read_frame
 
 
 def test_single_variant_uses_default_title_option() -> None:
@@ -23,7 +16,7 @@ def test_single_variant_uses_default_title_option() -> None:
     )
 
     csv_text, filename = product_to_shopify_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
@@ -68,7 +61,7 @@ def test_multi_variant_maps_two_options() -> None:
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=True)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 2
@@ -111,7 +104,7 @@ def test_multiple_images_create_extra_rows() -> None:
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 3
@@ -142,7 +135,7 @@ def test_body_html_round_trips_quotes_commas_newlines() -> None:
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert frame.loc[0, "Body (HTML)"] == body
@@ -161,7 +154,7 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
     )
 
     csv_text, filename = product_to_shopify_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
@@ -191,7 +184,7 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
-    frame = _read_frame(csv_text)
+    frame = read_frame(csv_text)
 
     assert frame.loc[0, "Variant SKU"] == "AE:1005008518647948:12000055918704599"
     assert frame.loc[0, "Variant Image"] == ""

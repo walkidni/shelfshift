@@ -32,6 +32,11 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+EXAMPLE_URLS = [
+    "https://example.myshopify.com/products/sample-product",
+    "https://www.amazon.com/dp/B0C1234567",
+    "https://www.aliexpress.com/item/1005008518647948.html",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,7 +65,7 @@ def _normalize_url(product_url: str) -> str:
     if not info.get("platform"):
         raise HTTPException(
             status_code=422,
-            detail="Unsupported URL. Supported platforms: Shopify, Amazon, Etsy, AliExpress.",
+            detail="Unsupported URL. Supported platforms: Shopify, Amazon, AliExpress.",
         )
     return normalized
 
@@ -71,7 +76,7 @@ def _run_import_product(product_url: str) -> ProductResult:
     if requires_rapidapi(normalized_url) and not settings.rapidapi_key:
         raise HTTPException(
             status_code=503,
-            detail="RAPIDAPI_KEY is required for Amazon, Etsy, and AliExpress imports.",
+            detail="RAPIDAPI_KEY is required for Amazon and AliExpress imports.",
         )
 
     try:
@@ -104,6 +109,32 @@ def _csv_attachment_response(csv_text: str, filename: str) -> Response:
         content=csv_text,
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _render_index(
+    request: Request,
+    *,
+    result_json: str | None,
+    shopify_csv_url: str | None,
+    woocommerce_csv_url: str | None,
+    error: str | None,
+    product_url: str,
+    status_code: int = 200,
+) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "brand": settings,
+            "result_json": result_json,
+            "shopify_csv_url": shopify_csv_url,
+            "woocommerce_csv_url": woocommerce_csv_url,
+            "error": error,
+            "form": {"product_url": product_url},
+            "examples": EXAMPLE_URLS,
+        },
+        status_code=status_code,
     )
 
 
@@ -159,22 +190,13 @@ def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Re
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(
+    return _render_index(
         request,
-        "index.html",
-        {
-            "brand": settings,
-            "result_json": None,
-            "shopify_csv_url": None,
-            "woocommerce_csv_url": None,
-            "error": None,
-            "form": {"product_url": ""},
-            "examples": [
-                "https://example.myshopify.com/products/sample-product",
-                "https://www.amazon.com/dp/B0C1234567",
-                "https://www.etsy.com/listing/123456789/sample-listing",
-            ],
-        },
+        result_json=None,
+        shopify_csv_url=None,
+        woocommerce_csv_url=None,
+        error=None,
+        product_url="",
     )
 
 
@@ -198,21 +220,12 @@ def import_from_web(
         status_code = exc.status_code
 
     result_json = json.dumps(payload, indent=2) if payload else None
-    return templates.TemplateResponse(
+    return _render_index(
         request,
-        "index.html",
-        {
-            "brand": settings,
-            "result_json": result_json,
-            "shopify_csv_url": shopify_csv_url,
-            "woocommerce_csv_url": woocommerce_csv_url,
-            "error": error,
-            "form": {"product_url": product_url},
-            "examples": [
-                "https://example.myshopify.com/products/sample-product",
-                "https://www.amazon.com/dp/B0C1234567",
-                "https://www.etsy.com/listing/123456789/sample-listing",
-            ],
-        },
+        result_json=result_json,
+        shopify_csv_url=shopify_csv_url,
+        woocommerce_csv_url=woocommerce_csv_url,
+        error=error,
+        product_url=product_url,
         status_code=status_code,
     )

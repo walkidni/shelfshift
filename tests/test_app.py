@@ -7,6 +7,7 @@ from app.main import app
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.services.importer import ProductResult, Variant
+from tests._app_helpers import patch_run_import_product
 
 
 client = TestClient(app)
@@ -26,32 +27,33 @@ def test_detect_rejects_unknown_platform() -> None:
 
 
 def test_import_endpoint_uses_service(monkeypatch) -> None:
-    def fake_run_import_product(product_url: str) -> ProductResult:
-        assert product_url == "https://demo.myshopify.com/products/mug"
-        return ProductResult(
-            platform="shopify",
-            id="123",
-            title="Demo Mug",
-            description="Demo description",
-            price={"amount": 12.0, "currency": "USD"},
-            images=[],
-            options={},
-            variants=[],
-            brand=None,
-            category=None,
-            meta_title=None,
-            meta_description=None,
-            slug=None,
-            tags=[],
-            vendor=None,
-            weight=None,
-            requires_shipping=True,
-            track_quantity=True,
-            is_digital=False,
-            raw={},
-        )
-
-    monkeypatch.setattr("app.main._run_import_product", fake_run_import_product)
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        brand=None,
+        category=None,
+        meta_title=None,
+        meta_description=None,
+        slug=None,
+        tags=[],
+        vendor=None,
+        weight=None,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
 
     response = client.post(
         "/api/v1/import",
@@ -64,42 +66,43 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:
-    def fake_run_import_product(product_url: str) -> ProductResult:
-        assert product_url == "https://demo.myshopify.com/products/mug"
-        return ProductResult(
-            platform="shopify",
-            id="123",
-            title="Demo Mug",
-            description="Demo description",
-            price={"amount": 12.0, "currency": "USD"},
-            images=["https://cdn.example.com/mug-front.jpg"],
-            options={"Color": ["Black"]},
-            variants=[
-                Variant(
-                    id="var-1",
-                    sku="MUG-001",
-                    options={"Color": "Black"},
-                    price_amount=12.0,
-                    inventory_quantity=10,
-                    weight=250,
-                    image="https://cdn.example.com/mug-black.jpg",
-                )
-            ],
-            brand="Demo",
-            category="Mugs",
-            meta_title=None,
-            meta_description=None,
-            slug="demo-mug",
-            tags=["mug", "coffee"],
-            vendor="Demo",
-            weight=250,
-            requires_shipping=True,
-            track_quantity=True,
-            is_digital=False,
-            raw={},
-        )
-
-    monkeypatch.setattr("app.main._run_import_product", fake_run_import_product)
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        options={"Color": ["Black"]},
+        variants=[
+            Variant(
+                id="var-1",
+                sku="MUG-001",
+                options={"Color": "Black"},
+                price_amount=12.0,
+                inventory_quantity=10,
+                weight=250,
+                image="https://cdn.example.com/mug-black.jpg",
+            )
+        ],
+        brand="Demo",
+        category="Mugs",
+        meta_title=None,
+        meta_description=None,
+        slug="demo-mug",
+        tags=["mug", "coffee"],
+        vendor="Demo",
+        weight=250,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
 
     response = client.get(
         "/api/v1/export/shopify.csv",
@@ -123,42 +126,43 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
 
 
 def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
-    def fake_run_import_product(product_url: str) -> ProductResult:
-        assert product_url == "https://demo.myshopify.com/products/mug"
-        return ProductResult(
-            platform="shopify",
-            id="123",
-            title="Demo Mug",
-            description="Demo description",
-            price={"amount": 12.0, "currency": "USD"},
-            images=["https://cdn.example.com/mug-front.jpg"],
-            options={"Color": ["Black"]},
-            variants=[
-                Variant(
-                    id="var-1",
-                    sku="MUG-001",
-                    options={"Color": "Black"},
-                    price_amount=12.0,
-                    inventory_quantity=10,
-                    weight=250,
-                    image="https://cdn.example.com/mug-black.jpg",
-                )
-            ],
-            brand="Demo",
-            category="Mugs",
-            meta_title=None,
-            meta_description=None,
-            slug="demo-mug",
-            tags=["mug", "coffee"],
-            vendor="Demo",
-            weight=250,
-            requires_shipping=True,
-            track_quantity=True,
-            is_digital=False,
-            raw={},
-        )
-
-    monkeypatch.setattr("app.main._run_import_product", fake_run_import_product)
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        options={"Color": ["Black"]},
+        variants=[
+            Variant(
+                id="var-1",
+                sku="MUG-001",
+                options={"Color": "Black"},
+                price_amount=12.0,
+                inventory_quantity=10,
+                weight=250,
+                image="https://cdn.example.com/mug-black.jpg",
+            )
+        ],
+        brand="Demo",
+        category="Mugs",
+        meta_title=None,
+        meta_description=None,
+        slug="demo-mug",
+        tags=["mug", "coffee"],
+        vendor="Demo",
+        weight=250,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
 
     response = client.get(
         "/api/v1/export/woocommerce.csv",
@@ -188,22 +192,23 @@ def test_home_page_renders() -> None:
 
 
 def test_import_page_shows_shopify_and_woocommerce_links(monkeypatch) -> None:
-    def fake_run_import_product(product_url: str) -> ProductResult:
-        assert product_url == "https://demo.myshopify.com/products/mug"
-        return ProductResult(
-            platform="shopify",
-            id="123",
-            title="Demo Mug",
-            description="Demo description",
-            price={"amount": 12.0, "currency": "USD"},
-            images=["https://cdn.example.com/mug-front.jpg"],
-            options={},
-            variants=[Variant(id="var-1", price_amount=12.0)],
-            slug="demo-mug",
-            raw={},
-        )
-
-    monkeypatch.setattr("app.main._run_import_product", fake_run_import_product)
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        options={},
+        variants=[Variant(id="var-1", price_amount=12.0)],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
 
     response = client.post(
         "/import",

@@ -7,13 +7,12 @@ I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
 - FastAPI CSV export endpoint (`GET/POST /api/v1/export/shopify.csv`)
 - Simple web UI for manual testing (`/`)
-- Shared importer services for Shopify, Amazon, Etsy, and AliExpress
+- Shared importer services for Shopify, Amazon, and AliExpress
 
 ## Supported sources
 
 - Shopify product URLs
 - Amazon product URLs (requires `RAPIDAPI_KEY`)
-- Etsy listing URLs (requires `RAPIDAPI_KEY`)
 - AliExpress item URLs (requires `RAPIDAPI_KEY`)
 
 ## Run locally
@@ -77,7 +76,7 @@ curl -L "http://127.0.0.1:8000/api/v1/export/shopify.csv?url=https://example.mys
 - `BRAND_SECONDARY`: secondary accent color
 - `BRAND_INK`: main text color
 - `DEBUG`: include/exclude `raw` payloads in responses
-- `RAPIDAPI_KEY`: required for Amazon/Etsy/AliExpress importers
+- `RAPIDAPI_KEY`: required for Amazon/AliExpress importers
 - `AMAZON_COUNTRY`: fallback Amazon marketplace country code
 - `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
 
