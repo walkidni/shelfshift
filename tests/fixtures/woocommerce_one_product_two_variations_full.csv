@@ -1,4 +1,4 @@
 Type,SKU,Name,Published,Is featured?,Visibility in catalog,Short description,Description,Tax status,In stock?,Stock,Backorders allowed?,Sold individually?,Weight (kg),Regular price,Categories,Tags,Images,Attribute 1 name,Attribute 1 value(s),Attribute 1 visible,Attribute 1 global,Attribute 2 name,Attribute 2 value(s),Attribute 2 visible,Attribute 2 global,Attribute 3 name,Attribute 3 value(s),Attribute 3 visible,Attribute 3 global,Parent
 variable,SH:101,V-Neck T-Shirt,1,0,visible,Made of our softest blend of cotton.,Made of our softest blend of cotton.,taxable,1,,0,0,,24.99,Shirts,"tee,v-neck",https://cdn.example.com/v-neck-tee.jpg,Size,"S,M",1,0,,,,,,,,,
-variation,SH:101:v1,,1,0,visible,Made of our softest blend of cotton.,Made of our softest blend of cotton.,taxable,1,10,0,0,0.2,24.99,,,https://cdn.example.com/v-neck-tee-size-s.jpg,Size,S,1,0,,,,,,,,,SH:101
-variation,SH:101:v2,,1,0,visible,Made of our softest blend of cotton.,Made of our softest blend of cotton.,taxable,1,8,0,0,0.2,24.99,,,https://cdn.example.com/v-neck-tee-size-m.jpg,Size,M,1,0,,,,,,,,,SH:101
+variation,SH:101:v1,,1,0,visible,,,taxable,1,10,0,0,0.2,24.99,,,https://cdn.example.com/v-neck-tee-size-s.jpg,Size,S,1,0,,,,,,,,,SH:101
+variation,SH:101:v2,,1,0,visible,,,taxable,1,8,0,0,0.2,24.99,,,https://cdn.example.com/v-neck-tee-size-m.jpg,Size,M,1,0,,,,,,,,,SH:101

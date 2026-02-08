@@ -168,12 +168,19 @@ def _resolve_short_description(product: ProductResult) -> str:
     return _strip_html(product.description)
 
 
-def _set_common_product_fields(row: dict[str, str], product: ProductResult, *, publish: bool) -> None:
+def _set_common_product_fields(
+    row: dict[str, str],
+    product: ProductResult,
+    *,
+    publish: bool,
+    include_descriptions: bool = True,
+) -> None:
     row["Published"] = "1" if publish else "0"
     row["Is featured?"] = "0"
     row["Visibility in catalog"] = "visible"
-    row["Short description"] = _resolve_short_description(product)
-    row["Description"] = product.description or ""
+    if include_descriptions:
+        row["Short description"] = _resolve_short_description(product)
+        row["Description"] = product.description or ""
     row["Tax status"] = "none" if product.is_digital else "taxable"
     row["Backorders allowed?"] = "0"
     row["Sold individually?"] = "0"
@@ -283,7 +290,12 @@ def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> lis
     seen_skus = {parent_sku}
     for index, variant in enumerate(variants, start=1):
         variant_row = _empty_row()
-        _set_common_product_fields(variant_row, product, publish=publish)
+        _set_common_product_fields(
+            variant_row,
+            product,
+            publish=publish,
+            include_descriptions=False,
+        )
         variant_row["Type"] = "variation"
         variant_sku_base = f"{parent_sku}:{_resolve_variant_key(variant, index)}"
         variant_sku = variant_sku_base
