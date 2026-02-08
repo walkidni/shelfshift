@@ -1,7 +1,7 @@
 import re
 import json
-import typing as t
 from dataclasses import dataclass
+from typing import Any, Iterable
 from urllib.parse import urlparse, parse_qs, unquote
 
 import requests
@@ -49,7 +49,7 @@ def detect_product_url(url: str) -> dict:
     """
     Returns: {'platform', 'is_product', 'product_id', 'slug'}
     """
-    res = {'platform': None, 'is_product': False, 'product_id': None, 'slug': None}
+    res = {"platform": None, "is_product": False, "product_id": None, "slug": None}
     try:
         p = urlparse(url)
     except Exception:
@@ -59,24 +59,31 @@ def detect_product_url(url: str) -> dict:
     if "amazon." in host:
         m = _AMAZON_ASIN_RE.search(p.path)
         if m:
-            res.update(platform="amazon", is_product=True, product_id=m.group(1)); return res
+            res.update(platform="amazon", is_product=True, product_id=m.group(1))
+            return res
         qs = parse_qs(p.query)
         for key in ("asin", "ASIN"):
             if key in qs and qs[key] and re.fullmatch(r"[A-Z0-9]{10}", qs[key][0], re.I):
-                res.update(platform="amazon", is_product=True, product_id=qs[key][0]); return res
-        res.update(platform="amazon"); return res
+                res.update(platform="amazon", is_product=True, product_id=qs[key][0])
+                return res
+        res.update(platform="amazon")
+        return res
 
     if "aliexpress." in host:
         m = _ALIEXPRESS_ITEM_RE.search(p.path)
         if m:
-            res.update(platform="aliexpress", is_product=True, product_id=m.group(1)); return res
-        res.update(platform="aliexpress"); return res
+            res.update(platform="aliexpress", is_product=True, product_id=m.group(1))
+            return res
+        res.update(platform="aliexpress")
+        return res
 
     if host.endswith(".myshopify.com") or _SHOPIFY_PRODUCT_RE.search(p.path):
         m = _SHOPIFY_PRODUCT_RE.search(p.path)
         if m:
-            res.update(platform="shopify", is_product=True, slug=m.group(1)); return res
-        res.update(platform="shopify"); return res
+            res.update(platform="shopify", is_product=True, slug=m.group(1))
+            return res
+        res.update(platform="shopify")
+        return res
 
     return res
 
@@ -84,23 +91,23 @@ def detect_product_url(url: str) -> dict:
 # ----------------------------- Shared structures -----------------------------
 @dataclass
 class Variant:
-    id: t.Optional[str] = None
-    sku: t.Optional[str] = None
-    title: t.Optional[str] = None
-    options: dict[str, str] = None  # e.g. {"Color": "Black", "Size": "M"}
-    price_amount: t.Optional[float] = None
-    currency: t.Optional[str] = None
-    image: t.Optional[str] = None
-    available: t.Optional[bool] = None
-    inventory_quantity: t.Optional[int] = None
-    weight: t.Optional[float] = None  # For shipping calculations
-    raw: t.Optional[dict] = None
+    id: str | None = None
+    sku: str | None = None
+    title: str | None = None
+    options: dict[str, str] | None = None  # e.g. {"Color": "Black", "Size": "M"}
+    price_amount: float | None = None
+    currency: str | None = None
+    image: str | None = None
+    available: bool | None = None
+    inventory_quantity: int | None = None
+    weight: float | None = None  # For shipping calculations
+    raw: dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.options is None:
             self.options = {}
 
-    def to_dict(self, include_raw: bool = True) -> dict:
+    def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
             "id": self.id,
             "sku": self.sku,
@@ -121,22 +128,22 @@ class Variant:
 @dataclass
 class ProductResult:
     platform: str
-    id: t.Optional[str]
-    title: t.Optional[str]
-    description: t.Optional[str]
-    price: t.Optional[dict]     # {"amount": float|None, "currency": str|None} (typically min/current)
-    images: t.List[str]
-    raw: t.Optional[dict]
-    options: dict[str, t.List[str]]  = None  # {"Color": ["Black","White"], "Size": ["S","M"]}
-    variants: t.List[Variant] = None
-    brand: t.Optional[str] = None  # Product brand for metadata
-    category: t.Optional[str] = None  # Product category for SEO and organization
-    meta_title: t.Optional[str] = None  # Custom page title for SEO
-    meta_description: t.Optional[str] = None  # Custom meta description for SEO
-    slug: t.Optional[str] = None  # Source URL slug if available
-    tags: t.List[str] = None  # Tags for searchability
-    vendor: t.Optional[str] = None  # Vendor/supplier name
-    weight: t.Optional[float] = None  # Default product weight
+    id: str | None
+    title: str | None
+    description: str | None
+    price: dict[str, Any] | None  # {"amount": float|None, "currency": str|None} (typically min/current)
+    images: list[str] | None
+    raw: dict[str, Any] | None
+    options: dict[str, list[str]] | None = None  # {"Color": ["Black","White"], "Size": ["S","M"]}
+    variants: list[Variant] | None = None
+    brand: str | None = None  # Product brand for metadata
+    category: str | None = None  # Product category for SEO and organization
+    meta_title: str | None = None  # Custom page title for SEO
+    meta_description: str | None = None  # Custom meta description for SEO
+    slug: str | None = None  # Source URL slug if available
+    tags: list[str] | None = None  # Tags for searchability
+    vendor: str | None = None  # Vendor/supplier name
+    weight: float | None = None  # Default product weight
     requires_shipping: bool = True  # Whether product needs shipping
     track_quantity: bool = True  # Whether to track inventory
     is_digital: bool = False  # Digital product flag
@@ -151,7 +158,7 @@ class ProductResult:
         if self.tags is None:
             self.tags = []
 
-    def to_dict(self, include_raw: bool = True) -> dict:
+    def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
             "platform": self.platform,
             "id": self.id,
@@ -190,14 +197,14 @@ class ApiConfig:
     Minimal configuration for RapidAPI-backed clients.
     Hosts/endpoints are hardcoded in the clients.
     """
-    rapidapi_key: t.Optional[str] = None
+    rapidapi_key: str | None = None
     amazon_country: str = "US"  # used by the Amazon provider
 
 
 # ----------------------------- helpers used in clients -----------------------------
-def _dedupe(seq: t.Iterable[str]) -> t.List[str]:
+def _dedupe(seq: Iterable[str]) -> list[str]:
     seen = set()
-    out: t.List[str] = []
+    out: list[str] = []
     for x in seq:
         if isinstance(x, str) and x and x not in seen:
             seen.add(x)
@@ -205,7 +212,7 @@ def _dedupe(seq: t.Iterable[str]) -> t.List[str]:
     return out
 
 
-def _parse_money_to_float(x: t.Any) -> t.Optional[float]:
+def _parse_money_to_float(x: Any) -> float | None:
     if x is None:
         return None
     if isinstance(x, (int, float)):
@@ -260,7 +267,7 @@ class ShopifyClient(ProductClient):
 
     def __init__(self):
         self._http = http_session()
-    def _extract(self, url: str) -> t.Tuple[str, str]:
+    def _extract(self, url: str) -> tuple[str, str]:
         p = urlparse(url)
         m = _SHOPIFY_PRODUCT_RE.search(p.path)
         if not m:
@@ -602,7 +609,7 @@ class AmazonRapidApiClient(ProductClient):
         # Default fallback
         return "US"
 
-    def _extract_asin(self, url: str) -> t.Optional[str]:
+    def _extract_asin(self, url: str) -> str | None:
         p = urlparse(url)
         m = _AMAZON_ASIN_RE.search(p.path)
         if m:
@@ -827,7 +834,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
 
     price = {"amount": price_amount, "currency": currency}
 
-    def normalize_url(value: t.Any) -> t.Optional[str]:
+    def normalize_url(value: Any) -> str | None:
         if not isinstance(value, str) or not value:
             return None
         if value.startswith("//"):
@@ -846,7 +853,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
     options: dict[str, list[str]] = {}
     variants: list[Variant] = []
 
-    prop_lookup: dict[int, dict[str, t.Any]] = {}
+    prop_lookup: dict[int, dict[str, Any]] = {}
     for prop in sku_data.get("props", []) or []:
         prop_name = prop.get("name")
         prop_values = prop.get("values") or []
@@ -863,7 +870,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
         except (TypeError, ValueError):
             continue
 
-        values_by_vid: dict[int, dict[str, t.Any]] = {}
+        values_by_vid: dict[int, dict[str, Any]] = {}
         for val in prop_values:
             vid_raw = val.get("vid")
             try:
@@ -878,7 +885,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
 
     for sku in sku_data.get("base", []) or []:
         variant_options: dict[str, str] = {}
-        variant_image: t.Optional[str] = None
+        variant_image: str | None = None
 
         # propMap format: "14:771;5:100014066"
         prop_map = str(sku.get("propMap") or "")
@@ -959,10 +966,10 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
     prop_list = properties.get("list", []) if properties else []
 
     brand = None
-    weight_grams: t.Optional[int] = None
+    weight_grams: int | None = None
     category = "Electronics"
 
-    def parse_weight_to_grams(raw_value: t.Any) -> t.Optional[int]:
+    def parse_weight_to_grams(raw_value: Any) -> int | None:
         if raw_value is None:
             return None
         text = str(raw_value).strip()

@@ -2,14 +2,14 @@ import csv
 import io
 from datetime import datetime, timezone
 import re
-import typing as t
+from typing import Iterable
 
 from ..importer import ProductResult, Variant
 
 _SAFE_DEST_RE = re.compile(r"[^a-z0-9-]+")
 
 
-def ordered_unique(items: t.Iterable[str]) -> list[str]:
+def ordered_unique(items: Iterable[str]) -> list[str]:
     values: list[str] = []
     seen: set[str] = set()
     for item in items:
@@ -21,7 +21,7 @@ def ordered_unique(items: t.Iterable[str]) -> list[str]:
     return values
 
 
-def format_number(value: t.Optional[float], *, decimals: int) -> str:
+def format_number(value: float | None, *, decimals: int) -> str:
     if value is None:
         return ""
     return f"{value:.{decimals}f}".rstrip("0").rstrip(".")

@@ -1,10 +1,10 @@
-import typing as t
+from typing import Any
 
 from app.services.importer import ProductResult
 
 
 def patch_run_import_product(
-    monkeypatch: t.Any,
+    monkeypatch: Any,
     *,
     expected_url: str,
     product: ProductResult,

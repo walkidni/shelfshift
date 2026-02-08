@@ -1,5 +1,4 @@
 import re
-import typing as t
 
 from slugify import slugify
 
@@ -48,7 +47,7 @@ def _format_bool(value: bool) -> str:
     return "TRUE" if value else "FALSE"
 
 
-def _format_grams(value: t.Optional[float]) -> str:
+def _format_grams(value: float | None) -> str:
     if value is None:
         return ""
     return str(max(0, int(round(value))))

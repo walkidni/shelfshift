@@ -1,5 +1,4 @@
 import os
-import typing as t
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -12,7 +11,7 @@ class Settings:
     brand_secondary: str
     brand_ink: str
     debug: bool
-    rapidapi_key: t.Optional[str]
+    rapidapi_key: str | None
     amazon_country: str
     cors_allow_origins: tuple[str, ...]
 

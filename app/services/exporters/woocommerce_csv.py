@@ -1,5 +1,5 @@
 import re
-import typing as t
+from typing import Iterable
 
 from slugify import slugify
 
@@ -54,13 +54,13 @@ def _empty_row() -> dict[str, str]:
     return {column: "" for column in WOOCOMMERCE_COLUMNS}
 
 
-def _slug(value: t.Optional[str]) -> str:
+def _slug(value: str | None) -> str:
     if value is None:
         return ""
     return slugify(str(value).strip(), separator="-")
 
 
-def _platform_token(platform: t.Optional[str]) -> str:
+def _platform_token(platform: str | None) -> str:
     return _PLATFORM_TOKEN.get((platform or "").strip().lower(), "SRC")
 
 
@@ -154,11 +154,11 @@ def _resolve_tags(product: ProductResult) -> str:
     return ",".join(tags)
 
 
-def _resolve_images(images: t.Iterable[str]) -> str:
+def _resolve_images(images: Iterable[str]) -> str:
     return ",".join(utils.ordered_unique(str(image) for image in images))
 
 
-def _strip_html(text: t.Optional[str]) -> str:
+def _strip_html(text: str | None) -> str:
     cleaned = _HTML_TAG_RE.sub(" ", text or "")
     return " ".join(cleaned.split())
 
