@@ -10,8 +10,13 @@ from fastapi.templating import Jinja2Templates
 import requests
 
 from .config import get_settings
-from .schemas import ExportShopifyCsvRequest, ExportWooCommerceCsvRequest, ImportRequest
-from .services.exporters import product_to_shopify_csv, product_to_woocommerce_csv
+from .schemas import (
+    ExportShopifyCsvRequest,
+    ExportSquarespaceCsvRequest,
+    ExportWooCommerceCsvRequest,
+    ImportRequest,
+)
+from .services.exporters import product_to_shopify_csv, product_to_squarespace_csv, product_to_woocommerce_csv
 from .services.importer import ApiConfig, ProductResult, detect_product_url, fetch_product_details, requires_rapidapi
 
 from dotenv import load_dotenv
@@ -115,6 +120,7 @@ def _render_index(
     *,
     result_json: str | None,
     shopify_csv_url: str | None,
+    squarespace_csv_url: str | None,
     woocommerce_csv_url: str | None,
     error: str | None,
     product_url: str,
@@ -127,6 +133,7 @@ def _render_index(
             "brand": settings,
             "result_json": result_json,
             "shopify_csv_url": shopify_csv_url,
+            "squarespace_csv_url": squarespace_csv_url,
             "woocommerce_csv_url": woocommerce_csv_url,
             "error": error,
             "form": {"product_url": product_url},
@@ -169,6 +176,23 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     return _csv_attachment_response(csv_text, filename)
 
 
+@app.get("/api/v1/export/squarespace.csv")
+def export_squarespace_csv_from_query(
+    url: str = Query(..., description="Product URL to import and convert to Squarespace CSV"),
+    publish: bool = Query(False, description="If true, mark product as visible"),
+) -> Response:
+    product = _run_import_product(url)
+    csv_text, filename = product_to_squarespace_csv(product, publish=publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
+@app.post("/api/v1/export/squarespace.csv")
+def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Response:
+    product = _run_import_product(payload.product_url)
+    csv_text, filename = product_to_squarespace_csv(product, publish=payload.publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
 @app.get("/api/v1/export/woocommerce.csv")
 def export_woocommerce_csv_from_query(
     url: str = Query(..., description="Product URL to import and convert to WooCommerce CSV"),
@@ -192,6 +216,7 @@ def home(request: Request) -> HTMLResponse:
         request,
         result_json=None,
         shopify_csv_url=None,
+        squarespace_csv_url=None,
         woocommerce_csv_url=None,
         error=None,
         product_url="",
@@ -205,6 +230,7 @@ def import_from_web(
 ) -> HTMLResponse:
     payload = None
     shopify_csv_url = None
+    squarespace_csv_url = None
     woocommerce_csv_url = None
     error = None
     status_code = 200
@@ -212,6 +238,7 @@ def import_from_web(
         product = _run_import_product(product_url)
         payload = product.to_dict(include_raw=settings.debug)
         shopify_csv_url = _export_csv_download_url("shopify.csv", product_url)
+        squarespace_csv_url = _export_csv_download_url("squarespace.csv", product_url)
         woocommerce_csv_url = _export_csv_download_url("woocommerce.csv", product_url)
     except HTTPException as exc:
         error = exc.detail
@@ -222,6 +249,7 @@ def import_from_web(
         request,
         result_json=result_json,
         shopify_csv_url=shopify_csv_url,
+        squarespace_csv_url=squarespace_csv_url,
         woocommerce_csv_url=woocommerce_csv_url,
         error=error,
         product_url=product_url,

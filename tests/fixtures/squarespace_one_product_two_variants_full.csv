@@ -1,0 +1,4 @@
+Product ID,Variant ID,Product Type,Product Page,Product URL,Title,Description,SKU,Option Name 1,Option Value 1,Option Name 2,Option Value 2,Option Name 3,Option Value 3,Price,Sale Price,On Sale,Stock,Categories,Tags,Weight,Length,Width,Height,Visible,Hosted Image URLs
+,,physical,,,V-Neck T-Shirt,Made of our softest blend of cotton.,SQ-TEE-S,Size,S,,,,,24.99,,FALSE,10,Shirts,"tee,v-neck",0.2,,,,TRUE,"https://cdn.example.com/v-neck-tee.jpg
+https://cdn.example.com/v-neck-tee-back.jpg"
+,,,,,,,SQ-TEE-M,Size,M,,,,,24.99,,FALSE,8,,,,,,,,

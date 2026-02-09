@@ -5,6 +5,7 @@ import pandas as pd
 
 from app.main import app
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
+from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.services.importer import ProductResult, Variant
 from tests._app_helpers import patch_run_import_product
@@ -184,13 +185,76 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Images"] == "https://cdn.example.com/mug-front.jpg"
 
 
+def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[
+            "https://cdn.example.com/mug-front.jpg",
+            "https://cdn.example.com/mug-side.jpg",
+        ],
+        options={"Color": ["Black"]},
+        variants=[
+            Variant(
+                id="var-1",
+                sku="MUG-001",
+                options={"Color": "Black"},
+                price_amount=12.0,
+                inventory_quantity=10,
+                weight=250,
+                image="https://cdn.example.com/mug-black.jpg",
+            )
+        ],
+        brand="Demo",
+        category="Mugs",
+        meta_title=None,
+        meta_description=None,
+        slug="demo-mug",
+        tags=["mug", "coffee"],
+        vendor="Demo",
+        weight=250,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.get(
+        "/api/v1/export/squarespace.csv",
+        params={"url": "https://demo.myshopify.com/products/mug"},
+    )
+
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    assert response.headers["content-disposition"] == 'attachment; filename="squarespace-20260208T000000Z.csv"'
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert list(frame.columns) == SQUARESPACE_COLUMNS
+    assert len(frame) == 1
+    assert frame.loc[0, "Product Type"] == "physical"
+    assert frame.loc[0, "Title"] == "Demo Mug"
+    assert frame.loc[0, "SKU"] == "MUG-001"
+    assert frame.loc[0, "Option Name 1"] == "Color"
+    assert frame.loc[0, "Option Value 1"] == "Black"
+    assert frame.loc[0, "Stock"] == "10"
+    assert frame.loc[0, "Visible"] == "FALSE"
+    assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
+
+
 def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "TradeMint" in response.text
 
 
-def test_import_page_shows_shopify_and_woocommerce_links(monkeypatch) -> None:
+def test_import_page_shows_shopify_squarespace_and_woocommerce_links(monkeypatch) -> None:
     product = ProductResult(
         platform="shopify",
         id="123",
@@ -216,6 +280,8 @@ def test_import_page_shows_shopify_and_woocommerce_links(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "Download Shopify CSV" in response.text
+    assert "Download Squarespace CSV" in response.text
     assert "Download WooCommerce CSV" in response.text
     assert "/api/v1/export/shopify.csv?url=" in response.text
+    assert "/api/v1/export/squarespace.csv?url=" in response.text
     assert "/api/v1/export/woocommerce.csv?url=" in response.text

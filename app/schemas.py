@@ -13,3 +13,8 @@ class ExportShopifyCsvRequest(BaseModel):
 class ExportWooCommerceCsvRequest(BaseModel):
     product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
     publish: bool = Field(default=False)
+
+
+class ExportSquarespaceCsvRequest(BaseModel):
+    product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
+    publish: bool = Field(default=False)

@@ -1,11 +1,14 @@
 # TradeMint Import Studio
 
 This app imports product data from supported ecommerce product URLs and returns a normalized JSON payload.
-It can also export the normalized product into a Shopify-importable CSV file.
+It can also export the normalized product into Shopify, Squarespace, and WooCommerce CSV files.
 
 I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
-- FastAPI CSV export endpoint (`GET/POST /api/v1/export/shopify.csv`)
+- FastAPI CSV export endpoints:
+  - `GET/POST /api/v1/export/shopify.csv`
+  - `GET/POST /api/v1/export/squarespace.csv`
+  - `GET/POST /api/v1/export/woocommerce.csv`
 - Simple web UI for manual testing (`/`)
 - Shared importer services for Shopify, Amazon, and AliExpress
 
@@ -63,6 +66,20 @@ curl -L "http://127.0.0.1:8000/api/v1/export/shopify.csv?url=https://example.mys
   -o product.csv
 ```
 
+Export Squarespace CSV:
+
+```bash
+curl -L "http://127.0.0.1:8000/api/v1/export/squarespace.csv?url=https://example.myshopify.com/products/item" \
+  -o product.csv
+```
+
+Export WooCommerce CSV:
+
+```bash
+curl -L "http://127.0.0.1:8000/api/v1/export/woocommerce.csv?url=https://example.myshopify.com/products/item" \
+  -o product.csv
+```
+
 ## Response behavior (`raw` field)
 
 - Default (`DEBUG=false`): `raw` is omitted from response JSON.
@@ -91,6 +108,8 @@ app/
     importer.py
     exporters/
       shopify_csv.py
+      squarespace_csv.py
+      woocommerce_csv.py
   web/
     templates/index.html
     static/styles.css
