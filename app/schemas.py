@@ -18,3 +18,5 @@ class ExportWooCommerceCsvRequest(BaseModel):
 class ExportSquarespaceCsvRequest(BaseModel):
     product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
     publish: bool = Field(default=False)
+    product_page: str = Field(default="", examples=["shop"])
+    squarespace_product_url: str = Field(default="", examples=["lemons"])

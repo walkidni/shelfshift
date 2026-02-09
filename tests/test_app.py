@@ -229,7 +229,11 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
 
     response = client.get(
         "/api/v1/export/squarespace.csv",
-        params={"url": "https://demo.myshopify.com/products/mug"},
+        params={
+            "url": "https://demo.myshopify.com/products/mug",
+            "product_page": "shop",
+            "product_url": "lemons",
+        },
     )
 
     assert response.status_code == 200
@@ -238,13 +242,16 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == SQUARESPACE_COLUMNS
     assert len(frame) == 1
-    assert frame.loc[0, "Product Type"] == "physical"
+    assert frame.loc[0, "Product Type [Non Editable]"] == "PHYSICAL"
+    assert frame.loc[0, "Product Page"] == "shop"
+    assert frame.loc[0, "Product URL"] == "lemons"
     assert frame.loc[0, "Title"] == "Demo Mug"
     assert frame.loc[0, "SKU"] == "MUG-001"
     assert frame.loc[0, "Option Name 1"] == "Color"
     assert frame.loc[0, "Option Value 1"] == "Black"
     assert frame.loc[0, "Stock"] == "10"
-    assert frame.loc[0, "Visible"] == "FALSE"
+    assert frame.loc[0, "On Sale"] == "No"
+    assert frame.loc[0, "Visible"] == "No"
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
 
 
@@ -275,7 +282,11 @@ def test_import_page_shows_shopify_squarespace_and_woocommerce_links(monkeypatch
 
     response = client.post(
         "/import",
-        data={"product_url": "https://demo.myshopify.com/products/mug"},
+        data={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "squarespace_product_page": "shop",
+            "squarespace_product_url": "lemons",
+        },
     )
 
     assert response.status_code == 200
@@ -284,4 +295,6 @@ def test_import_page_shows_shopify_squarespace_and_woocommerce_links(monkeypatch
     assert "Download WooCommerce CSV" in response.text
     assert "/api/v1/export/shopify.csv?url=" in response.text
     assert "/api/v1/export/squarespace.csv?url=" in response.text
+    assert "product_page=shop" in response.text
+    assert "product_url=lemons" in response.text
     assert "/api/v1/export/woocommerce.csv?url=" in response.text

@@ -27,21 +27,26 @@ def test_single_variant_maps_visible_and_hosted_images() -> None:
         raw={},
     )
 
-    csv_text, filename = product_to_squarespace_csv(product, publish=False)
+    csv_text, filename = product_to_squarespace_csv(
+        product,
+        publish=False,
+        product_page="shop",
+        product_url="lemons",
+    )
     frame = read_frame(csv_text)
 
     assert filename == "squarespace-20260208T000000Z.csv"
     assert list(frame.columns) == SQUARESPACE_COLUMNS
     assert len(frame) == 1
-    assert frame.loc[0, "Product Type"] == "physical"
-    assert frame.loc[0, "Product Page"] == ""
-    assert frame.loc[0, "Product URL"] == ""
+    assert frame.loc[0, "Product Type [Non Editable]"] == "PHYSICAL"
+    assert frame.loc[0, "Product Page"] == "shop"
+    assert frame.loc[0, "Product URL"] == "lemons"
     assert frame.loc[0, "SKU"] == "AMZ-MUG-001"
     assert frame.loc[0, "Price"] == "12"
-    assert frame.loc[0, "On Sale"] == "FALSE"
+    assert frame.loc[0, "On Sale"] == "No"
     assert frame.loc[0, "Stock"] == "0"
     assert frame.loc[0, "Weight"] == "0.25"
-    assert frame.loc[0, "Visible"] == "FALSE"
+    assert frame.loc[0, "Visible"] == "No"
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
 
 
@@ -77,20 +82,27 @@ def test_multi_variant_uses_first_row_for_product_fields() -> None:
         raw={},
     )
 
-    csv_text, _ = product_to_squarespace_csv(product, publish=True)
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=True,
+        product_page="shop",
+        product_url="pickled-things",
+    )
     frame = read_frame(csv_text)
 
     assert list(frame.columns) == SQUARESPACE_COLUMNS
     assert len(frame) == 2
-    assert frame.loc[0, "Product Type"] == "physical"
+    assert frame.loc[0, "Product Type [Non Editable]"] == "PHYSICAL"
+    assert frame.loc[0, "Product Page"] == "shop"
+    assert frame.loc[0, "Product URL"] == "pickled-things"
     assert frame.loc[0, "Title"] == "Classic Tee"
     assert frame.loc[0, "Description"] == "Soft cotton tee"
     assert frame.loc[0, "SKU"] == "TEE-S"
     assert frame.loc[0, "Option Name 1"] == "Size"
     assert frame.loc[0, "Option Value 1"] == "S"
-    assert frame.loc[0, "Visible"] == "TRUE"
+    assert frame.loc[0, "Visible"] == "Yes"
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/tee.jpg"
-    assert frame.loc[1, "Product Type"] == ""
+    assert frame.loc[1, "Product Type [Non Editable]"] == ""
     assert frame.loc[1, "Title"] == ""
     assert frame.loc[1, "Description"] == ""
     assert frame.loc[1, "SKU"] == "TEE-M"
@@ -115,7 +127,12 @@ def test_multiple_variants_without_options_synthesizes_option_column() -> None:
         raw={},
     )
 
-    csv_text, _ = product_to_squarespace_csv(product, publish=False)
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=False,
+        product_page="shop",
+        product_url="pickled-things",
+    )
     frame = read_frame(csv_text)
 
     assert list(frame.columns) == SQUARESPACE_COLUMNS
@@ -124,3 +141,26 @@ def test_multiple_variants_without_options_synthesizes_option_column() -> None:
     assert frame.loc[0, "Option Value 1"] == "Black"
     assert frame.loc[1, "Option Name 1"] == "Option"
     assert frame.loc[1, "Option Value 1"] == "White"
+
+
+def test_missing_inventory_defaults_to_unlimited_stock() -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        images=[],
+        variants=[Variant(id="v1", sku="TEE-BLK", price_amount=19.99, inventory_quantity=None)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=False,
+        product_page="shop",
+        product_url="pickled-things",
+    )
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Stock"] == "Unlimited"

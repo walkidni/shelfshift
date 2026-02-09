@@ -2,9 +2,9 @@ from ..importer import ProductResult, Variant
 from . import utils
 
 SQUARESPACE_COLUMNS: list[str] = [
-    "Product ID",
-    "Variant ID",
-    "Product Type",
+    "Product ID [Non Editable]",
+    "Variant ID [Non Editable]",
+    "Product Type [Non Editable]",
     "Product Page",
     "Product URL",
     "Title",
@@ -36,7 +36,7 @@ def _empty_row() -> dict[str, str]:
 
 
 def _format_bool(value: bool) -> str:
-    return "TRUE" if value else "FALSE"
+    return "Yes" if value else "No"
 
 
 def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
@@ -66,13 +66,15 @@ def _resolve_price(product: ProductResult, variant: Variant) -> str:
     return ""
 
 
-def _resolve_stock(variant: Variant) -> str:
+def _resolve_stock(product: ProductResult, variant: Variant) -> str:
+    if not product.track_quantity:
+        return "Unlimited"
     if variant.inventory_quantity is None:
-        return ""
+        return "Unlimited"
     try:
         return str(max(0, int(variant.inventory_quantity)))
     except (TypeError, ValueError):
-        return ""
+        return "Unlimited"
 
 
 def _resolve_weight_kg(product: ProductResult, variant: Variant) -> str:
@@ -114,7 +116,13 @@ def _set_variant_option_fields(
         row[f"Option Value {option_index}"] = str((variant.options or {}).get(option_name) or "")
 
 
-def product_to_squarespace_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def product_to_squarespace_rows(
+    product: ProductResult,
+    *,
+    publish: bool,
+    product_page: str = "",
+    product_url: str = "",
+) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     hosted_image_urls = _resolve_hosted_image_urls(product)
@@ -125,14 +133,14 @@ def product_to_squarespace_rows(product: ProductResult, *, publish: bool) -> lis
         row["SKU"] = str(variant.sku or variant.id or "")
         row["Price"] = _resolve_price(product, variant)
         row["Sale Price"] = ""
-        row["On Sale"] = "FALSE"
-        row["Stock"] = _resolve_stock(variant)
+        row["On Sale"] = "No"
+        row["Stock"] = _resolve_stock(product, variant)
         _set_variant_option_fields(row, option_names, variant, index=index)
 
         if index == 1:
-            row["Product Type"] = "digital" if product.is_digital else "physical"
-            row["Product Page"] = ""
-            row["Product URL"] = ""
+            row["Product Type [Non Editable]"] = "DIGITAL" if product.is_digital else "PHYSICAL"
+            row["Product Page"] = (product_page or "").strip()
+            row["Product URL"] = (product_url or "").strip()
             row["Title"] = product.title or ""
             row["Description"] = product.description or ""
             row["Categories"] = (product.category or "").strip()
@@ -146,6 +154,17 @@ def product_to_squarespace_rows(product: ProductResult, *, publish: bool) -> lis
     return rows
 
 
-def product_to_squarespace_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
-    rows = product_to_squarespace_rows(product, publish=publish)
+def product_to_squarespace_csv(
+    product: ProductResult,
+    *,
+    publish: bool,
+    product_page: str = "",
+    product_url: str = "",
+) -> tuple[str, str]:
+    rows = product_to_squarespace_rows(
+        product,
+        publish=publish,
+        product_page=product_page,
+        product_url=product_url,
+    )
     return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename("squarespace")

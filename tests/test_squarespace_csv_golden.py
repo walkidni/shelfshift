@@ -51,7 +51,12 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
         raw={},
     )
 
-    csv_text, filename = product_to_squarespace_csv(product, publish=True)
+    csv_text, filename = product_to_squarespace_csv(
+        product,
+        publish=True,
+        product_page="",
+        product_url="v-neck-tee",
+    )
     assert filename == "squarespace-20260208T000000Z.csv"
     actual = read_frame(csv_text)
 
