@@ -31,10 +31,10 @@ def get_settings() -> Settings:
         if origin.strip()
     )
     return Settings(
-        app_name=os.getenv("APP_NAME", "TradeMint Import Studio"),
+        app_name=os.getenv("APP_NAME", "Ecommerce Catalog Transfer"),
         app_tagline=os.getenv(
             "APP_TAGLINE",
-            "Turn product URLs into structured catalog data in seconds.",
+            "Ingest product URLs and export import-ready CSV in seconds.",
         ),
         brand_primary=os.getenv("BRAND_PRIMARY", "#e65c2f"),
         brand_secondary=os.getenv("BRAND_SECONDARY", "#f8b84a"),

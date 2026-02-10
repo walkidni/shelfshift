@@ -90,19 +90,58 @@ label {
   font-weight: 600;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-width: 0;
+  display: block;
+  height: 44px;
   border: 1px solid color-mix(in srgb, var(--brand-ink), white 70%);
   border-radius: 10px;
   padding: 0.72rem 0.8rem;
   font-size: 0.95rem;
+  line-height: 1.2;
   background: white;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: 2px solid color-mix(in srgb, var(--brand-primary), white 35%);
   border-color: transparent;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.5rem;
+}
+
+.select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.conditional-fields {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.conditional-fields.is-hidden {
+  display: none;
+}
+
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid color-mix(in srgb, var(--brand-ink), white 30%);
+  border-bottom: 2px solid color-mix(in srgb, var(--brand-ink), white 30%);
+  transform: translateY(-62%) rotate(45deg);
+  pointer-events: none;
 }
 
 button {

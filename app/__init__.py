@@ -1,1 +1,1 @@
-"""TradeMint import application package."""
+"""Ecommerce Catalog Transfer application package."""

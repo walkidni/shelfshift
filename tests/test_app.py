@@ -258,10 +258,16 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
 def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
-    assert "TradeMint" in response.text
+    assert "Ecommerce Catalog Transfer" in response.text
+    assert 'action="/export.csv"' in response.text
+    assert 'name="target_platform"' in response.text
+    assert 'id="squarespace-fields"' in response.text
+    assert "conditional-fields is-hidden" in response.text
+    assert "Export CSV" in response.text
+    assert "Result JSON" not in response.text
 
 
-def test_import_page_shows_shopify_squarespace_and_woocommerce_export_forms(monkeypatch) -> None:
+def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
     product = ProductResult(
         platform="shopify",
         id="123",
@@ -281,20 +287,51 @@ def test_import_page_shows_shopify_squarespace_and_woocommerce_export_forms(monk
     )
 
     response = client.post(
-        "/import",
+        "/export.csv",
         data={
             "product_url": "https://demo.myshopify.com/products/mug",
+            "target_platform": "woocommerce",
             "squarespace_product_page": "shop",
             "squarespace_product_url": "lemons",
         },
     )
 
     assert response.status_code == 200
-    assert "Download Shopify CSV" in response.text
-    assert "Download Squarespace CSV" in response.text
-    assert "Download WooCommerce CSV" in response.text
-    assert 'action="/export/shopify.csv"' in response.text
-    assert 'action="/export/squarespace.csv"' in response.text
-    assert 'action="/export/woocommerce.csv"' in response.text
-    assert 'name="squarespace_product_page" value="shop"' in response.text
-    assert 'name="squarespace_product_url" value="lemons"' in response.text
+    assert "text/csv" in response.headers["content-type"]
+    assert response.headers["content-disposition"] == 'attachment; filename="woocommerce-20260208T000000Z.csv"'
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert len(frame) == 1
+    assert frame.loc[0, "SKU"] == "SH:123"
+
+
+def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch) -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/export.csv",
+        data={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "target_platform": "invalid",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Export Error" in response.text
+    assert "target_platform must be one of: shopify, squarespace, woocommerce" in response.text

@@ -1,7 +1,6 @@
-# TradeMint Import Studio
+# Ecommerce Catalog Transfer
 
-This app imports product data from supported ecommerce product URLs and returns a normalized JSON payload.
-It can also export the normalized product into Shopify, Squarespace, and WooCommerce CSV files.
+This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, Squarespace, and WooCommerce.
 
 I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
@@ -9,7 +8,7 @@ I use this structure:
   - `POST /api/v1/export/shopify.csv`
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
-- Simple web UI for manual testing (`/`)
+- Simple web UI for one-step CSV export (`/`)
 - Shared importer services for Shopify, Amazon, and AliExpress
 
 ## Supported sources
