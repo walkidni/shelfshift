@@ -105,9 +105,9 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
         product=product,
     )
 
-    response = client.get(
+    response = client.post(
         "/api/v1/export/shopify.csv",
-        params={"url": "https://demo.myshopify.com/products/mug"},
+        json={"product_url": "https://demo.myshopify.com/products/mug"},
     )
 
     assert response.status_code == 200
@@ -165,9 +165,9 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
         product=product,
     )
 
-    response = client.get(
+    response = client.post(
         "/api/v1/export/woocommerce.csv",
-        params={"url": "https://demo.myshopify.com/products/mug"},
+        json={"product_url": "https://demo.myshopify.com/products/mug"},
     )
 
     assert response.status_code == 200
@@ -227,12 +227,12 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
         product=product,
     )
 
-    response = client.get(
+    response = client.post(
         "/api/v1/export/squarespace.csv",
-        params={
-            "url": "https://demo.myshopify.com/products/mug",
+        json={
+            "product_url": "https://demo.myshopify.com/products/mug",
             "product_page": "shop",
-            "product_url": "lemons",
+            "squarespace_product_url": "lemons",
         },
     )
 
@@ -261,7 +261,7 @@ def test_home_page_renders() -> None:
     assert "TradeMint" in response.text
 
 
-def test_import_page_shows_shopify_squarespace_and_woocommerce_links(monkeypatch) -> None:
+def test_import_page_shows_shopify_squarespace_and_woocommerce_export_forms(monkeypatch) -> None:
     product = ProductResult(
         platform="shopify",
         id="123",
@@ -293,8 +293,8 @@ def test_import_page_shows_shopify_squarespace_and_woocommerce_links(monkeypatch
     assert "Download Shopify CSV" in response.text
     assert "Download Squarespace CSV" in response.text
     assert "Download WooCommerce CSV" in response.text
-    assert "/api/v1/export/shopify.csv?url=" in response.text
-    assert "/api/v1/export/squarespace.csv?url=" in response.text
-    assert "product_page=shop" in response.text
-    assert "product_url=lemons" in response.text
-    assert "/api/v1/export/woocommerce.csv?url=" in response.text
+    assert 'action="/export/shopify.csv"' in response.text
+    assert 'action="/export/squarespace.csv"' in response.text
+    assert 'action="/export/woocommerce.csv"' in response.text
+    assert 'name="squarespace_product_page" value="shop"' in response.text
+    assert 'name="squarespace_product_url" value="lemons"' in response.text

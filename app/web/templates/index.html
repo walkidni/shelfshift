@@ -83,13 +83,24 @@
         <div class="result-head">
           <h2>Result JSON</h2>
           {% if shopify_csv_url %}
-          <a class="download-link" href="{{ shopify_csv_url }}">Download Shopify CSV</a>
+          <form method="post" action="{{ shopify_csv_url }}">
+            <input type="hidden" name="product_url" value="{{ form.product_url }}" />
+            <button class="download-link" type="submit">Download Shopify CSV</button>
+          </form>
           {% endif %}
           {% if squarespace_csv_url %}
-          <a class="download-link" href="{{ squarespace_csv_url }}">Download Squarespace CSV</a>
+          <form method="post" action="{{ squarespace_csv_url }}">
+            <input type="hidden" name="product_url" value="{{ form.product_url }}" />
+            <input type="hidden" name="squarespace_product_page" value="{{ form.squarespace_product_page }}" />
+            <input type="hidden" name="squarespace_product_url" value="{{ form.squarespace_product_url }}" />
+            <button class="download-link" type="submit">Download Squarespace CSV</button>
+          </form>
           {% endif %}
           {% if woocommerce_csv_url %}
-          <a class="download-link" href="{{ woocommerce_csv_url }}">Download WooCommerce CSV</a>
+          <form method="post" action="{{ woocommerce_csv_url }}">
+            <input type="hidden" name="product_url" value="{{ form.product_url }}" />
+            <button class="download-link" type="submit">Download WooCommerce CSV</button>
+          </form>
           {% endif %}
         </div>
         <pre>{{ result_json }}</pre>

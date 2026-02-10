@@ -6,9 +6,9 @@ It can also export the normalized product into Shopify, Squarespace, and WooComm
 I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
 - FastAPI CSV export endpoints:
-  - `GET/POST /api/v1/export/shopify.csv`
-  - `GET/POST /api/v1/export/squarespace.csv`
-  - `GET/POST /api/v1/export/woocommerce.csv`
+  - `POST /api/v1/export/shopify.csv`
+  - `POST /api/v1/export/squarespace.csv`
+  - `POST /api/v1/export/woocommerce.csv`
 - Simple web UI for manual testing (`/`)
 - Shared importer services for Shopify, Amazon, and AliExpress
 
@@ -62,21 +62,27 @@ curl -X POST http://127.0.0.1:8000/api/v1/import \
 Export Shopify CSV:
 
 ```bash
-curl -L "http://127.0.0.1:8000/api/v1/export/shopify.csv?url=https://example.myshopify.com/products/item" \
+curl -X POST "http://127.0.0.1:8000/api/v1/export/shopify.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
   -o product.csv
 ```
 
 Export Squarespace CSV:
 
 ```bash
-curl -L "http://127.0.0.1:8000/api/v1/export/squarespace.csv?url=https://example.myshopify.com/products/item" \
+curl -X POST "http://127.0.0.1:8000/api/v1/export/squarespace.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"product_page":"shop","squarespace_product_url":"lemons"}' \
   -o product.csv
 ```
 
 Export WooCommerce CSV:
 
 ```bash
-curl -L "http://127.0.0.1:8000/api/v1/export/woocommerce.csv?url=https://example.myshopify.com/products/item" \
+curl -X POST "http://127.0.0.1:8000/api/v1/export/woocommerce.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
   -o product.csv
 ```
 
