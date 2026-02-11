@@ -8,6 +8,14 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from .product_url_detection import (
+    _ALIEXPRESS_ITEM_RE,
+    _ALIEXPRESS_X_OBJECT_RE,
+    _AMAZON_ASIN_RE,
+    detect_product_url,
+    extract_shopify_slug_from_path,
+)
+
 # ----------------------------- HTTP helper -----------------------------
 def http_session(timeout: int = 20) -> requests.Session:
     s = requests.Session()
@@ -24,68 +32,6 @@ def http_session(timeout: int = 20) -> requests.Session:
     # store desired default timeout on the session for convenience
     s.request_timeout = timeout  # type: ignore[attr-defined]
     return s
-
-
-# ----------------------------- Detection regexes -----------------------------
-_AMAZON_ASIN_RE = re.compile(r"/(?:gp/product|dp)/([A-Z0-9]{10})(?:[/?#]|$)", re.I)
-_ALIEXPRESS_ITEM_RE = re.compile(r"/(?:item|i)/(\d+)\.html(?:[/?#]|$)", re.I)
-_ALIEXPRESS_X_OBJECT_RE = re.compile(
-    r"x_object_id(?:%25)?(?:%3A|%3D|:|=)(\d{12,20})",
-    re.I
-)
-
-# _SHOPIFY_PRODUCT_RE = re.compile(r"^/(?:collections/[^/]+/)?products/([^/?#]+)(?:[/?#]|$)", re.I)
-# _SHOPIFY_PRODUCT_RE = re.compile(
-#     r"^/(?:[a-z]{2}(?:-[a-z]{2})?/)?(?:collections/[^/]+/)?products/([^/?#]+)(?:[/?#]|$)",
-#     re.I
-# )
-_SHOPIFY_PRODUCT_RE = re.compile(
-    r"^/(?:[a-z]{2}(?:-[a-z0-9]{2,8})?/)?(?:collections/[^/]+/)?products/([^/?#]+)(?:[/?#]|$)",
-    re.I
-)
-
-
-def detect_product_url(url: str) -> dict:
-    """
-    Returns: {'platform', 'is_product', 'product_id', 'slug'}
-    """
-    res = {"platform": None, "is_product": False, "product_id": None, "slug": None}
-    try:
-        p = urlparse(url)
-    except Exception:
-        return res
-    host = (p.netloc or "").lower()
-
-    if "amazon." in host:
-        m = _AMAZON_ASIN_RE.search(p.path)
-        if m:
-            res.update(platform="amazon", is_product=True, product_id=m.group(1))
-            return res
-        qs = parse_qs(p.query)
-        for key in ("asin", "ASIN"):
-            if key in qs and qs[key] and re.fullmatch(r"[A-Z0-9]{10}", qs[key][0], re.I):
-                res.update(platform="amazon", is_product=True, product_id=qs[key][0])
-                return res
-        res.update(platform="amazon")
-        return res
-
-    if "aliexpress." in host:
-        m = _ALIEXPRESS_ITEM_RE.search(p.path)
-        if m:
-            res.update(platform="aliexpress", is_product=True, product_id=m.group(1))
-            return res
-        res.update(platform="aliexpress")
-        return res
-
-    if host.endswith(".myshopify.com") or _SHOPIFY_PRODUCT_RE.search(p.path):
-        m = _SHOPIFY_PRODUCT_RE.search(p.path)
-        if m:
-            res.update(platform="shopify", is_product=True, slug=m.group(1))
-            return res
-        res.update(platform="shopify")
-        return res
-
-    return res
 
 
 # ----------------------------- Shared structures -----------------------------
@@ -267,13 +213,14 @@ class ShopifyClient(ProductClient):
 
     def __init__(self):
         self._http = http_session()
+
     def _extract(self, url: str) -> tuple[str, str]:
         p = urlparse(url)
-        m = _SHOPIFY_PRODUCT_RE.search(p.path)
-        if not m:
+        handle = extract_shopify_slug_from_path(p.path)
+        if not handle:
             raise ValueError("Not a Shopify product path.")
-        return p.netloc, m.group(1)
-    
+        return p.netloc, handle
+
     def _fetch_from_html(self, url: str) -> ProductResult:
         HEADERS = {
             "User-Agent": (
@@ -351,8 +298,7 @@ class ShopifyClient(ProductClient):
 
         # 4️⃣ Slug
         path = urlparse(url).path
-        slug_match = re.search(r"/products/([^/?#]+)", path, re.I)
-        slug = slug_match.group(1) if slug_match else None
+        slug = extract_shopify_slug_from_path(path)
 
         # 5️⃣ Variant (JSON-LD is usually single-offer)
         variants = [

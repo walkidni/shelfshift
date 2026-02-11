@@ -27,6 +27,28 @@ def test_detect_rejects_unknown_platform() -> None:
     assert response.json()["platform"] is None
 
 
+def test_detect_woocommerce_product_url() -> None:
+    response = client.get(
+        "/api/v1/detect",
+        params={"url": "https://producttable.barn2.com/product/adjustable-wrench-set/"},
+    )
+    assert response.status_code == 200
+    assert response.json()["platform"] == "woocommerce"
+    assert response.json()["is_product"] is True
+    assert response.json()["slug"] == "adjustable-wrench-set"
+
+
+def test_detect_squarespace_product_url() -> None:
+    response = client.get(
+        "/api/v1/detect",
+        params={"url": "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"},
+    )
+    assert response.status_code == 200
+    assert response.json()["platform"] == "squarespace"
+    assert response.json()["is_product"] is True
+    assert response.json()["slug"] == "custom-patchwork-shirt-snzgy"
+
+
 def test_import_endpoint_uses_service(monkeypatch) -> None:
     product = ProductResult(
         platform="shopify",
@@ -64,6 +86,28 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["platform"] == "shopify"
     assert response.json()["title"] == "Demo Mug"
+
+
+def test_import_endpoint_rejects_woocommerce_url_as_unsupported_source() -> None:
+    response = client.post(
+        "/api/v1/import",
+        json={"product_url": "https://producttable.barn2.com/product/adjustable-wrench-set/"},
+    )
+
+    assert response.status_code == 422
+    assert "Detected platform 'WooCommerce'" in response.json()["detail"]
+    assert "Supported import sources: Shopify, Amazon, AliExpress." in response.json()["detail"]
+
+
+def test_import_endpoint_rejects_squarespace_url_as_unsupported_source() -> None:
+    response = client.post(
+        "/api/v1/import",
+        json={"product_url": "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"},
+    )
+
+    assert response.status_code == 422
+    assert "Detected platform 'Squarespace'" in response.json()["detail"]
+    assert "Supported import sources: Shopify, Amazon, AliExpress." in response.json()["detail"]
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:

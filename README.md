@@ -11,11 +11,21 @@ I use this structure:
 - Simple web UI for one-step CSV export (`/`)
 - Shared importer services for Shopify, Amazon, and AliExpress
 
-## Supported sources
+## Supported import sources
 
 - Shopify product URLs
 - Amazon product URLs (requires `RAPIDAPI_KEY`)
 - AliExpress item URLs (requires `RAPIDAPI_KEY`)
+
+## URL detection coverage (`GET /api/v1/detect`)
+
+- Shopify
+- Amazon
+- AliExpress
+- WooCommerce
+- Squarespace
+
+Detected WooCommerce and Squarespace URLs are not yet supported import sources for `POST /api/v1/import`.
 
 ## Run locally
 
