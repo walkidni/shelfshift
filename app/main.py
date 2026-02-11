@@ -66,7 +66,7 @@ def _normalize_url(product_url: str) -> str:
     if not info.get("platform"):
         raise HTTPException(
             status_code=422,
-            detail="Unsupported URL. Supported import sources: Shopify, Amazon, AliExpress.",
+            detail="Unsupported URL. Supported import sources: Shopify, WooCommerce, Amazon, AliExpress.",
         )
     return normalized
 
@@ -76,17 +76,14 @@ def _run_import_product(product_url: str) -> ProductResult:
     info = detect_product_url(normalized_url)
     platform = info.get("platform")
 
-    unsupported_import_sources = {
-        "woocommerce": "WooCommerce",
-        "squarespace": "Squarespace",
-    }
+    unsupported_import_sources = {"squarespace": "Squarespace"}
     if platform in unsupported_import_sources:
         platform_label = unsupported_import_sources[platform]
         raise HTTPException(
             status_code=422,
             detail=(
                 f"Detected platform '{platform_label}', but importing from {platform_label} URLs "
-                "is not supported yet. Supported import sources: Shopify, Amazon, AliExpress."
+                "is not supported yet. Supported import sources: Shopify, WooCommerce, Amazon, AliExpress."
             ),
         )
 

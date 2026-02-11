@@ -88,15 +88,43 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
     assert response.json()["title"] == "Demo Mug"
 
 
-def test_import_endpoint_rejects_woocommerce_url_as_unsupported_source() -> None:
+def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:
+    product = ProductResult(
+        platform="woocommerce",
+        id="123",
+        title="Adjustable Wrench Set",
+        description="Demo description",
+        price={"amount": 29.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        brand=None,
+        category=None,
+        meta_title=None,
+        meta_description=None,
+        slug="adjustable-wrench-set",
+        tags=[],
+        vendor=None,
+        weight=None,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://producttable.barn2.com/product/adjustable-wrench-set/",
+        product=product,
+    )
+
     response = client.post(
         "/api/v1/import",
         json={"product_url": "https://producttable.barn2.com/product/adjustable-wrench-set/"},
     )
 
-    assert response.status_code == 422
-    assert "Detected platform 'WooCommerce'" in response.json()["detail"]
-    assert "Supported import sources: Shopify, Amazon, AliExpress." in response.json()["detail"]
+    assert response.status_code == 200
+    assert response.json()["platform"] == "woocommerce"
+    assert response.json()["title"] == "Adjustable Wrench Set"
 
 
 def test_import_endpoint_rejects_squarespace_url_as_unsupported_source() -> None:
@@ -107,7 +135,7 @@ def test_import_endpoint_rejects_squarespace_url_as_unsupported_source() -> None
 
     assert response.status_code == 422
     assert "Detected platform 'Squarespace'" in response.json()["detail"]
-    assert "Supported import sources: Shopify, Amazon, AliExpress." in response.json()["detail"]
+    assert "Supported import sources: Shopify, WooCommerce, Amazon, AliExpress." in response.json()["detail"]
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:

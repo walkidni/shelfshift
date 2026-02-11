@@ -1,5 +1,5 @@
 import re
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 
 _AMAZON_ASIN_RE = re.compile(r"/(?:gp/product|dp)/([A-Z0-9]{10})(?:[/?#]|$)", re.I)
@@ -18,6 +18,10 @@ _WOOCOMMERCE_PRODUCT_RE = re.compile(
     rf"^/{_LOCALE_PREFIX_RE}product/([^/?#]+)/?$",
     re.I,
 )
+_WOOCOMMERCE_STORE_API_PRODUCT_RE = re.compile(
+    r"^/wp-json/wc/store/v1/products/([^/?#]+)/?$",
+    re.I,
+)
 _WOOCOMMERCE_API_RE = re.compile(r"^/wp-json/wc/(?:store/v1|v[1-9]+)/", re.I)
 _SQUARESPACE_PRODUCT_RE = re.compile(r"^/(?:shop|store)/(?:p/)?([a-z0-9-]+)/?$", re.I)
 _SQUARESPACE_SHOP_PATH_RE = re.compile(r"^/(?:shop|store)(?:/|$)", re.I)
@@ -28,6 +32,13 @@ def extract_shopify_slug_from_path(path: str) -> str | None:
     if not match:
         return None
     return match.group(1)
+
+
+def extract_woocommerce_store_api_product_token(path: str) -> str | None:
+    match = _WOOCOMMERCE_STORE_API_PRODUCT_RE.search(path or "")
+    if not match:
+        return None
+    return unquote(match.group(1))
 
 
 def detect_product_url(url: str) -> dict:
@@ -74,6 +85,13 @@ def detect_product_url(url: str) -> dict:
     product_values = query.get("product") or []
     if product_values and re.fullmatch(r"\d+", product_values[0]):
         res.update(platform="woocommerce", is_product=True, product_id=product_values[0])
+        return res
+    token = extract_woocommerce_store_api_product_token(path)
+    if token:
+        if re.fullmatch(r"\d+", token):
+            res.update(platform="woocommerce", is_product=True, product_id=token)
+        else:
+            res.update(platform="woocommerce", is_product=True, slug=token)
         return res
     if _WOOCOMMERCE_API_RE.search(path):
         res.update(platform="woocommerce")

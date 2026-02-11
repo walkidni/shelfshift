@@ -46,6 +46,16 @@ def test_detect_woocommerce_product_urls() -> None:
     assert pretty_path["is_product"] is True
     assert pretty_path["slug"] == "adjustable-wrench-set"
 
+    api_product_id = detect_product_url("https://demo-store.com/wp-json/wc/store/v1/products/123")
+    assert api_product_id["platform"] == "woocommerce"
+    assert api_product_id["is_product"] is True
+    assert api_product_id["product_id"] == "123"
+
+    api_product_slug = detect_product_url("https://demo-store.com/wp-json/wc/store/v1/products/brake-disc-rotor")
+    assert api_product_slug["platform"] == "woocommerce"
+    assert api_product_slug["is_product"] is True
+    assert api_product_slug["slug"] == "brake-disc-rotor"
+
 
 def test_detect_woocommerce_non_product_signal() -> None:
     api_url = detect_product_url("https://demo-store.com/wp-json/wc/store/v1/products")
@@ -89,4 +99,5 @@ def test_requires_rapidapi_only_for_amazon_and_aliexpress() -> None:
     assert requires_rapidapi("https://www.aliexpress.com/item/1005008518647948.html") is True
     assert requires_rapidapi("https://demo.myshopify.com/products/red-rain-coat") is False
     assert requires_rapidapi("https://demo-store.com/product/adjustable-wrench-set/") is False
+    assert requires_rapidapi("https://demo-store.com/wp-json/wc/store/v1/products/123") is False
     assert requires_rapidapi("https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy") is False

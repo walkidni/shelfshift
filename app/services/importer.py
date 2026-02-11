@@ -6,6 +6,7 @@ from .platforms import (
     ProductResult,
     ShopifyClient,
     Variant,
+    WooCommerceClient,
     _parse_aliexpress_result,
 )
 from .product_url_detection import detect_product_url
@@ -24,6 +25,7 @@ class ProductClientFactory:
             "shopify": ShopifyClient(),
             "amazon": AmazonRapidApiClient(cfg),
             "aliexpress": AliExpressClient(cfg),
+            "woocommerce": WooCommerceClient(),
         }
 
     def for_url(self, url: str) -> ProductClient:
@@ -61,6 +63,7 @@ __all__ = [
     "ProductResult",
     "ShopifyClient",
     "Variant",
+    "WooCommerceClient",
     "_parse_aliexpress_result",
     "detect_product_url",
     "fetch_product_details",

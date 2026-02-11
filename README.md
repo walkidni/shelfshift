@@ -9,11 +9,12 @@ I use this structure:
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
 - Simple web UI for one-step CSV export (`/`)
-- Shared importer services for Shopify, Amazon, and AliExpress
+- Shared importer services for Shopify, WooCommerce, Amazon, and AliExpress
 
 ## Supported import sources
 
 - Shopify product URLs
+- WooCommerce product URLs (storefront product URLs and Store API product URLs)
 - Amazon product URLs (requires `RAPIDAPI_KEY`)
 - AliExpress item URLs (requires `RAPIDAPI_KEY`)
 
@@ -25,7 +26,7 @@ I use this structure:
 - WooCommerce
 - Squarespace
 
-Detected WooCommerce and Squarespace URLs are not yet supported import sources for `POST /api/v1/import`.
+Detected Squarespace URLs are not yet supported import sources for `POST /api/v1/import`.
 
 ## Run locally
 
@@ -126,6 +127,7 @@ app/
       __init__.py
       common.py
       shopify.py
+      woocommerce.py
       amazon.py
       aliexpress.py
     exporters/

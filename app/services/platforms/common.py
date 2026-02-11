@@ -1,3 +1,4 @@
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable
@@ -174,6 +175,10 @@ def append_default_variant_if_empty(variants: list[Variant], default_variant: Va
 
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
+_JSON_LD_SCRIPT_RE = re.compile(
+    r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+    re.I | re.S,
+)
 
 
 def strip_html(text: str) -> str:
@@ -195,3 +200,69 @@ def meta_from_description(
         return title, None
     base = strip_html(description) if strip_html_content else description
     return title, truncate(base)
+
+
+def to_int(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def to_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "y"}:
+            return True
+        if lowered in {"false", "0", "no", "n"}:
+            return False
+    return None
+
+
+def pick_name(value: Any) -> str | None:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    return None
+
+
+def normalize_url(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    if not stripped:
+        return None
+    if stripped.startswith("//"):
+        return f"https:{stripped}"
+    return stripped
+
+
+def _extract_json_ld_nodes(data: Any, *, target_type: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    if isinstance(data, dict):
+        node_type = data.get("@type")
+        if node_type == target_type or (isinstance(node_type, list) and target_type in node_type):
+            out.append(data)
+        graph = data.get("@graph")
+        if isinstance(graph, list):
+            for item in graph:
+                out.extend(_extract_json_ld_nodes(item, target_type=target_type))
+    elif isinstance(data, list):
+        for item in data:
+            out.extend(_extract_json_ld_nodes(item, target_type=target_type))
+    return out
+
+
+def extract_product_json_ld_nodes(html: str) -> list[dict[str, Any]]:
+    products: list[dict[str, Any]] = []
+    for block in _JSON_LD_SCRIPT_RE.findall(html or ""):
+        try:
+            data = json.loads(block.strip())
+        except Exception:
+            continue
+        products.extend(_extract_json_ld_nodes(data, target_type="Product"))
+    return products
