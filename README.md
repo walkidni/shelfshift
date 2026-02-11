@@ -145,22 +145,3 @@ tests/
 ```bash
 pytest -q
 ```
-
-## Push to GitHub (private)
-
-Create a new private repo:
-
-```bash
-git init
-git add .
-git commit -m "Initial import studio setup"
-gh repo create <your-repo-name> --private --source . --remote origin --push
-```
-
-If remote already exists:
-
-```bash
-git remote add origin <your-private-repo-url>
-git branch -M main
-git push -u origin main
-```
