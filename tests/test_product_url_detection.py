@@ -1,5 +1,5 @@
 from app.services.importer import requires_rapidapi
-from app.services.product_url_detection import detect_product_url
+from app.services.importer.product_url_detection import detect_product_url
 
 
 def test_detect_shopify_product_url_shapes() -> None:

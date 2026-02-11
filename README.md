@@ -121,15 +121,16 @@ app/
   config.py
   schemas.py
   services/
-    importer.py
-    product_url_detection.py
-    platforms/
+    importer/
       __init__.py
-      common.py
-      shopify.py
-      woocommerce.py
-      amazon.py
-      aliexpress.py
+      product_url_detection.py
+      platforms/
+        __init__.py
+        common.py
+        shopify.py
+        woocommerce.py
+        amazon.py
+        aliexpress.py
     exporters/
       shopify_csv.py
       squarespace_csv.py

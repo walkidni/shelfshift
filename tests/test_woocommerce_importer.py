@@ -1,6 +1,6 @@
 import requests
 
-from app.services.platforms.woocommerce import WooCommerceClient
+from app.services.importer.platforms.woocommerce import WooCommerceClient
 
 
 class _FakeResponse:
