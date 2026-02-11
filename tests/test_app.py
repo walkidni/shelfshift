@@ -6,6 +6,7 @@ import pandas as pd
 from app.main import app
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
+from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.services.importer import ProductResult, Variant
 from tests._app_helpers import patch_run_import_product
@@ -355,12 +356,73 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
 
 
+def test_export_wix_csv_endpoint(monkeypatch) -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        options={"Color": ["Black"]},
+        variants=[
+            Variant(
+                id="var-1",
+                sku="MUG-001",
+                options={"Color": "Black"},
+                price_amount=12.0,
+                inventory_quantity=10,
+                weight=250,
+                image="https://cdn.example.com/mug-black.jpg",
+            )
+        ],
+        brand="Demo",
+        category="Mugs",
+        meta_title=None,
+        meta_description=None,
+        slug="demo-mug",
+        tags=["mug", "coffee"],
+        vendor="Demo",
+        weight=250,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/api/v1/export/wix.csv",
+        json={"product_url": "https://demo.myshopify.com/products/mug"},
+    )
+
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    assert response.headers["content-disposition"] == 'attachment; filename="wix-20260208T000000Z.csv"'
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert list(frame.columns) == WIX_COLUMNS
+    assert len(frame) == 2
+    assert frame.loc[0, "fieldType"] == "PRODUCT"
+    assert frame.loc[0, "name"] == "Demo Mug"
+    assert frame.loc[0, "visible"] == "FALSE"
+    assert frame.loc[0, "productOptionName[1]"] == "Color"
+    assert frame.loc[0, "productOptionChoices[1]"] == "Black"
+    assert frame.loc[1, "fieldType"] == "VARIANT"
+    assert frame.loc[1, "sku"] == "MUG-001"
+    assert frame.loc[1, "inventory"] == "10"
+
+
 def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "Ecommerce Catalog Transfer" in response.text
     assert 'action="/export.csv"' in response.text
     assert 'name="target_platform"' in response.text
+    assert "<option value=\"wix\"" in response.text
     assert 'id="squarespace-fields"' in response.text
     assert "conditional-fields is-hidden" in response.text
     assert "Export CSV" in response.text
@@ -390,7 +452,7 @@ def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
         "/export.csv",
         data={
             "product_url": "https://demo.myshopify.com/products/mug",
-            "target_platform": "woocommerce",
+            "target_platform": "wix",
             "squarespace_product_page": "shop",
             "squarespace_product_url": "lemons",
         },
@@ -398,11 +460,13 @@ def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-    assert response.headers["content-disposition"] == 'attachment; filename="woocommerce-20260208T000000Z.csv"'
+    assert response.headers["content-disposition"] == 'attachment; filename="wix-20260208T000000Z.csv"'
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
-    assert len(frame) == 1
-    assert frame.loc[0, "SKU"] == "SH:123"
+    assert list(frame.columns) == WIX_COLUMNS
+    assert len(frame) == 2
+    assert frame.loc[0, "fieldType"] == "PRODUCT"
+    assert frame.loc[1, "fieldType"] == "VARIANT"
+    assert frame.loc[1, "sku"] == "var-1"
 
 
 def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch) -> None:
@@ -434,4 +498,4 @@ def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch)
 
     assert response.status_code == 422
     assert "Export Error" in response.text
-    assert "target_platform must be one of: shopify, squarespace, woocommerce" in response.text
+    assert "target_platform must be one of: shopify, wix, squarespace, woocommerce" in response.text

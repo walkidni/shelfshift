@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlparse
 
 from slugify import slugify
 
@@ -37,6 +38,12 @@ SHOPIFY_COLUMNS: list[str] = [
 ]
 
 _HANDLE_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+_SHOPIFY_SUPPORTED_IMAGE_EXTENSIONS = (".gif", ".jpeg", ".jpg", ".png", ".webp", ".heic")
+# Fallback used only when a non-empty source image URL is not Shopify-compatible.
+SHOPIFY_DEFAULT_IMAGE_URL = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/"
+    "1024px-No_image_available.svg.png"
+)
 
 
 def _empty_row() -> dict[str, str]:
@@ -118,10 +125,36 @@ def _resolve_price(product: ProductResult, variant: Variant) -> str:
     return ""
 
 
+def _is_valid_shopify_image_url(value: str) -> bool:
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return False
+    path = (parsed.path or "").strip().lower()
+    if not path:
+        return False
+    return any(path.endswith(ext) for ext in _SHOPIFY_SUPPORTED_IMAGE_EXTENSIONS)
+
+
+def _resolve_shopify_image_url(value: str | None) -> str:
+    candidate = (value or "").strip()
+    if not candidate:
+        return ""
+    if _is_valid_shopify_image_url(candidate):
+        return candidate
+    return SHOPIFY_DEFAULT_IMAGE_URL
+
+
+def _resolve_shopify_product_images(images: list[str] | None) -> list[str]:
+    resolved = [_resolve_shopify_image_url(value) for value in (images or [])]
+    non_empty = [value for value in resolved if value]
+    return utils.ordered_unique(non_empty)
+
+
 def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
+    product_images = _resolve_shopify_product_images(product.images)
     rows: list[dict[str, str]] = []
     variants = utils.resolve_variants(product)
 
@@ -134,7 +167,7 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
         row["Variant Fulfillment Service"] = "manual"
         row["Variant Requires Shipping"] = _format_bool(bool(product.requires_shipping and not product.is_digital))
         row["Variant Taxable"] = _format_bool(not product.is_digital)
-        row["Variant Image"] = str(variant.image or "")
+        row["Variant Image"] = _resolve_shopify_image_url(variant.image)
 
         weight = variant.weight if variant.weight is not None else product.weight
         grams = _format_grams(weight)
@@ -164,14 +197,14 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
             row["Tags"] = _resolve_tags(product)
             row["Published"] = _format_bool(publish)
             row["Status"] = "active" if publish else "draft"
-            if product.images:
-                row["Image Src"] = product.images[0]
+            if product_images:
+                row["Image Src"] = product_images[0]
                 row["Image Position"] = "1"
                 row["Image Alt Text"] = image_alt_text
 
         rows.append(row)
 
-    for image_position, image_url in enumerate(product.images[1:], start=2):
+    for image_position, image_url in enumerate(product_images[1:], start=2):
         row = _empty_row()
         row["Handle"] = handle
         row["Image Src"] = image_url

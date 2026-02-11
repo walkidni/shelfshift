@@ -1,5 +1,5 @@
 from app.services.exporters import product_to_shopify_csv
-from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
+from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
 from app.services.importer import ProductResult, Variant
 from tests._csv_helpers import read_frame
 
@@ -191,3 +191,37 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
 
     assert frame.loc[0, "Variant SKU"] == "AE:1005008518647948:12000055918704599"
     assert frame.loc[0, "Variant Image"] == ""
+
+
+def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
+    product = ProductResult(
+        platform="squarespace",
+        id="4280546",
+        title="Large Boxy Quilt Pouch (R)",
+        description="Pouch description",
+        price={"amount": 35.0, "currency": "USD"},
+        images=[
+            "https://static1.squarespace.com/static/680ed8af/680ed8b0/693f5bcc/1765764069386/",
+            "https://static1.squarespace.com/static/680ed8af/680ed8b0/693f5bcc/1765764069387/",
+            "https://cdn.example.com/large-boxy-pouch.jpg",
+        ],
+        variants=[
+            Variant(
+                id="v1",
+                sku="SQ4280546",
+                price_amount=35.0,
+                image="https://static1.squarespace.com/static/680ed8af/680ed8b0/693f5bcc/1765764069388/",
+            )
+        ],
+        slug="large-boxy-quilt-pouch-r",
+        raw={},
+    )
+
+    csv_text, _ = product_to_shopify_csv(product, publish=False)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == SHOPIFY_COLUMNS
+    assert len(frame) == 2
+    assert frame.loc[0, "Image Src"] == SHOPIFY_DEFAULT_IMAGE_URL
+    assert frame.loc[1, "Image Src"] == "https://cdn.example.com/large-boxy-pouch.jpg"
+    assert frame.loc[0, "Variant Image"] == SHOPIFY_DEFAULT_IMAGE_URL

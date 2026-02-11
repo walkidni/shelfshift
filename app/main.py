@@ -11,10 +11,16 @@ from .config import get_settings
 from .schemas import (
     ExportShopifyCsvRequest,
     ExportSquarespaceCsvRequest,
+    ExportWixCsvRequest,
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
-from .services.exporters import product_to_shopify_csv, product_to_squarespace_csv, product_to_woocommerce_csv
+from .services.exporters import (
+    product_to_shopify_csv,
+    product_to_squarespace_csv,
+    product_to_wix_csv,
+    product_to_woocommerce_csv,
+)
 from .services.importer import ApiConfig, ProductResult, detect_product_url, fetch_product_details, requires_rapidapi
 
 from dotenv import load_dotenv
@@ -105,6 +111,8 @@ def _export_csv_for_target(
     target = (target_platform or "").strip().lower()
     if target == "shopify":
         return product_to_shopify_csv(product, publish=publish)
+    if target == "wix":
+        return product_to_wix_csv(product, publish=publish)
     if target == "squarespace":
         return product_to_squarespace_csv(
             product,
@@ -117,7 +125,7 @@ def _export_csv_for_target(
 
     raise HTTPException(
         status_code=422,
-        detail="target_platform must be one of: shopify, squarespace, woocommerce",
+        detail="target_platform must be one of: shopify, wix, squarespace, woocommerce",
     )
 
 
@@ -180,6 +188,13 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     return _csv_attachment_response(csv_text, filename)
 
 
+@app.post("/api/v1/export/wix.csv")
+def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
+    product = _run_import_product(payload.product_url)
+    csv_text, filename = product_to_wix_csv(product, publish=payload.publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
 @app.post("/api/v1/export/squarespace.csv")
 def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
@@ -218,6 +233,16 @@ def export_shopify_csv_from_web(
 ) -> Response:
     product = _run_import_product(product_url)
     csv_text, filename = product_to_shopify_csv(product, publish=publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
+@app.post("/export/wix.csv")
+def export_wix_csv_from_web(
+    product_url: str = Form(...),
+    publish: bool = Form(False),
+) -> Response:
+    product = _run_import_product(product_url)
+    csv_text, filename = product_to_wix_csv(product, publish=publish)
     return _csv_attachment_response(csv_text, filename)
 
 
