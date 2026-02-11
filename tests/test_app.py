@@ -127,15 +127,43 @@ def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:
     assert response.json()["title"] == "Adjustable Wrench Set"
 
 
-def test_import_endpoint_rejects_squarespace_url_as_unsupported_source() -> None:
+def test_import_endpoint_accepts_squarespace_url(monkeypatch) -> None:
+    product = ProductResult(
+        platform="squarespace",
+        id="abc123",
+        title="Custom Patchwork Shirt",
+        description="Demo description",
+        price={"amount": 120.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        brand="ST-P SEWS",
+        category="Shirts",
+        meta_title=None,
+        meta_description=None,
+        slug="custom-patchwork-shirt-snzgy",
+        tags=[],
+        vendor="ST-P SEWS",
+        weight=None,
+        requires_shipping=True,
+        track_quantity=True,
+        is_digital=False,
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy",
+        product=product,
+    )
+
     response = client.post(
         "/api/v1/import",
         json={"product_url": "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"},
     )
 
-    assert response.status_code == 422
-    assert "Detected platform 'Squarespace'" in response.json()["detail"]
-    assert "Supported import sources: Shopify, WooCommerce, Amazon, AliExpress." in response.json()["detail"]
+    assert response.status_code == 200
+    assert response.json()["platform"] == "squarespace"
+    assert response.json()["title"] == "Custom Patchwork Shirt"
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:

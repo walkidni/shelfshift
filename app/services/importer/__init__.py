@@ -4,6 +4,7 @@ from .platforms import (
     ApiConfig,
     ProductClient,
     ProductResult,
+    SquarespaceClient,
     ShopifyClient,
     Variant,
     WooCommerceClient,
@@ -16,6 +17,8 @@ class ProductClientFactory:
     """
     Factory that wires clients. By default:
       - Shopify: public JSON
+      - Squarespace: page JSON with HTML JSON-LD fallback
+      - WooCommerce: Store API with HTML JSON-LD fallback
       - Amazon/AliExpress: RapidAPI (hardcoded providers)
     """
 
@@ -25,6 +28,7 @@ class ProductClientFactory:
             "shopify": ShopifyClient(),
             "amazon": AmazonRapidApiClient(cfg),
             "aliexpress": AliExpressClient(cfg),
+            "squarespace": SquarespaceClient(),
             "woocommerce": WooCommerceClient(),
         }
 
@@ -61,6 +65,7 @@ __all__ = [
     "ProductClient",
     "ProductClientFactory",
     "ProductResult",
+    "SquarespaceClient",
     "ShopifyClient",
     "Variant",
     "WooCommerceClient",
