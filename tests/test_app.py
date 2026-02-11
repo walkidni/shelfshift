@@ -277,12 +277,16 @@ def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
     assert response.headers["content-disposition"] == 'attachment; filename="bigcommerce-20260208T000000Z.csv"'
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
-    assert len(frame) == 2
+    assert len(frame) == 3
     assert frame.loc[0, "Item Type"] == "Product"
-    assert frame.loc[0, "Product Name"] == "Demo Mug"
-    assert frame.loc[0, "Product Code/SKU"] == "SH-123"
-    assert frame.loc[1, "Item Type"] == "SKU"
-    assert frame.loc[1, "Product Code/SKU"] == "MUG-001"
+    assert frame.loc[0, "Name"] == "Demo Mug"
+    assert frame.loc[0, "SKU"] == "SH-123"
+    assert frame.loc[0, "Inventory"] == "variant"
+    assert frame.loc[1, "Item Type"] == "Variant"
+    assert frame.loc[1, "SKU"] == "MUG-001"
+    assert frame.loc[1, "Variant Image URL"] == "https://cdn.example.com/mug-black.jpg"
+    assert frame.loc[2, "Item Type"] == "Image"
+    assert frame.loc[2, "Image URL (Import)"] == "https://cdn.example.com/mug-front.jpg"
 
 
 def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
@@ -316,6 +320,7 @@ def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
     assert len(frame) == 1
     assert frame.loc[0, "Item Type"] == "Product"
+    assert frame.loc[0, "SKU"] == "MUG-001"
 
 
 def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
@@ -593,9 +598,10 @@ def test_web_export_csv_supports_bigcommerce_target(monkeypatch) -> None:
     assert response.headers["content-disposition"] == 'attachment; filename="bigcommerce-20260208T000000Z.csv"'
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
-    assert len(frame) == 1
+    assert len(frame) == 2
     assert frame.loc[0, "Item Type"] == "Product"
-    assert frame.loc[0, "Product Code/SKU"] == "MUG-001"
+    assert frame.loc[0, "SKU"] == "MUG-001"
+    assert frame.loc[1, "Item Type"] == "Image"
 
 
 def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch) -> None:

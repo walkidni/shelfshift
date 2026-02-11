@@ -4,7 +4,7 @@ from app.services.importer import ProductResult, Variant
 from tests._csv_helpers import read_frame
 
 
-def test_bigcommerce_export_maps_product_and_sku_rows() -> None:
+def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None:
     product = ProductResult(
         platform="shopify",
         id="101",
@@ -33,9 +33,9 @@ def test_bigcommerce_export_maps_product_and_sku_rows() -> None:
                 price_amount=21.99,
                 inventory_quantity=2,
                 weight=230,
+                image="//cdn.example.com/tee-white-l.jpg",
             ),
         ],
-        tags=["tee", "cotton"],
         slug="classic-tee",
         raw={},
     )
@@ -45,36 +45,37 @@ def test_bigcommerce_export_maps_product_and_sku_rows() -> None:
 
     assert filename == "bigcommerce-20260208T000000Z.csv"
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
-    assert len(frame) == 3
+    assert len(frame) == 5
 
     assert frame.loc[0, "Item Type"] == "Product"
-    assert frame.loc[0, "Product Name"] == "Classic Tee"
-    assert frame.loc[0, "Product Code/SKU"] == "SH-101"
-    assert frame.loc[0, "Option Set"] == "Color, Size"
-    assert frame.loc[0, "Product Description"] == "<p>Soft cotton tee</p>"
+    assert frame.loc[0, "Type"] == "physical"
+    assert frame.loc[0, "Name"] == "Classic Tee"
+    assert frame.loc[0, "Description"] == "<p>Soft cotton tee</p>"
+    assert frame.loc[0, "SKU"] == "SH-101"
     assert frame.loc[0, "Price"] == "19.99"
-    assert frame.loc[0, "Allow Purchases?"] == "Y"
-    assert frame.loc[0, "Product Visible?"] == "N"
-    assert frame.loc[0, "Track Inventory"] == "N"
-    assert frame.loc[0, "Search Keywords"] == "cotton,tee"
-    assert frame.loc[0, "Product Image File - 1"] == "https://cdn.example.com/tee-1.jpg"
-    assert frame.loc[0, "Product Image File - 2"] == "https://cdn.example.com/tee-2.jpg"
-    assert frame.loc[0, "Product URL"] == "classic-tee"
+    assert frame.loc[0, "Weight"] == "0.22"
+    assert frame.loc[0, "Inventory"] == "variant"
 
-    assert frame.loc[1, "Item Type"] == "SKU"
-    assert frame.loc[1, "Product Code/SKU"] == "TEE-BLK-M"
-    assert frame.loc[1, "Product Name"] == "Classic Tee [S]Color=Black[/S] [S]Size=M[/S]"
-    assert frame.loc[1, "Track Inventory"] == "Y"
-    assert frame.loc[1, "Current Stock Level"] == "4"
+    assert frame.loc[1, "Item Type"] == "Variant"
+    assert frame.loc[1, "SKU"] == "TEE-BLK-M"
+    assert frame.loc[1, "Options"] == "Color=Black,Size=M"
+    assert frame.loc[1, "Variant Image URL"] == "https://cdn.example.com/tee-black-m.jpg"
 
-    assert frame.loc[2, "Item Type"] == "SKU"
-    assert frame.loc[2, "Product Code/SKU"] == "TEE-WHT-L"
-    assert frame.loc[2, "Product Name"] == "Classic Tee [S]Color=White[/S] [S]Size=L[/S]"
-    assert frame.loc[2, "Track Inventory"] == "Y"
-    assert frame.loc[2, "Current Stock Level"] == "2"
+    assert frame.loc[2, "Item Type"] == "Variant"
+    assert frame.loc[2, "SKU"] == "TEE-WHT-L"
+    assert frame.loc[2, "Options"] == "Color=White,Size=L"
+    assert frame.loc[2, "Variant Image URL"] == "https://cdn.example.com/tee-white-l.jpg"
+
+    assert frame.loc[3, "Item Type"] == "Image"
+    assert frame.loc[3, "Image URL (Import)"] == "https://cdn.example.com/tee-1.jpg"
+    assert frame.loc[3, "Image Is Thumbnail?"] == "TRUE"
+
+    assert frame.loc[4, "Item Type"] == "Image"
+    assert frame.loc[4, "Image URL (Import)"] == "https://cdn.example.com/tee-2.jpg"
+    assert frame.loc[4, "Image Is Thumbnail?"] == "FALSE"
 
 
-def test_bigcommerce_export_simple_product_uses_single_product_row() -> None:
+def test_bigcommerce_export_simple_product_uses_product_and_image_rows() -> None:
     product = ProductResult(
         platform="amazon",
         id="B000111",
@@ -82,6 +83,7 @@ def test_bigcommerce_export_simple_product_uses_single_product_row() -> None:
         description="Demo description",
         price={"amount": 12.0, "currency": "USD"},
         images=["https://cdn.example.com/mug.jpg"],
+        variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, image="//cdn.example.com/mug-variant.jpg")],
         raw={},
     )
 
@@ -89,10 +91,12 @@ def test_bigcommerce_export_simple_product_uses_single_product_row() -> None:
     frame = read_frame(csv_text)
 
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
-    assert len(frame) == 1
+    assert len(frame) == 2
     assert frame.loc[0, "Item Type"] == "Product"
-    assert frame.loc[0, "Product Code/SKU"] == "AMZ-B000111"
+    assert frame.loc[0, "Type"] == "physical"
+    assert frame.loc[0, "SKU"] == "MUG-001"
     assert frame.loc[0, "Price"] == "12"
-    assert frame.loc[0, "Product Visible?"] == "Y"
-    assert frame.loc[0, "Track Inventory"] == "N"
-    assert frame.loc[0, "Current Stock Level"] == ""
+    assert frame.loc[0, "Inventory"] == "none"
+    assert frame.loc[0, "Variant Image URL"] == "https://cdn.example.com/mug-variant.jpg"
+    assert frame.loc[1, "Item Type"] == "Image"
+    assert frame.loc[1, "Image URL (Import)"] == "https://cdn.example.com/mug.jpg"
