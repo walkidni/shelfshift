@@ -44,21 +44,22 @@ def test_wix_export_maps_product_and_variant_rows() -> None:
     assert frame.loc[0, "fieldType"] == "PRODUCT"
     assert frame.loc[0, "name"] == "Guava Glow Set"
     assert frame.loc[0, "visible"] == "TRUE"
+    assert frame.loc[0, "plainDescription"] == "Glow kit"
     assert frame.loc[0, "price"] == "29.99"
-    assert frame.loc[0, "productOptionName[1]"] == "Size"
-    assert frame.loc[0, "productOptionType[1]"] == "TEXT_CHOICES"
-    assert frame.loc[0, "productOptionChoices[1]"] == "Small;Medium"
-    assert frame.loc[0, "mediaUrl"] == "https://example.com/img1.jpg"
+    assert frame.loc[0, "productOptionName1"] == "Size"
+    assert frame.loc[0, "productOptionType1"] == "TEXT_CHOICES"
+    assert frame.loc[0, "productOptionChoices1"] == "Small;Medium"
+    assert frame.loc[0, "media"] == "https://example.com/img1.jpg"
 
     assert frame.loc[1, "fieldType"] == "VARIANT"
     assert frame.loc[1, "sku"] == "GG-S"
     assert frame.loc[1, "inventory"] == "10"
-    assert frame.loc[1, "productOptionChoices[1]"] == "Small"
+    assert frame.loc[1, "productOptionChoices1"] == "Small"
 
     assert frame.loc[2, "fieldType"] == "VARIANT"
     assert frame.loc[2, "sku"] == "GG-M"
     assert frame.loc[2, "inventory"] == "8"
-    assert frame.loc[2, "productOptionChoices[1]"] == "Medium"
+    assert frame.loc[2, "productOptionChoices1"] == "Medium"
 
 
 def test_wix_export_synthesizes_option_column_when_variants_have_no_options() -> None:
@@ -83,7 +84,57 @@ def test_wix_export_synthesizes_option_column_when_variants_have_no_options() ->
     assert len(frame) == 3
     assert frame.loc[0, "fieldType"] == "PRODUCT"
     assert frame.loc[0, "visible"] == "FALSE"
-    assert frame.loc[0, "productOptionName[1]"] == "Option"
-    assert frame.loc[0, "productOptionChoices[1]"] == "Only Face mask;Only Neck White"
-    assert frame.loc[1, "productOptionChoices[1]"] == "Only Face mask"
-    assert frame.loc[2, "productOptionChoices[1]"] == "Only Neck White"
+    assert frame.loc[0, "productOptionName1"] == "Option"
+    assert frame.loc[0, "productOptionChoices1"] == "Only Face mask;Only Neck White"
+    assert frame.loc[1, "productOptionChoices1"] == "Only Face mask"
+    assert frame.loc[2, "productOptionChoices1"] == "Only Neck White"
+
+
+def test_wix_export_emits_media_rows_for_additional_images() -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        images=[
+            "https://cdn.example.com/tee-1.jpg",
+            "https://cdn.example.com/tee-2.jpg",
+            "https://cdn.example.com/tee-3.jpg",
+        ],
+        variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_wix_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == WIX_COLUMNS
+    assert len(frame) == 4
+    assert frame.loc[0, "fieldType"] == "PRODUCT"
+    assert frame.loc[0, "media"] == "https://cdn.example.com/tee-1.jpg"
+    assert frame.loc[2, "fieldType"] == "MEDIA"
+    assert frame.loc[2, "media"] == "https://cdn.example.com/tee-2.jpg"
+    assert frame.loc[3, "fieldType"] == "MEDIA"
+    assert frame.loc[3, "media"] == "https://cdn.example.com/tee-3.jpg"
+
+
+def test_wix_export_truncates_name_and_plain_description_to_wix_limits() -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="101",
+        title="X" * 114,
+        description="Y" * 21649,
+        price={"amount": 19.99, "currency": "USD"},
+        images=["https://cdn.example.com/tee-1.jpg"],
+        variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_wix_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert len(frame.loc[0, "name"]) == 80
+    assert len(frame.loc[0, "plainDescription"]) == 16000
+    assert frame.loc[0, "name"] == "X" * 80
+    assert frame.loc[0, "plainDescription"] == "Y" * 16000
