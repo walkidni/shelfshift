@@ -50,9 +50,19 @@ def _format_inventory_qty(value: int | None) -> str:
 
 def _truncate(value: str | None, max_len: int) -> str:
     text = str(value or "")
-    if len(text) <= max_len:
-        return text
-    return text[:max_len]
+    if not text:
+        return ""
+
+    units = 0
+    out: list[str] = []
+    for ch in text:
+        # Wix validation appears to use UTF-16 code units (JS-style length).
+        ch_units = 2 if ord(ch) > 0xFFFF else 1
+        if units + ch_units > max_len:
+            break
+        out.append(ch)
+        units += ch_units
+    return "".join(out)
 
 
 def _normalize_handle(value: str) -> str:

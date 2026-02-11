@@ -138,3 +138,28 @@ def test_wix_export_truncates_name_and_plain_description_to_wix_limits() -> None
     assert len(frame.loc[0, "plainDescription"]) == 16000
     assert frame.loc[0, "name"] == "X" * 80
     assert frame.loc[0, "plainDescription"] == "Y" * 16000
+
+
+def test_wix_export_truncates_using_utf16_units_for_wix_limits() -> None:
+    # Python len("A" * 15999 + "😀") == 16000, but JS/UTF-16 length is 16001.
+    description = ("A" * 15999) + "😀" + ("B" * 50)
+    name = ("N" * 79) + "😀"
+    product = ProductResult(
+        platform="shopify",
+        id="101",
+        title=name,
+        description=description,
+        price={"amount": 19.99, "currency": "USD"},
+        images=["https://cdn.example.com/tee-1.jpg"],
+        variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_wix_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    exported_name = frame.loc[0, "name"]
+    exported_description = frame.loc[0, "plainDescription"]
+
+    assert exported_name == "N" * 79
+    assert exported_description == "A" * 15999
