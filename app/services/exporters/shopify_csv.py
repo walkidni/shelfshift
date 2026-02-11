@@ -53,6 +53,15 @@ def _format_grams(value: float | None) -> str:
     return str(max(0, int(round(value))))
 
 
+def _format_inventory_qty(value: int | None) -> str:
+    if value is None:
+        return ""
+    try:
+        return str(max(0, int(value)))
+    except (TypeError, ValueError):
+        return ""
+
+
 def _normalize_handle(value: str) -> str:
     normalized = value.strip().lower()
     if _HANDLE_RE.fullmatch(normalized):
@@ -121,6 +130,7 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
         row["Handle"] = handle
         row["Variant SKU"] = str(variant.sku or variant.id or "")
         row["Variant Price"] = _resolve_price(product, variant)
+        row["Variant Inventory Policy"] = "deny"
         row["Variant Fulfillment Service"] = "manual"
         row["Variant Requires Shipping"] = _format_bool(bool(product.requires_shipping and not product.is_digital))
         row["Variant Taxable"] = _format_bool(not product.is_digital)
@@ -132,10 +142,10 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
             row["Variant Grams"] = grams
             row["Variant Weight Unit"] = "g"
 
-        if variant.inventory_quantity is not None:
+        qty = _format_inventory_qty(variant.inventory_quantity)
+        if qty:
             row["Variant Inventory Tracker"] = "shopify"
-            row["Variant Inventory Qty"] = str(variant.inventory_quantity)
-            row["Variant Inventory Policy"] = "deny"
+            row["Variant Inventory Qty"] = qty
 
         for option_index, option_name in enumerate(option_names, start=1):
             option_value = ""

@@ -73,6 +73,8 @@ def test_multi_variant_maps_two_options() -> None:
     assert frame.loc[1, "Option2 Value"] == "L"
     assert frame.loc[0, "Variant Inventory Tracker"] == "shopify"
     assert frame.loc[0, "Variant Inventory Qty"] == "4"
+    assert frame.loc[0, "Variant Inventory Policy"] == "deny"
+    assert frame.loc[1, "Variant Inventory Policy"] == "deny"
     assert frame.loc[1, "Title"] == ""
     assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/tee-black-m.jpg"
     assert frame.loc[1, "Variant Image"] == "https://cdn.example.com/tee-white-l.jpg"
@@ -162,6 +164,7 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
     assert frame.loc[0, "Variant Image"] == ""
     assert frame.loc[0, "Variant Inventory Tracker"] == ""
     assert frame.loc[0, "Variant Inventory Qty"] == ""
+    assert frame.loc[0, "Variant Inventory Policy"] == "deny"
 
 
 def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
