@@ -1,11 +1,12 @@
 # Ecommerce Catalog Transfer
 
-This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, Wix, Squarespace, and WooCommerce.
+This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, BigCommerce, Wix, Squarespace, and WooCommerce.
 
 I use this structure:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
 - FastAPI CSV export endpoints:
   - `POST /api/v1/export/shopify.csv`
+  - `POST /api/v1/export/bigcommerce.csv`
   - `POST /api/v1/export/wix.csv`
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
@@ -105,6 +106,15 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/woocommerce.csv" \
   -o product.csv
 ```
 
+Export BigCommerce CSV:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/export/bigcommerce.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
+  -o product.csv
+```
+
 ## Response behavior (`raw` field)
 
 - Default (`DEBUG=false`): `raw` is omitted from response JSON.
@@ -143,6 +153,7 @@ app/
         aliexpress.py
     exporters/
       shopify_csv.py
+      bigcommerce_csv.py
       wix_csv.py
       squarespace_csv.py
       woocommerce_csv.py

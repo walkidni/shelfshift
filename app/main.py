@@ -9,6 +9,7 @@ import requests
 
 from .config import get_settings
 from .schemas import (
+    ExportBigCommerceCsvRequest,
     ExportShopifyCsvRequest,
     ExportSquarespaceCsvRequest,
     ExportWixCsvRequest,
@@ -16,6 +17,7 @@ from .schemas import (
     ImportRequest,
 )
 from .services.exporters import (
+    product_to_bigcommerce_csv,
     product_to_shopify_csv,
     product_to_squarespace_csv,
     product_to_wix_csv,
@@ -111,6 +113,8 @@ def _export_csv_for_target(
     target = (target_platform or "").strip().lower()
     if target == "shopify":
         return product_to_shopify_csv(product, publish=publish)
+    if target == "bigcommerce":
+        return product_to_bigcommerce_csv(product, publish=publish)
     if target == "wix":
         return product_to_wix_csv(product, publish=publish)
     if target == "squarespace":
@@ -125,7 +129,7 @@ def _export_csv_for_target(
 
     raise HTTPException(
         status_code=422,
-        detail="target_platform must be one of: shopify, wix, squarespace, woocommerce",
+        detail="target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce",
     )
 
 
@@ -188,6 +192,13 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     return _csv_attachment_response(csv_text, filename)
 
 
+@app.post("/api/v1/export/bigcommerce.csv")
+def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Response:
+    product = _run_import_product(payload.product_url)
+    csv_text, filename = product_to_bigcommerce_csv(product, publish=payload.publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
 @app.post("/api/v1/export/wix.csv")
 def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
@@ -233,6 +244,16 @@ def export_shopify_csv_from_web(
 ) -> Response:
     product = _run_import_product(product_url)
     csv_text, filename = product_to_shopify_csv(product, publish=publish)
+    return _csv_attachment_response(csv_text, filename)
+
+
+@app.post("/export/bigcommerce.csv")
+def export_bigcommerce_csv_from_web(
+    product_url: str = Form(...),
+    publish: bool = Form(False),
+) -> Response:
+    product = _run_import_product(product_url)
+    csv_text, filename = product_to_bigcommerce_csv(product, publish=publish)
     return _csv_attachment_response(csv_text, filename)
 
 

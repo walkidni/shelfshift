@@ -46,6 +46,7 @@
           <div class="select-wrap">
             <select id="target_platform" name="target_platform" required>
               <option value="shopify" {% if form.target_platform == "shopify" %}selected{% endif %}>Shopify</option>
+              <option value="bigcommerce" {% if form.target_platform == "bigcommerce" %}selected{% endif %}>BigCommerce</option>
               <option value="wix" {% if form.target_platform == "wix" %}selected{% endif %}>Wix</option>
               <option value="squarespace" {% if form.target_platform == "squarespace" %}selected{% endif %}>Squarespace</option>
               <option value="woocommerce" {% if form.target_platform == "woocommerce" %}selected{% endif %}>WooCommerce</option>
