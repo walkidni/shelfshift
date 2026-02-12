@@ -1,6 +1,6 @@
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 import requests
@@ -30,7 +30,7 @@ class Variant:
     id: str | None = None
     sku: str | None = None
     title: str | None = None
-    options: dict[str, str] | None = None  # e.g. {"Color": "Black", "Size": "M"}
+    options: dict[str, str] = field(default_factory=dict)  # e.g. {"Color": "Black", "Size": "M"}
     price_amount: float | None = None
     currency: str | None = None
     image: str | None = None
@@ -38,10 +38,6 @@ class Variant:
     inventory_quantity: int | None = None
     weight: float | None = None  # For shipping calculations
     raw: dict[str, Any] | None = None
-
-    def __post_init__(self):
-        if self.options is None:
-            self.options = {}
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
@@ -68,31 +64,21 @@ class ProductResult:
     title: str | None
     description: str | None
     price: dict[str, Any] | None  # {"amount": float|None, "currency": str|None} (typically min/current)
-    images: list[str] | None
-    raw: dict[str, Any] | None
-    options: dict[str, list[str]] | None = None  # {"Color": ["Black","White"], "Size": ["S","M"]}
-    variants: list[Variant] | None = None
+    images: list[str] = field(default_factory=list)
+    raw: dict[str, Any] | None = None
+    options: dict[str, list[str]] = field(default_factory=dict)  # {"Color": ["Black","White"], "Size": ["S","M"]}
+    variants: list[Variant] = field(default_factory=list)
     brand: str | None = None  # Product brand for metadata
     category: str | None = None  # Product category for SEO and organization
     meta_title: str | None = None  # Custom page title for SEO
     meta_description: str | None = None  # Custom meta description for SEO
     slug: str | None = None  # Source URL slug if available
-    tags: list[str] | None = None  # Tags for searchability
+    tags: list[str] = field(default_factory=list)  # Tags for searchability
     vendor: str | None = None  # Vendor/supplier name
     weight: float | None = None  # Default product weight
     requires_shipping: bool = True  # Whether product needs shipping
     track_quantity: bool = True  # Whether to track inventory
     is_digital: bool = False  # Digital product flag
-
-    def __post_init__(self):
-        if self.options is None:
-            self.options = {}
-        if self.variants is None:
-            self.variants = []
-        if self.images is None:
-            self.images = []
-        if self.tags is None:
-            self.tags = []
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
@@ -102,14 +88,14 @@ class ProductResult:
             "description": self.description,
             "price": self.price,
             "images": self.images,
-            "options": self.options or {},
-            "variants": [v.to_dict(include_raw=include_raw) for v in (self.variants or [])],
+            "options": self.options,
+            "variants": [v.to_dict(include_raw=include_raw) for v in self.variants],
             "brand": self.brand,
             "category": self.category,
             "meta_title": self.meta_title,
             "meta_description": self.meta_description,
             "slug": self.slug,
-            "tags": self.tags or [],
+            "tags": self.tags,
             "vendor": self.vendor,
             "weight": self.weight,
             "requires_shipping": self.requires_shipping,
