@@ -1,4 +1,6 @@
 from pathlib import Path
+import json
+import logging
 
 from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +25,14 @@ from .services.exporters import (
     product_to_wix_csv,
     product_to_woocommerce_csv,
 )
-from .services.importer import ApiConfig, ProductResult, detect_product_url, fetch_product_details, requires_rapidapi
+from .services.logging import product_result_to_loggable
+from .services.importer import (
+    ApiConfig,
+    ProductResult,
+    detect_product_url,
+    fetch_product_details,
+    requires_rapidapi,
+)
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -33,6 +42,9 @@ TEMPLATE_DIR = BASE_DIR / "web" / "templates"
 STATIC_DIR = BASE_DIR / "web" / "static"
 
 settings = get_settings()
+# Use Uvicorn's error logger so app logs appear in the standard server log stream.
+logger = logging.getLogger("uvicorn.error")
+logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 app = FastAPI(
     title=settings.app_name,
     summary="Ingest product URLs and export importable platform CSV files",
@@ -89,7 +101,12 @@ def _run_import_product(product_url: str) -> ProductResult:
         )
 
     try:
-        return fetch_product_details(normalized_url, _api_config())
+        product = fetch_product_details(normalized_url, _api_config())
+        logger.debug(
+            "Imported product summary:\n%s",
+            json.dumps(product_result_to_loggable(product), ensure_ascii=False, indent=2),
+        )
+        return product
     except requests.HTTPError as exc:
         status = getattr(exc.response, "status_code", 502) or 502
         text = getattr(exc.response, "text", str(exc))

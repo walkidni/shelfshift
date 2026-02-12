@@ -11,6 +11,7 @@ class Settings:
     brand_secondary: str
     brand_ink: str
     debug: bool
+    log_verbosity: str
     rapidapi_key: str | None
     amazon_country: str
     cors_allow_origins: tuple[str, ...]
@@ -21,6 +22,16 @@ def _env_bool(name: str, default: bool = False) -> bool:
     if val is None:
         return default
     return val.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_choice(name: str, default: str, *, allowed: set[str]) -> str:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    normalized = val.strip().lower()
+    if normalized in allowed:
+        return normalized
+    return default
 
 
 @lru_cache(maxsize=1)
@@ -40,6 +51,11 @@ def get_settings() -> Settings:
         brand_secondary=os.getenv("BRAND_SECONDARY", "#f8b84a"),
         brand_ink=os.getenv("BRAND_INK", "#1f1916"),
         debug=_env_bool("DEBUG", default=False),
+        log_verbosity=_env_choice(
+            "LOG_VERBOSITY",
+            default="medium",
+            allowed={"low", "medium", "high", "extrahigh"},
+        ),
         rapidapi_key=os.getenv("RAPIDAPI_KEY"),
         amazon_country=os.getenv("AMAZON_COUNTRY", "US"),
         cors_allow_origins=origins or ("*",),
