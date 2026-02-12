@@ -278,14 +278,14 @@ def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
     assert len(frame) == 3
-    assert frame.loc[0, "Item Type"] == "Product"
+    assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "Name"] == "Demo Mug"
     assert frame.loc[0, "SKU"] == "SH-123"
-    assert frame.loc[0, "Inventory"] == "variant"
-    assert frame.loc[1, "Item Type"] == "Variant"
+    assert frame.loc[0, "Inventory Tracking"] == "variant"
+    assert frame.loc[1, "Item"] == "Variant"
     assert frame.loc[1, "SKU"] == "MUG-001"
     assert frame.loc[1, "Variant Image URL"] == "https://cdn.example.com/mug-black.jpg"
-    assert frame.loc[2, "Item Type"] == "Image"
+    assert frame.loc[2, "Item"] == "Image"
     assert frame.loc[2, "Image URL (Import)"] == "https://cdn.example.com/mug-front.jpg"
 
 
@@ -319,7 +319,7 @@ def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
     assert len(frame) == 1
-    assert frame.loc[0, "Item Type"] == "Product"
+    assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "SKU"] == "MUG-001"
 
 
@@ -599,9 +599,75 @@ def test_web_export_csv_supports_bigcommerce_target(monkeypatch) -> None:
     frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == BIGCOMMERCE_COLUMNS
     assert len(frame) == 2
-    assert frame.loc[0, "Item Type"] == "Product"
+    assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "SKU"] == "MUG-001"
-    assert frame.loc[1, "Item Type"] == "Image"
+    assert frame.loc[1, "Item"] == "Image"
+
+
+def test_web_export_csv_supports_bigcommerce_legacy_format(monkeypatch) -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        variants=[Variant(id="var-1", sku="MUG-001", price_amount=12.0, inventory_quantity=5)],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/export.csv",
+        data={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "target_platform": "bigcommerce",
+            "bigcommerce_csv_format": "legacy",
+        },
+    )
+
+    assert response.status_code == 200
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert "Product Type" in frame.columns
+    assert "Item" not in frame.columns
+    assert frame.loc[0, "Product Type"] == "P"
+    assert frame.loc[0, "Code"] == "MUG-001"
+
+
+def test_export_bigcommerce_csv_endpoint_supports_legacy_format(monkeypatch) -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg"],
+        variants=[Variant(id="var-1", sku="MUG-001", price_amount=12.0, inventory_quantity=10)],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/api/v1/export/bigcommerce.csv",
+        json={"product_url": "https://demo.myshopify.com/products/mug", "csv_format": "legacy"},
+    )
+
+    assert response.status_code == 200
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert "Product Type" in frame.columns
+    assert "Item" not in frame.columns
+    assert frame.loc[0, "Product Type"] == "P"
+    assert frame.loc[0, "Code"] == "MUG-001"
 
 
 def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch) -> None:

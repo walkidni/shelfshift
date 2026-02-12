@@ -1,5 +1,5 @@
 from app.services.exporters import product_to_bigcommerce_csv
-from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS
+from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
 from app.services.importer import ProductResult, Variant
 from tests._csv_helpers import read_frame
 
@@ -166,3 +166,49 @@ def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() ->
 
     assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "Weight"] == "0.1"
+
+
+def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug-front.jpg", "https://cdn.example.com/mug-side.jpg"],
+        variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, inventory_quantity=5, weight=250)],
+        category="Mugs",
+        slug="demo-mug",
+        raw={},
+    )
+
+    csv_text, filename = product_to_bigcommerce_csv(product, publish=True, csv_format="legacy")
+    frame = read_frame(csv_text)
+
+    assert filename == "bigcommerce-20260208T000000Z.csv"
+    assert list(frame.columns) == BIGCOMMERCE_LEGACY_COLUMNS
+    assert len(frame) == 1
+    assert frame.loc[0, "Product Type"] == "P"
+    assert frame.loc[0, "Code"] == "MUG-001"
+    assert frame.loc[0, "Name"] == "Demo Mug"
+    assert frame.loc[0, "Calculated Price"] == "12"
+    assert frame.loc[0, "Product Visible"] == "Y"
+    assert frame.loc[0, "Product URL"] == "/demo-mug/"
+    assert frame.loc[0, "Images"] == "Product Image URL: https://cdn.example.com/mug-front.jpg|Product Image URL: https://cdn.example.com/mug-side.jpg"
+
+
+def test_bigcommerce_export_uses_modern_format_by_default() -> None:
+    product = ProductResult(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_bigcommerce_csv(product, publish=False)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == BIGCOMMERCE_COLUMNS

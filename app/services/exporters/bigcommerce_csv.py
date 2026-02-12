@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 from slugify import slugify
 
 from ..importer import ProductResult, Variant
@@ -58,6 +59,46 @@ BIGCOMMERCE_COLUMNS: list[str] = [
     "Video Sort Order",
 ]
 
+BIGCOMMERCE_LEGACY_COLUMNS: list[str] = [
+    "Product ID",
+    "Product Type",
+    "Code",
+    "Name",
+    "Brand",
+    "Description",
+    "Cost Price",
+    "Retail Price",
+    "Sale Price",
+    "Calculated Price",
+    "Fixed Shipping Price",
+    "Free Shipping",
+    "Warranty",
+    "Weight",
+    "Width",
+    "Height",
+    "Depth",
+    "Allow Purchases",
+    "Product Visible",
+    "Product Availability",
+    "Product Inventoried",
+    "Stock Level",
+    "Low Stock Level",
+    "Date Added",
+    "Date Modified",
+    "Category Details",
+    "Images",
+    "Page Title",
+    "META Keywords",
+    "META Description",
+    "Product Condition",
+    "Product URL",
+    "Redirect Old URL?",
+    "Product Tax Code",
+    "Product Custom Fields",
+]
+
+BigCommerceCsvFormat = Literal["modern", "legacy"]
+
 _PLATFORM_TOKEN = {
     "shopify": "SH",
     "amazon": "AMZ",
@@ -78,6 +119,10 @@ def _empty_row() -> dict[str, str]:
     return {column: "" for column in BIGCOMMERCE_COLUMNS}
 
 
+def _empty_legacy_row() -> dict[str, str]:
+    return {column: "" for column in BIGCOMMERCE_LEGACY_COLUMNS}
+
+
 def _format_price(value: float | None) -> str:
     return utils.format_number(value, decimals=6) if value is not None else ""
 
@@ -90,6 +135,16 @@ def _format_weight_kg(value: float | None) -> str:
     except (TypeError, ValueError):
         return ""
     return utils.format_number(kilograms, decimals=6)
+
+
+def _format_weight_kg_legacy(value: float | None) -> str:
+    if value is None:
+        return ""
+    try:
+        kilograms = float(value) / 1000.0
+    except (TypeError, ValueError):
+        return ""
+    return utils.format_number(kilograms, decimals=4)
 
 
 def _require_weight_kg(value: float | None, *, is_digital: bool) -> str:
@@ -260,7 +315,57 @@ def _resolve_product_weight_grams(product: ProductResult, variants: list[Variant
     return product.weight
 
 
-def product_to_bigcommerce_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def _resolve_category_details(category: str | None) -> str:
+    value = str(category or "").strip()
+    if not value:
+        return ""
+    return f"Category Name: {value}, Category Path: {value}"
+
+
+def _resolve_legacy_images(product: ProductResult) -> str:
+    urls = utils.ordered_unique(
+        [url for url in (_normalize_image_url(image) for image in (product.images or [])) if url]
+    )
+    return "|".join(f"Product Image URL: {url}" for url in urls)
+
+
+def _product_to_bigcommerce_legacy_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+    variants = utils.resolve_variants(product)
+    option_names = _resolve_option_names(product, variants)
+    is_variable = _is_variable_product(product, variants, option_names)
+    has_inventory = _has_any_inventory_quantity(variants)
+    inventory_mode = _resolve_inventory_mode(is_variable=is_variable, has_inventory=has_inventory)
+    parent_sku = _resolve_parent_sku(product, variants, is_variable=is_variable)
+    first_variant = variants[0] if variants else None
+
+    row = _empty_legacy_row()
+    row["Product ID"] = str(product.id or "")
+    row["Product Type"] = "P"
+    row["Code"] = parent_sku
+    row["Name"] = product.title or ""
+    row["Brand"] = product.brand or ""
+    row["Description"] = product.description or ""
+    row["Calculated Price"] = _resolve_price(product, first_variant)
+    row["Fixed Shipping Price"] = "0.0000"
+    row["Free Shipping"] = "Y" if not product.requires_shipping else "N"
+    row["Weight"] = _format_weight_kg_legacy(_resolve_product_weight_grams(product, variants))
+    row["Allow Purchases"] = "Y"
+    row["Product Visible"] = "Y" if publish else "N"
+    row["Product Inventoried"] = "Y" if inventory_mode != _INVENTORY_NONE else "N"
+    row["Stock Level"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
+    row["Low Stock Level"] = "0"
+    row["Category Details"] = _resolve_category_details(product.category)
+    row["Images"] = _resolve_legacy_images(product)
+    row["Page Title"] = str(product.meta_title or "").strip()
+    keyword_value = _resolve_keywords_from_tags(product.tags)
+    row["META Keywords"] = keyword_value
+    row["META Description"] = (product.meta_description or "").strip()
+    row["Product Condition"] = "New"
+    row["Product URL"] = _resolve_product_url_slug(product)
+    return [row]
+
+
+def _product_to_bigcommerce_modern_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -332,6 +437,25 @@ def product_to_bigcommerce_rows(product: ProductResult, *, publish: bool) -> lis
     return rows
 
 
-def product_to_bigcommerce_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
-    rows = product_to_bigcommerce_rows(product, publish=publish)
-    return utils.dict_rows_to_csv(rows, BIGCOMMERCE_COLUMNS), utils.make_export_filename("bigcommerce")
+def product_to_bigcommerce_rows(
+    product: ProductResult,
+    *,
+    publish: bool,
+    csv_format: BigCommerceCsvFormat = "modern",
+) -> list[dict[str, str]]:
+    if csv_format == "modern":
+        return _product_to_bigcommerce_modern_rows(product, publish=publish)
+    if csv_format == "legacy":
+        return _product_to_bigcommerce_legacy_rows(product, publish=publish)
+    raise ValueError("csv_format must be one of: modern, legacy")
+
+
+def product_to_bigcommerce_csv(
+    product: ProductResult,
+    *,
+    publish: bool,
+    csv_format: BigCommerceCsvFormat = "modern",
+) -> tuple[str, str]:
+    rows = product_to_bigcommerce_rows(product, publish=publish, csv_format=csv_format)
+    columns = BIGCOMMERCE_COLUMNS if csv_format == "modern" else BIGCOMMERCE_LEGACY_COLUMNS
+    return utils.dict_rows_to_csv(rows, columns), utils.make_export_filename("bigcommerce")

@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
@@ -13,6 +14,7 @@ class ExportShopifyCsvRequest(BaseModel):
 class ExportBigCommerceCsvRequest(BaseModel):
     product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
     publish: bool = Field(default=False)
+    csv_format: Literal["modern", "legacy"] = Field(default="modern")
 
 
 class ExportWooCommerceCsvRequest(BaseModel):

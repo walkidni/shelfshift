@@ -54,6 +54,24 @@
           </div>
 
           <div
+            id="bigcommerce-fields"
+            class="conditional-fields{% if form.target_platform != "bigcommerce" %} is-hidden{% endif %}"
+            aria-hidden="{% if form.target_platform == "bigcommerce" %}false{% else %}true{% endif %}"
+          >
+            <label for="bigcommerce_csv_format">BigCommerce CSV Format</label>
+            <div class="select-wrap">
+              <select
+                id="bigcommerce_csv_format"
+                name="bigcommerce_csv_format"
+                {% if form.target_platform != "bigcommerce" %}disabled{% endif %}
+              >
+                <option value="modern" {% if form.bigcommerce_csv_format == "modern" %}selected{% endif %}>Modern</option>
+                <option value="legacy" {% if form.bigcommerce_csv_format == "legacy" %}selected{% endif %}>Legacy</option>
+              </select>
+            </div>
+          </div>
+
+          <div
             id="squarespace-fields"
             class="conditional-fields{% if not show_squarespace_fields %} is-hidden{% endif %}"
             aria-hidden="{% if show_squarespace_fields %}false{% else %}true{% endif %}"
@@ -103,14 +121,23 @@
     <script>
       (() => {
         const targetPlatform = document.getElementById("target_platform");
+        const bigcommerceFields = document.getElementById("bigcommerce-fields");
         const squarespaceFields = document.getElementById("squarespace-fields");
-        if (!targetPlatform || !squarespaceFields) {
+        if (!targetPlatform || !squarespaceFields || !bigcommerceFields) {
           return;
         }
 
+        const bigcommerceInputs = bigcommerceFields.querySelectorAll("select, input");
         const squarespaceInputs = squarespaceFields.querySelectorAll("input");
 
         const syncSquarespaceFields = () => {
+          const showBigCommerceFields = targetPlatform.value === "bigcommerce";
+          bigcommerceFields.classList.toggle("is-hidden", !showBigCommerceFields);
+          bigcommerceFields.setAttribute("aria-hidden", showBigCommerceFields ? "false" : "true");
+          bigcommerceInputs.forEach((input) => {
+            input.disabled = !showBigCommerceFields;
+          });
+
           const showSquarespaceFields = targetPlatform.value === "squarespace";
           squarespaceFields.classList.toggle("is-hidden", !showSquarespaceFields);
           squarespaceFields.setAttribute("aria-hidden", showSquarespaceFields ? "false" : "true");

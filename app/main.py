@@ -124,6 +124,7 @@ def _export_csv_for_target(
     *,
     target_platform: str,
     publish: bool,
+    bigcommerce_csv_format: str,
     squarespace_product_page: str,
     squarespace_product_url: str,
 ) -> tuple[str, str]:
@@ -131,7 +132,7 @@ def _export_csv_for_target(
     if target == "shopify":
         return product_to_shopify_csv(product, publish=publish)
     if target == "bigcommerce":
-        return product_to_bigcommerce_csv(product, publish=publish)
+        return product_to_bigcommerce_csv(product, publish=publish, csv_format=bigcommerce_csv_format)
     if target == "wix":
         return product_to_wix_csv(product, publish=publish)
     if target == "squarespace":
@@ -164,6 +165,7 @@ def _render_index(
     error: str | None,
     product_url: str,
     target_platform: str,
+    bigcommerce_csv_format: str,
     squarespace_product_page: str,
     squarespace_product_url: str,
     status_code: int = 200,
@@ -177,6 +179,7 @@ def _render_index(
             "form": {
                 "product_url": product_url,
                 "target_platform": target_platform,
+                "bigcommerce_csv_format": bigcommerce_csv_format,
                 "squarespace_product_page": squarespace_product_page,
                 "squarespace_product_url": squarespace_product_url,
             },
@@ -212,7 +215,11 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
 @app.post("/api/v1/export/bigcommerce.csv")
 def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
-    csv_text, filename = product_to_bigcommerce_csv(product, publish=payload.publish)
+    csv_text, filename = product_to_bigcommerce_csv(
+        product,
+        publish=payload.publish,
+        csv_format=payload.csv_format,
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -249,6 +256,7 @@ def home(request: Request) -> HTMLResponse:
         error=None,
         product_url="",
         target_platform="shopify",
+        bigcommerce_csv_format="modern",
         squarespace_product_page="",
         squarespace_product_url="",
     )
@@ -268,9 +276,10 @@ def export_shopify_csv_from_web(
 def export_bigcommerce_csv_from_web(
     product_url: str = Form(...),
     publish: bool = Form(False),
+    csv_format: str = Form("modern"),
 ) -> Response:
     product = _run_import_product(product_url)
-    csv_text, filename = product_to_bigcommerce_csv(product, publish=publish)
+    csv_text, filename = product_to_bigcommerce_csv(product, publish=publish, csv_format=csv_format)
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -317,6 +326,7 @@ def export_csv_from_web(
     product_url: str = Form(...),
     target_platform: str = Form(...),
     publish: bool = Form(False),
+    bigcommerce_csv_format: str = Form("modern"),
     squarespace_product_page: str = Form(default=""),
     squarespace_product_url: str = Form(default=""),
 ) -> Response:
@@ -326,6 +336,7 @@ def export_csv_from_web(
             product,
             target_platform=target_platform,
             publish=publish,
+            bigcommerce_csv_format=bigcommerce_csv_format,
             squarespace_product_page=squarespace_product_page,
             squarespace_product_url=squarespace_product_url,
         )
@@ -336,6 +347,7 @@ def export_csv_from_web(
             error=exc.detail,
             product_url=product_url,
             target_platform=target_platform,
+            bigcommerce_csv_format=bigcommerce_csv_format,
             squarespace_product_page=squarespace_product_page,
             squarespace_product_url=squarespace_product_url,
             status_code=exc.status_code,
