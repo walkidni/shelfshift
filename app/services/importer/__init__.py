@@ -10,6 +10,7 @@ from .platforms import (
     WooCommerceClient,
     _parse_aliexpress_result,
 )
+from .model_v2 import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
 from .product_url_detection import detect_product_url
 
 
@@ -72,6 +73,13 @@ __all__ = [
     "_parse_aliexpress_result",
     "detect_product_url",
     "fetch_product_details",
+    "format_decimal",
     "import_product",
+    "Media",
+    "Money",
+    "normalize_currency",
+    "parse_decimal_money",
+    "Price",
     "requires_rapidapi",
+    "Weight",
 ]
