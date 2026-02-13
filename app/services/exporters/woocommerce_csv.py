@@ -84,17 +84,7 @@ def _resolve_variant_key(variant: Variant, index: int) -> str:
 
 
 def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
-    names = utils.ordered_unique((product.options or {}).keys())
-    if len(names) < 3:
-        for variant in variants:
-            for option_name in utils.ordered_unique((variant.options or {}).keys()):
-                if option_name in names:
-                    continue
-                names.append(option_name)
-                if len(names) == 3:
-                    break
-            if len(names) == 3:
-                break
+    names = [option.name for option in utils.resolve_option_defs(product) if option.name]
     if not names and len(variants) > 1:
         return ["Option"]
     return names[:3]
@@ -105,36 +95,28 @@ def _fallback_option_value(variant: Variant, index: int) -> str:
 
 
 def _resolve_parent_attribute_values(
-    product: Product,
     variants: list[Variant],
     option_names: list[str],
+    option_values_by_name: dict[str, list[str]],
+    variant_option_maps: list[dict[str, str]],
 ) -> dict[str, list[str]]:
     values_by_option: dict[str, list[str]] = {}
     for option_name in option_names:
         values: list[str] = []
         if option_name != "Option":
-            raw_values = (product.options or {}).get(option_name, [])
-            if isinstance(raw_values, (list, tuple, set)):
-                values.extend(str(v) for v in raw_values)
-            elif raw_values is not None:
-                values.append(str(raw_values))
+            values.extend(option_values_by_name.get(option_name, []))
         for index, variant in enumerate(variants, start=1):
             if option_name == "Option":
                 values.append(_fallback_option_value(variant, index))
             else:
-                values.append(str((variant.options or {}).get(option_name) or ""))
+                values.append(str(variant_option_maps[index - 1].get(option_name) or ""))
         values_by_option[option_name] = utils.ordered_unique(values)
     return values_by_option
 
 
 def _resolve_price(product: Product, variant: Variant | None = None) -> str:
-    if variant and variant.price_amount is not None:
-        return utils.format_number(variant.price_amount, decimals=6)
-    if isinstance(product.price, dict):
-        amount = product.price.get("amount")
-        if isinstance(amount, (int, float)):
-            return utils.format_number(float(amount), decimals=6)
-    return ""
+    amount = utils.resolve_price_amount(product, variant)
+    return utils.format_number(amount, decimals=6) if amount is not None else ""
 
 
 def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
@@ -163,8 +145,9 @@ def _strip_html(text: str | None) -> str:
 
 
 def _resolve_short_description(product: Product) -> str:
-    if product.meta_description:
-        return product.meta_description
+    seo_description = utils.resolve_seo_description(product)
+    if seo_description:
+        return seo_description
     return _strip_html(product.description)
 
 
@@ -184,32 +167,30 @@ def _set_common_product_fields(
     row["Tax status"] = "none" if product.is_digital else "taxable"
     row["Backorders allowed?"] = "0"
     row["Sold individually?"] = "0"
-    row["Categories"] = (product.category or "").strip()
+    row["Categories"] = utils.resolve_primary_category(product)
     row["Tags"] = _resolve_tags(product)
 
 
 def _variant_in_stock(variant: Variant) -> bool:
-    if variant.inventory_quantity is not None:
-        try:
-            return int(variant.inventory_quantity) > 0
-        except (TypeError, ValueError):
-            return False
-    if variant.available is not None:
-        return bool(variant.available)
+    quantity = utils.resolve_variant_inventory_quantity(variant)
+    if quantity is not None:
+        return quantity > 0
+    available = utils.resolve_variant_available(variant)
+    if available is not None:
+        return bool(available)
     return True
 
 
 def _apply_stock_fields(row: dict[str, str], variant: Variant) -> None:
-    if variant.inventory_quantity is not None:
-        try:
-            qty = max(0, int(variant.inventory_quantity))
-        except (TypeError, ValueError):
-            qty = 0
+    quantity = utils.resolve_variant_inventory_quantity(variant)
+    if quantity is not None:
+        qty = max(0, quantity)
         row["Stock"] = str(qty)
         row["In stock?"] = "1" if qty > 0 else "0"
         return
-    if variant.available is not None:
-        row["In stock?"] = "1" if variant.available else "0"
+    available = utils.resolve_variant_available(variant)
+    if available is not None:
+        row["In stock?"] = "1" if available else "0"
         return
     row["In stock?"] = "1"
 
@@ -230,14 +211,8 @@ def _set_attributes(
 def _is_variable_product(product: Product, variants: list[Variant]) -> bool:
     if len(variants) > 1:
         return True
-    for values in (product.options or {}).values():
-        if isinstance(values, (list, tuple, set)):
-            option_values = [str(v) for v in values]
-        elif values is None:
-            option_values = []
-        else:
-            option_values = [str(values)]
-        if len(utils.ordered_unique(option_values)) > 1:
+    for option in utils.resolve_option_defs(product):
+        if len(utils.ordered_unique(option.values)) > 1:
             return True
     return False
 
@@ -246,8 +221,19 @@ def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
-    images = utils.ordered_unique(product.images or [])
-    parent_attribute_values = _resolve_parent_attribute_values(product, variants, option_names)
+    images = utils.resolve_product_image_urls(product)
+    option_values_by_name = {
+        option.name: option.values
+        for option in utils.resolve_option_defs(product)
+        if option.name and option.name in option_names
+    }
+    variant_option_maps = [utils.resolve_variant_option_map(product, variant) for variant in variants]
+    parent_attribute_values = _resolve_parent_attribute_values(
+        variants,
+        option_names,
+        option_values_by_name,
+        variant_option_maps,
+    )
     is_variable = _is_variable_product(product, variants)
 
     if not is_variable:
@@ -259,14 +245,15 @@ def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict
         row["Name"] = product.title or ""
         row["Regular price"] = _resolve_price(product, variant)
         row["Weight (kg)"] = _resolve_weight_kg(product, variant)
-        row["Images"] = _resolve_images(images or [variant.image or ""])
+        row["Images"] = _resolve_images(images or [utils.resolve_variant_image_url(variant) or ""])
         _apply_stock_fields(row, variant)
+        variant_option_values = variant_option_maps[0] if variant_option_maps else {}
         simple_values: dict[str, str] = {}
         for index, option_name in enumerate(option_names, start=1):
             if option_name == "Option":
                 simple_values[option_name] = _fallback_option_value(variant, index)
             else:
-                simple_values[option_name] = str((variant.options or {}).get(option_name) or "")
+                simple_values[option_name] = str(variant_option_values.get(option_name) or "")
         _set_attributes(row, option_names, simple_values)
         return [row]
 
@@ -308,19 +295,20 @@ def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict
         variant_row["SKU"] = variant_sku
         variant_row["Regular price"] = _resolve_price(product, variant)
         variant_row["Weight (kg)"] = _resolve_weight_kg(product, variant)
-        variant_row["Images"] = str(variant.image or "")
+        variant_row["Images"] = utils.resolve_variant_image_url(variant)
         variant_row["Parent"] = parent_sku
         variant_row["Categories"] = ""
         variant_row["Tags"] = ""
 
         _apply_stock_fields(variant_row, variant)
 
+        variant_option_values = variant_option_maps[index - 1]
         variant_values: dict[str, str] = {}
         for option_name in option_names:
             if option_name == "Option":
                 variant_values[option_name] = _fallback_option_value(variant, index)
             else:
-                variant_values[option_name] = str((variant.options or {}).get(option_name) or "")
+                variant_values[option_name] = str(variant_option_values.get(option_name) or "")
         _set_attributes(variant_row, option_names, variant_values)
         rows.append(variant_row)
 

@@ -206,8 +206,8 @@ def _is_variable_product(product: Product, variants: list[Variant], option_names
         return True
     if option_names:
         return True
-    for values in (product.options or {}).values():
-        if isinstance(values, (list, tuple, set)) and len(utils.ordered_unique(str(v) for v in values)) > 1:
+    for option in utils.resolve_option_defs(product):
+        if len(utils.ordered_unique(option.values)) > 1:
             return True
     return False
 

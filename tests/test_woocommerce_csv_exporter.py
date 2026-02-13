@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.models import Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -149,4 +151,69 @@ def test_multiple_variants_without_options_synthesizes_option_attribute() -> Non
     assert frame.loc[0, "Attribute 1 value(s)"] == "Black,White"
     assert frame.loc[1, "Attribute 1 name"] == "Option"
     assert frame.loc[1, "Attribute 1 value(s)"] == "Black"
+    assert frame.loc[2, "Attribute 1 value(s)"] == "White"
+
+
+def test_woocommerce_export_prefers_typed_fields_when_present() -> None:
+    product = Product(
+        platform="shopify",
+        id="900",
+        title="Typed Tee",
+        description="Typed description",
+        price={"amount": 999.99, "currency": "USD"},
+        images=["https://cdn.example.com/legacy-wrong-product.jpg"],
+        options={"Legacy": ["Wrong"]},
+        category="Legacy Category",
+        variants=[
+            Variant(
+                id="v1",
+                sku="TS-BLK",
+                options={"Legacy": "Wrong-BLK"},
+                price_amount=111.11,
+                inventory_quantity=999,
+                image="https://cdn.example.com/legacy-wrong-v1.jpg",
+            ),
+            Variant(
+                id="v2",
+                sku="TS-WHT",
+                options={"Legacy": "Wrong-WHT"},
+                price_amount=222.22,
+                inventory_quantity=999,
+                image="https://cdn.example.com/legacy-wrong-v2.jpg",
+            ),
+        ],
+        raw={},
+    )
+    product.price_v2 = Price(current=Money(amount=Decimal("18.5"), currency="USD"))
+    product.options_v2 = [OptionDef(name="Color", values=["Black", "White"])]
+    product.taxonomy_v2 = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
+    product.media_v2 = [Media(url="https://cdn.example.com/typed-product.jpg", is_primary=True)]
+
+    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("19.99"), currency="USD"))
+    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("21.99"), currency="USD"))
+    product.variants[0].option_values_v2 = [OptionValue(name="Color", value="Black")]
+    product.variants[1].option_values_v2 = [OptionValue(name="Color", value="White")]
+    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=4, available=True)
+    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=2, available=True)
+    product.variants[0].media_v2 = [Media(url="https://cdn.example.com/typed-v1.jpg", is_primary=True)]
+    product.variants[1].media_v2 = [Media(url="https://cdn.example.com/typed-v2.jpg", is_primary=True)]
+
+    csv_text, _ = product_to_woocommerce_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert len(frame) == 3
+    assert frame.loc[0, "Type"] == "variable"
+    assert frame.loc[0, "Regular price"] == "18.5"
+    assert frame.loc[0, "Categories"] == "Men > Shirts"
+    assert frame.loc[0, "Images"] == "https://cdn.example.com/typed-product.jpg"
+    assert frame.loc[0, "Attribute 1 name"] == "Color"
+    assert frame.loc[0, "Attribute 1 value(s)"] == "Black,White"
+    assert frame.loc[1, "Regular price"] == "19.99"
+    assert frame.loc[1, "Stock"] == "4"
+    assert frame.loc[1, "Images"] == "https://cdn.example.com/typed-v1.jpg"
+    assert frame.loc[1, "Attribute 1 value(s)"] == "Black"
+    assert frame.loc[2, "Regular price"] == "21.99"
+    assert frame.loc[2, "Stock"] == "2"
+    assert frame.loc[2, "Images"] == "https://cdn.example.com/typed-v2.jpg"
     assert frame.loc[2, "Attribute 1 value(s)"] == "White"
