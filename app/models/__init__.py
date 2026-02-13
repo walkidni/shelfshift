@@ -9,7 +9,14 @@ from .entities import (
     Weight,
     WeightUnit,
 )
-from .helpers import format_decimal, normalize_currency, parse_decimal_money
+from .helpers import (
+    format_decimal,
+    normalize_currency,
+    parse_decimal_money,
+    resolve_all_image_urls,
+    resolve_current_money,
+    resolve_primary_image_url,
+)
 
 __all__ = [
     "Currency",
@@ -24,4 +31,7 @@ __all__ = [
     "format_decimal",
     "normalize_currency",
     "parse_decimal_money",
+    "resolve_all_image_urls",
+    "resolve_current_money",
+    "resolve_primary_image_url",
 ]

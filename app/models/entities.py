@@ -20,6 +20,9 @@ class Variant:
     inventory_quantity: int | None = None
     weight: float | None = None  # For shipping calculations
     raw: dict[str, Any] | None = None
+    price_v2: "Price | None" = None
+    media_v2: list["Media"] = field(default_factory=list)
+    identifiers: dict[str, str] = field(default_factory=dict)
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
@@ -61,6 +64,11 @@ class Product:
     requires_shipping: bool = True  # Whether product needs shipping
     track_quantity: bool = True  # Whether to track inventory
     is_digital: bool = False  # Digital product flag
+    price_v2: "Price | None" = None
+    media_v2: list["Media"] = field(default_factory=list)
+    categories_v2: list[list[str]] = field(default_factory=list)
+    identifiers: dict[str, str] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
