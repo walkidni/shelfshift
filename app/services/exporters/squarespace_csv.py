@@ -40,41 +40,24 @@ def _format_bool(value: bool) -> str:
 
 
 def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
-    option_names = utils.ordered_unique((product.options or {}).keys())
-    if len(option_names) < 3:
-        for variant in variants:
-            for option_name in utils.ordered_unique((variant.options or {}).keys()):
-                if option_name in option_names:
-                    continue
-                option_names.append(option_name)
-                if len(option_names) == 3:
-                    break
-            if len(option_names) == 3:
-                break
+    option_names = [option.name for option in utils.resolve_option_defs(product) if option.name]
     if not option_names and len(variants) > 1:
         return ["Option"]
     return option_names[:3]
 
 
 def _resolve_price(product: Product, variant: Variant) -> str:
-    if variant.price_amount is not None:
-        return utils.format_number(variant.price_amount, decimals=2)
-    if isinstance(product.price, dict):
-        amount = product.price.get("amount")
-        if isinstance(amount, (int, float)):
-            return utils.format_number(float(amount), decimals=2)
-    return ""
+    amount = utils.resolve_price_amount(product, variant)
+    return utils.format_number(amount, decimals=2) if amount is not None else ""
 
 
 def _resolve_stock(product: Product, variant: Variant) -> str:
-    if not product.track_quantity:
+    if not utils.resolve_variant_track_quantity(product, variant):
         return "Unlimited"
-    if variant.inventory_quantity is None:
+    qty = utils.resolve_variant_inventory_quantity(variant)
+    if qty is None:
         return "Unlimited"
-    try:
-        return str(max(0, int(variant.inventory_quantity)))
-    except (TypeError, ValueError):
-        return "Unlimited"
+    return str(qty)
 
 
 def _resolve_weight_kg(product: Product, variant: Variant) -> str:
@@ -94,7 +77,7 @@ def _resolve_tags(product: Product) -> str:
 
 
 def _resolve_hosted_image_urls(product: Product) -> str:
-    return "\n".join(utils.ordered_unique(product.images or []))
+    return "\n".join(utils.resolve_product_image_urls(product))
 
 
 def _fallback_option_value(variant: Variant, index: int) -> str:
@@ -107,13 +90,14 @@ def _set_variant_option_fields(
     variant: Variant,
     *,
     index: int,
+    values_by_name: dict[str, str],
 ) -> None:
     for option_index, option_name in enumerate(option_names, start=1):
         row[f"Option Name {option_index}"] = option_name
         if option_name == "Option":
             row[f"Option Value {option_index}"] = _fallback_option_value(variant, index)
             continue
-        row[f"Option Value {option_index}"] = str((variant.options or {}).get(option_name) or "")
+        row[f"Option Value {option_index}"] = str(values_by_name.get(option_name) or "")
 
 
 def product_to_squarespace_rows(
@@ -130,12 +114,19 @@ def product_to_squarespace_rows(
     rows: list[dict[str, str]] = []
     for index, variant in enumerate(variants, start=1):
         row = _empty_row()
+        variant_option_values = utils.resolve_variant_option_map(product, variant)
         row["SKU"] = str(variant.sku or variant.id or "")
         row["Price"] = _resolve_price(product, variant)
         row["Sale Price"] = ""
         row["On Sale"] = "No"
         row["Stock"] = _resolve_stock(product, variant)
-        _set_variant_option_fields(row, option_names, variant, index=index)
+        _set_variant_option_fields(
+            row,
+            option_names,
+            variant,
+            index=index,
+            values_by_name=variant_option_values,
+        )
 
         if index == 1:
             row["Product Type [Non Editable]"] = "DIGITAL" if product.is_digital else "PHYSICAL"
@@ -143,7 +134,7 @@ def product_to_squarespace_rows(
             row["Product URL"] = (product_url or "").strip()
             row["Title"] = product.title or ""
             row["Description"] = product.description or ""
-            row["Categories"] = (product.category or "").strip()
+            row["Categories"] = utils.resolve_primary_category(product)
             row["Tags"] = _resolve_tags(product)
             row["Weight"] = _resolve_weight_kg(product, variant)
             row["Visible"] = _format_bool(publish)

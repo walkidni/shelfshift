@@ -155,13 +155,8 @@ def _require_weight_kg(value: float | None, *, is_digital: bool) -> str:
 
 
 def _resolve_price(product: Product, variant: Variant | None = None) -> str:
-    if variant and variant.price_amount is not None:
-        return _format_price(variant.price_amount)
-    if isinstance(product.price, dict):
-        amount = product.price.get("amount")
-        if isinstance(amount, (int, float)):
-            return _format_price(float(amount))
-    return ""
+    amount = utils.resolve_price_amount(product, variant)
+    return _format_price(amount)
 
 
 def _resolve_product_key(product: Product) -> str:
@@ -189,12 +184,10 @@ def _resolve_variant_sku(parent_sku: str, variant: Variant, *, index: int) -> st
 
 
 def _resolve_inventory_qty(variant: Variant) -> str:
-    if variant.inventory_quantity is None:
+    qty = utils.resolve_variant_inventory_quantity(variant)
+    if qty is None:
         return ""
-    try:
-        return str(max(0, int(variant.inventory_quantity)))
-    except (TypeError, ValueError):
-        return ""
+    return str(qty)
 
 
 def _has_any_inventory_quantity(variants: list[Variant]) -> bool:
@@ -202,12 +195,7 @@ def _has_any_inventory_quantity(variants: list[Variant]) -> bool:
 
 
 def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
-    option_names = utils.ordered_unique((product.options or {}).keys())
-    for variant in variants:
-        for option_name in utils.ordered_unique((variant.options or {}).keys()):
-            if option_name in option_names:
-                continue
-            option_names.append(option_name)
+    option_names = [option.name for option in utils.resolve_option_defs(product) if option.name]
     if not option_names and len(variants) > 1:
         return ["Option"]
     return option_names
@@ -254,14 +242,19 @@ def _resolve_option_type(option_name: str, option_value: str) -> str:
     return _DEFAULT_OPTION_TYPE
 
 
-def _build_variant_options_value(variant: Variant, option_names: list[str], *, index: int) -> str:
+def _build_variant_options_value(
+    variant: Variant,
+    option_names: list[str],
+    *,
+    index: int,
+    values_by_name: dict[str, str],
+) -> str:
     chunks: list[str] = []
-    variant_options = variant.options or {}
     for option_name in option_names:
         if option_name == "Option":
             raw_value = _fallback_variant_option_value(variant, index)
         else:
-            raw_value = str(variant_options.get(option_name) or "")
+            raw_value = str(values_by_name.get(option_name) or "")
             if not raw_value:
                 raw_value = _fallback_variant_option_value(variant, index)
         safe_name = _sanitize_option_token_value(option_name)
@@ -322,10 +315,16 @@ def _resolve_category_details(category: str | None) -> str:
     return f"Category Name: {value}, Category Path: {value}"
 
 
+def _resolve_modern_categories(product: Product) -> str:
+    if product.taxonomy_v2 is None and not product.categories_v2:
+        return ""
+    return utils.resolve_primary_category(product)
+
+
 def _resolve_legacy_images(product: Product) -> str:
-    urls = utils.ordered_unique(
-        [url for url in (_normalize_image_url(image) for image in (product.images or [])) if url]
-    )
+    urls = utils.ordered_unique([
+        url for url in (_normalize_image_url(image) for image in utils.resolve_product_image_urls(product)) if url
+    ])
     return "|".join(f"Product Image URL: {url}" for url in urls)
 
 
@@ -354,12 +353,12 @@ def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> l
     row["Product Inventoried"] = "Y" if inventory_mode != _INVENTORY_NONE else "N"
     row["Stock Level"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
     row["Low Stock Level"] = "0"
-    row["Category Details"] = _resolve_category_details(product.category)
+    row["Category Details"] = _resolve_category_details(utils.resolve_primary_category(product))
     row["Images"] = _resolve_legacy_images(product)
-    row["Page Title"] = str(product.meta_title or "").strip()
+    row["Page Title"] = utils.resolve_seo_title(product)
     keyword_value = _resolve_keywords_from_tags(product.tags)
     row["META Keywords"] = keyword_value
-    row["META Description"] = (product.meta_description or "").strip()
+    row["META Description"] = utils.resolve_seo_description(product)
     row["Product Condition"] = "New"
     row["Product URL"] = _resolve_product_url_slug(product)
     return [row]
@@ -384,6 +383,7 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
     product_row["Description"] = product.description or ""
     product_row["SKU"] = parent_sku
     product_row["Price"] = _resolve_price(product, first_variant)
+    product_row["Categories"] = _resolve_modern_categories(product)
     product_row["Weight"] = _require_weight_kg(
         _resolve_product_weight_grams(product, variants),
         is_digital=product.is_digital,
@@ -392,7 +392,7 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
     product_row["Current Stock"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
     product_row["Low Stock"] = "0"
     product_row["Product URL"] = _resolve_product_url_slug(product)
-    product_row["Meta Description"] = (product.meta_description or "").strip()
+    product_row["Meta Description"] = utils.resolve_seo_description(product)
     product_row["Search Keywords"] = keyword_value
     product_row["Meta Keywords"] = keyword_value
     product_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
@@ -407,6 +407,7 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
     if is_variable:
         for index, variant in enumerate(variants, start=1):
             variant_row = _empty_row()
+            variant_option_values = utils.resolve_variant_option_map(product, variant)
             variant_row["Item"] = "Variant"
             variant_row["SKU"] = _resolve_variant_sku(parent_sku, variant, index=index)
             variant_row["Price"] = _resolve_price(product, variant)
@@ -415,13 +416,18 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
             variant_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
             variant_row["Is Visible"] = "TRUE" if publish else "FALSE"
             variant_row["Show Product Condition"] = "FALSE"
-            variant_row["Options"] = _build_variant_options_value(variant, option_names, index=index)
-            variant_row["Variant Image URL"] = _normalize_image_url(variant.image)
+            variant_row["Options"] = _build_variant_options_value(
+                variant,
+                option_names,
+                index=index,
+                values_by_name=variant_option_values,
+            )
+            variant_row["Variant Image URL"] = _normalize_image_url(utils.resolve_variant_image_url(variant))
             rows.append(variant_row)
 
-    product_images = utils.ordered_unique(
-        [url for url in (_normalize_image_url(image) for image in (product.images or [])) if url]
-    )
+    product_images = utils.ordered_unique([
+        url for url in (_normalize_image_url(image) for image in utils.resolve_product_image_urls(product)) if url
+    ])
     for image_index, image_url in enumerate(product_images, start=1):
         image_row = _empty_row()
         image_row["Item"] = "Image"
@@ -432,7 +438,7 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
 
     if not is_variable and first_variant is not None:
         # For simple products with a variant-level image source, place it on Variant Image URL.
-        rows[0]["Variant Image URL"] = _normalize_image_url(first_variant.image)
+        rows[0]["Variant Image URL"] = _normalize_image_url(utils.resolve_variant_image_url(first_variant))
 
     return rows
 
