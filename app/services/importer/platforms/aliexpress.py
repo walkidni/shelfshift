@@ -2,7 +2,17 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
-from app.models import Product, Variant
+from app.models import (
+    CategorySet,
+    Inventory,
+    Media,
+    OptionDef,
+    OptionValue,
+    Product,
+    Seo,
+    SourceRef,
+    Variant,
+)
 
 from ..product_url_detection import _ALIEXPRESS_ITEM_RE, _ALIEXPRESS_X_OBJECT_RE
 from .common import (
@@ -10,13 +20,17 @@ from .common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
+    finalize_product_typed_fields,
     http_session,
+    make_identifiers,
+    make_price,
     meta_from_description,
+    normalize_url,
     parse_money_to_float,
 )
 
 
-def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
+def _parse_aliexpress_result(resp: dict, item_id: str, *, source_url: str | None = None) -> Product:
     result = resp.get("result", {}) if isinstance(resp, dict) else {}
     item = result.get("item", {}) if isinstance(result, dict) else {}
 
@@ -44,21 +58,38 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
 
     price = {"amount": price_amount, "currency": currency}
 
-    def normalize_url(value: Any) -> str | None:
-        if not isinstance(value, str) or not value:
-            return None
-        if value.startswith("//"):
-            return f"https:{value}"
-        return value
-
     images: list[str] = []
+    media_v2: list[Media] = []
+    media_image_urls: set[str] = set()
     for raw_img in item.get("images", []) or []:
         normalized = normalize_url(raw_img)
         if normalized:
             images.append(normalized)
+            media_v2.append(
+                Media(
+                    url=normalized,
+                    type="image",
+                    position=len(media_v2) + 1,
+                    is_primary=(len(media_v2) == 0),
+                )
+            )
+            media_image_urls.add(normalized)
+
+    video_payload = item.get("video")
+    if isinstance(video_payload, dict):
+        video_url = normalize_url(video_payload.get("url"))
+        if video_url:
+            media_v2.append(
+                Media(
+                    url=video_url,
+                    type="video",
+                    position=len(media_v2) + 1,
+                )
+            )
     images = dedupe(images)
 
     options: dict[str, list[str]] = {}
+    options_v2: list[OptionDef] = []
     variants: list[Variant] = []
 
     prop_lookup: dict[int, dict[str, Any]] = {}
@@ -71,6 +102,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
         option_values = [val.get("name") for val in prop_values if val.get("name")]
         if option_values:
             options[prop_name] = option_values
+            options_v2.append(OptionDef(name=prop_name, values=option_values))
 
         pid_raw = prop.get("pid")
         try:
@@ -139,6 +171,25 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
 
         sku_id = str(sku.get("skuId") or "").strip()
         canonical_sku = f"AE:{item_id}:{sku_id}" if sku_id else None
+        compare_at_amount = parse_money_to_float(str(sku.get("price") or "").replace("$", ""))
+        variant_identifiers, variant_identifiers_v2 = make_identifiers(
+            {
+                "source_variant_id": sku_id,
+                "sku": canonical_sku,
+                "raw_sku_id": sku_id,
+            }
+        )
+        variant_media_v2: list[Media] = []
+        if variant_image:
+            variant_media_v2.append(
+                Media(
+                    url=variant_image,
+                    type="image",
+                    position=1,
+                    is_primary=True,
+                    variant_skus=[canonical_sku] if canonical_sku else [],
+                )
+            )
 
         variants.append(
             Variant(
@@ -150,11 +201,36 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
                 available=available,
                 inventory_quantity=quantity,
                 image=variant_image,
+                price_v2=make_price(
+                    amount=variant_price,
+                    currency=currency,
+                    compare_at=compare_at_amount,
+                ),
+                media_v2=variant_media_v2,
+                option_values_v2=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                inventory_v2=Inventory(
+                    track_quantity=True,
+                    quantity=quantity,
+                    available=available,
+                ),
+                identifiers=variant_identifiers,
+                identifiers_v2=variant_identifiers_v2,
             )
         )
 
         if variant_image and variant_image not in images:
             images.append(variant_image)
+        if variant_image and variant_image not in media_image_urls:
+            media_v2.append(
+                Media(
+                    url=variant_image,
+                    type="image",
+                    position=len(media_v2) + 1,
+                    is_primary=False,
+                    variant_skus=[canonical_sku] if canonical_sku else [],
+                )
+            )
+            media_image_urls.add(variant_image)
 
     default_variant = None
     if price_amount is not None:
@@ -163,6 +239,12 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
             price_amount=price_amount,
             currency=currency,
             available=item.get("available", True),
+            price_v2=make_price(amount=price_amount, currency=currency),
+            inventory_v2=Inventory(
+                track_quantity=True,
+                quantity=None,
+                available=item.get("available", True),
+            ),
         )
     append_default_variant_if_empty(variants, default_variant)
 
@@ -225,6 +307,13 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
         description if len(description) > 160 else None,
         strip_html_content=True,
     )
+    product_identifiers, product_identifiers_v2 = make_identifiers(
+        {
+            "source_product_id": item_id,
+            "item_id": item_id,
+            "cat_id": item.get("catId"),
+        }
+    )
 
     return Product(
         platform="aliexpress",
@@ -246,6 +335,27 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
         track_quantity=True,
         is_digital=False,
         raw=resp,
+        price_v2=make_price(
+            amount=price_amount,
+            currency=currency,
+            compare_at=parse_money_to_float(str(sku_def.get("price") or "").split(" - ")[0]),
+        ),
+        media_v2=media_v2,
+        categories_v2=[[category]] if category else [],
+        identifiers=product_identifiers,
+        options_v2=options_v2,
+        seo_v2=Seo(
+            title=meta_title,
+            description=meta_description,
+        ),
+        source_v2=SourceRef(
+            platform="aliexpress",
+            id=str(item_id),
+            slug=slug,
+            url=source_url,
+        ),
+        taxonomy_v2=CategorySet(paths=[[category]], primary=[category]) if category else None,
+        identifiers_v2=product_identifiers_v2,
     )
 
 
@@ -315,4 +425,4 @@ class AliExpressClient(ProductClient):
             except Exception:
                 pass
 
-        return _parse_aliexpress_result(resp, item_id)
+        return finalize_product_typed_fields(_parse_aliexpress_result(resp, item_id, source_url=url), source_url=url)

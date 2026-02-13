@@ -1,7 +1,17 @@
 import re
 from urllib.parse import parse_qs, urlparse
 
-from app.models import Product, Variant
+from app.models import (
+    CategorySet,
+    Inventory,
+    Media,
+    OptionDef,
+    OptionValue,
+    Product,
+    Seo,
+    SourceRef,
+    Variant,
+)
 
 from ..product_url_detection import _AMAZON_ASIN_RE
 from .common import (
@@ -9,7 +19,10 @@ from .common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
+    finalize_product_typed_fields,
     http_session,
+    make_identifiers,
+    make_price,
     parse_money_to_float,
 )
 
@@ -143,6 +156,7 @@ class AmazonRapidApiClient(ProductClient):
         images = dedupe(images)
 
         options: dict[str, list[str]] = {}
+        options_v2: list[OptionDef] = []
         variants: list[Variant] = []
 
         if data.get("product_variations_dimensions") and data.get("product_variations"):
@@ -155,10 +169,12 @@ class AmazonRapidApiClient(ProductClient):
                             values.append(var["value"])
                     if values:
                         options[dim_name] = dedupe(values)
+                        options_v2.append(OptionDef(name=dim_name, values=dedupe(values)))
 
             if data.get("all_product_variations"):
                 for var_asin, var_options in data["all_product_variations"].items():
                     variant_options = {dim.title(): value for dim, value in var_options.items()}
+                    option_values_v2 = [OptionValue(name=name, value=value) for name, value in variant_options.items()]
                     is_available = data.get("product_availability", "").lower() == "in stock"
                     if var_asin != asin:
                         for dim in data.get("product_variations_dimensions", []):
@@ -168,6 +184,13 @@ class AmazonRapidApiClient(ProductClient):
                                         is_available = var.get("is_available", False)
                                         break
 
+                    variant_identifiers, variant_identifiers_v2 = make_identifiers(
+                        {
+                            "source_variant_id": var_asin,
+                            "asin": var_asin,
+                        }
+                    )
+
                     variants.append(
                         Variant(
                             id=var_asin,
@@ -175,6 +198,15 @@ class AmazonRapidApiClient(ProductClient):
                             price_amount=price_amount,
                             currency=currency,
                             available=is_available,
+                            price_v2=make_price(amount=price_amount, currency=currency),
+                            option_values_v2=option_values_v2,
+                            inventory_v2=Inventory(
+                                track_quantity=False,
+                                quantity=None,
+                                available=is_available,
+                            ),
+                            identifiers=variant_identifiers,
+                            identifiers_v2=variant_identifiers_v2,
                         )
                     )
 
@@ -183,6 +215,12 @@ class AmazonRapidApiClient(ProductClient):
             price_amount=price_amount,
             currency=currency,
             available=data.get("product_availability", "").lower() == "in stock",
+            price_v2=make_price(amount=price_amount, currency=currency),
+            inventory_v2=Inventory(
+                track_quantity=False,
+                quantity=None,
+                available=data.get("product_availability", "").lower() == "in stock",
+            ),
         )
         append_default_variant_if_empty(variants, default_variant)
 
@@ -226,7 +264,23 @@ class AmazonRapidApiClient(ProductClient):
             except (ValueError, AttributeError):
                 pass
 
-        return Product(
+        taxonomy_paths: list[list[str]] = []
+        category_path = data.get("category_path")
+        if isinstance(category_path, list):
+            names = [entry.get("name") for entry in category_path if isinstance(entry, dict) and entry.get("name")]
+            if names:
+                taxonomy_paths.append(names)
+
+        product_identifiers, product_identifiers_v2 = make_identifiers(
+            {
+                "source_product_id": asin,
+                "asin": asin,
+                "parent_asin": data.get("parent_asin"),
+                "landing_asin": data.get("landing_asin"),
+            }
+        )
+
+        product = Product(
             platform=self.platform,
             id=asin,
             title=title,
@@ -247,4 +301,34 @@ class AmazonRapidApiClient(ProductClient):
             track_quantity=True,
             is_digital=False,
             raw=resp,
+            price_v2=make_price(
+                amount=price_amount,
+                currency=currency,
+                compare_at=data.get("product_original_price"),
+            ),
+            media_v2=[
+                Media(
+                    url=image_url,
+                    type="image",
+                    position=index,
+                    is_primary=(index == 1),
+                )
+                for index, image_url in enumerate(images, start=1)
+            ],
+            categories_v2=taxonomy_paths,
+            identifiers=product_identifiers,
+            options_v2=options_v2,
+            seo_v2=Seo(
+                title=meta_title,
+                description=meta_description,
+            ),
+            source_v2=SourceRef(
+                platform=self.platform,
+                id=asin,
+                slug=slug,
+                url=url,
+            ),
+            taxonomy_v2=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
+            identifiers_v2=product_identifiers_v2,
         )
+        return finalize_product_typed_fields(product, source_url=url)

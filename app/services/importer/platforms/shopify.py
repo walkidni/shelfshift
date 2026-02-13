@@ -2,15 +2,29 @@ import json
 import re
 from urllib.parse import urlparse
 
-from app.models import Product, Variant
+from app.models import (
+    CategorySet,
+    Inventory,
+    Media,
+    OptionDef,
+    OptionValue,
+    Product,
+    Seo,
+    SourceRef,
+    Variant,
+)
 
 from ..product_url_detection import extract_shopify_slug_from_path
 from .common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
+    finalize_product_typed_fields,
     http_session,
+    make_identifiers,
+    make_price,
     meta_from_description,
+    normalize_url,
     parse_money_to_float,
 )
 
@@ -27,6 +41,33 @@ class ShopifyClient(ProductClient):
         if not handle:
             raise ValueError("Not a Shopify product path.")
         return parsed.netloc, handle
+
+    def _product_media_from_images(self, raw_images: list[dict], sku_by_variant_id: dict[str, str]) -> list[Media]:
+        media: list[Media] = []
+        for raw_image in raw_images:
+            if not isinstance(raw_image, dict):
+                continue
+            image_url = normalize_url(raw_image.get("src"))
+            if not image_url:
+                continue
+            raw_variant_ids = raw_image.get("variant_ids")
+            variant_skus: list[str] = []
+            if isinstance(raw_variant_ids, list):
+                for raw_variant_id in raw_variant_ids:
+                    variant_sku = sku_by_variant_id.get(str(raw_variant_id))
+                    if variant_sku:
+                        variant_skus.append(variant_sku)
+            media.append(
+                Media(
+                    url=image_url,
+                    type="image",
+                    alt=(raw_image.get("alt") or None),
+                    position=(raw_image.get("position") if isinstance(raw_image.get("position"), int) else None),
+                    is_primary=(raw_image.get("position") == 1),
+                    variant_skus=variant_skus,
+                )
+            )
+        return media
 
     def _fetch_from_html(self, url: str) -> Product:
         headers = {
@@ -100,10 +141,11 @@ class ShopifyClient(ProductClient):
                 price_amount=price_amount,
                 currency=currency,
                 available=available,
+                price_v2=make_price(amount=price_amount, currency=currency),
+                inventory_v2=Inventory(track_quantity=False, quantity=None, available=available),
             )
         ]
-
-        return Product(
+        product = Product(
             platform=self.platform,
             id=None,
             title=title,
@@ -124,7 +166,35 @@ class ShopifyClient(ProductClient):
             track_quantity=False,
             is_digital=False,
             raw=product_ld,
+            price_v2=make_price(amount=price_amount, currency=currency),
+            media_v2=[
+                Media(
+                    url=image_url,
+                    type="image",
+                    position=index,
+                    is_primary=(index == 1),
+                )
+                for index, image_url in enumerate(images, start=1)
+            ],
+            options_v2=[],
+            seo_v2=Seo(
+                title=title,
+                description=description[:400].strip() if description else None,
+            ),
+            source_v2=SourceRef(
+                platform=self.platform,
+                id=None,
+                slug=slug,
+                url=url,
+            ),
+            taxonomy_v2=(
+                CategorySet(paths=[[str(product_ld.get("category"))]], primary=[str(product_ld.get("category"))])
+                if product_ld.get("category")
+                else None
+            ),
         )
+        product.identifiers, product.identifiers_v2 = make_identifiers({})
+        return product
 
     def fetch_product(self, url: str) -> Product:
         host, handle = self._extract(url)
@@ -133,7 +203,7 @@ class ShopifyClient(ProductClient):
             timeout=self._http.request_timeout,
         )
         if response.status_code == 404:
-            return self._fetch_from_html(url)
+            return finalize_product_typed_fields(self._fetch_from_html(url), source_url=url)
 
         response.raise_for_status()
         payload = response.json()
@@ -148,6 +218,7 @@ class ShopifyClient(ProductClient):
         if variants_list:
             first_variant = variants_list[0]
             price_amount = parse_money_to_float(first_variant.get("price"))
+            currency = (first_variant.get("price_currency") or currency)
         price = {"amount": price_amount, "currency": currency}
 
         images = []
@@ -158,6 +229,7 @@ class ShopifyClient(ProductClient):
         images = dedupe(images)
 
         options: dict[str, list[str]] = {}
+        options_v2: list[OptionDef] = []
         variants: list[Variant] = []
 
         if data.get("options"):
@@ -166,6 +238,19 @@ class ShopifyClient(ProductClient):
                 option_values = option.get("values", [])
                 if option_name and option_values:
                     options[option_name] = option_values
+                    options_v2.append(OptionDef(name=option_name, values=option_values))
+
+        sku_by_variant_id: dict[str, str] = {}
+        for variant in variants_list:
+            raw_variant_id = variant.get("id")
+            raw_sku = (variant.get("sku") or "").strip()
+            if raw_variant_id is not None and raw_sku:
+                sku_by_variant_id[str(raw_variant_id)] = raw_sku
+
+        image_by_id: dict[str, dict] = {}
+        for raw_image in (data.get("images") or []):
+            if isinstance(raw_image, dict) and raw_image.get("id") is not None:
+                image_by_id[str(raw_image.get("id"))] = raw_image
 
         if variants_list:
             for variant in variants_list:
@@ -181,9 +266,39 @@ class ShopifyClient(ProductClient):
                 inventory_quantity = (
                     inventory_quantity if isinstance(inventory_quantity, int) and inventory_quantity >= 0 else 0
                 )
+                variant_id = str(variant.get("id", ""))
+                raw_sku = (variant.get("sku") or "").strip()
+                compare_at_amount = parse_money_to_float(variant.get("compare_at_price"))
+                inventory_management = str(variant.get("inventory_management") or "").strip().lower()
+                track_inventory = bool(inventory_management and inventory_management != "null")
+                inventory_policy = str(variant.get("inventory_policy") or "").strip().lower()
+                allow_backorder = True if inventory_policy == "continue" else False if inventory_policy else None
+                variant_image_raw = image_by_id.get(str(variant.get("image_id")))
+                variant_media_v2: list[Media] = []
+                if isinstance(variant_image_raw, dict):
+                    variant_image_url = normalize_url(variant_image_raw.get("src"))
+                    if variant_image_url:
+                        variant_media_v2.append(
+                            Media(
+                                url=variant_image_url,
+                                type="image",
+                                alt=(variant_image_raw.get("alt") or None),
+                                position=1,
+                                is_primary=True,
+                                variant_skus=[raw_sku] if raw_sku else [],
+                            )
+                        )
+
+                variant_identifiers, variant_identifiers_v2 = make_identifiers(
+                    {
+                        "source_variant_id": variant_id,
+                        "sku": raw_sku,
+                        "barcode": variant.get("barcode"),
+                    }
+                )
                 variants.append(
                     Variant(
-                        id=str(variant.get("id", "")),
+                        id=variant_id,
                         sku=(variant.get("sku") or "") + str(variant.get("id") or ""),
                         title=variant.get("title"),
                         options=variant_options,
@@ -192,6 +307,21 @@ class ShopifyClient(ProductClient):
                         available=variant.get("available", True),
                         inventory_quantity=inventory_quantity,
                         weight=variant.get("weight"),
+                        price_v2=make_price(
+                            amount=variant.get("price"),
+                            currency=(variant.get("price_currency") or currency),
+                            compare_at=compare_at_amount,
+                        ),
+                        media_v2=variant_media_v2,
+                        option_values_v2=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                        inventory_v2=Inventory(
+                            track_quantity=track_inventory,
+                            quantity=inventory_quantity,
+                            available=variant.get("available", True),
+                            allow_backorder=allow_backorder,
+                        ),
+                        identifiers=variant_identifiers,
+                        identifiers_v2=variant_identifiers_v2,
                     )
                 )
 
@@ -230,7 +360,28 @@ class ShopifyClient(ProductClient):
             is_digital = True
             requires_shipping = False
 
-        return Product(
+        product_media_v2 = self._product_media_from_images(data.get("images") or [], sku_by_variant_id)
+        if not product_media_v2 and isinstance(data.get("image"), dict):
+            image_url = normalize_url(data["image"].get("src"))
+            if image_url:
+                product_media_v2 = [
+                    Media(
+                        url=image_url,
+                        type="image",
+                        alt=(data["image"].get("alt") or None),
+                        position=(data["image"].get("position") if isinstance(data["image"].get("position"), int) else 1),
+                        is_primary=True,
+                    )
+                ]
+
+        product_identifiers, product_identifiers_v2 = make_identifiers(
+            {
+                "source_product_id": data.get("id"),
+                "handle": handle,
+            }
+        )
+
+        product = Product(
             platform=self.platform,
             id=str(data.get("id", "")),
             title=title,
@@ -251,4 +402,26 @@ class ShopifyClient(ProductClient):
             track_quantity=track_quantity,
             is_digital=is_digital,
             raw=payload,
+            price_v2=make_price(
+                amount=price_amount,
+                currency=currency,
+                compare_at=parse_money_to_float(variants_list[0].get("compare_at_price")) if variants_list else None,
+            ),
+            media_v2=product_media_v2,
+            categories_v2=[[category]] if category else [],
+            identifiers=product_identifiers,
+            options_v2=options_v2,
+            seo_v2=Seo(
+                title=meta_title,
+                description=meta_description,
+            ),
+            source_v2=SourceRef(
+                platform=self.platform,
+                id=str(data.get("id", "")),
+                slug=handle,
+                url=url,
+            ),
+            taxonomy_v2=CategorySet(paths=[[category]], primary=[category]) if category else None,
+            identifiers_v2=product_identifiers_v2,
         )
+        return finalize_product_typed_fields(product, source_url=url)

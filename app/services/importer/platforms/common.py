@@ -7,7 +7,18 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from app.models import Product, Variant
+from app.models import (
+    CategorySet,
+    Identifiers,
+    Media,
+    Money,
+    Price,
+    Product,
+    SourceRef,
+    Variant,
+    normalize_currency,
+    parse_decimal_money,
+)
 
 
 def http_session(timeout: int = 20) -> requests.Session:
@@ -172,3 +183,75 @@ def extract_product_json_ld_nodes(html: str) -> list[dict[str, Any]]:
             continue
         products.extend(_extract_json_ld_nodes(data, target_type="Product"))
     return products
+
+
+def _clean_identifier_values(values: dict[str, Any]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for key, value in values.items():
+        key_str = str(key or "").strip()
+        value_str = str(value or "").strip()
+        if not key_str or not value_str:
+            continue
+        out[key_str] = value_str
+    return out
+
+
+def make_money(amount: Any, currency: Any) -> Money | None:
+    parsed_amount = parse_decimal_money(amount)
+    parsed_currency = normalize_currency(currency)
+    if parsed_amount is None and parsed_currency is None:
+        return None
+    return Money(amount=parsed_amount, currency=parsed_currency)
+
+
+def make_price(
+    *,
+    amount: Any,
+    currency: Any,
+    compare_at: Any = None,
+    cost: Any = None,
+    min_price: Any = None,
+    max_price: Any = None,
+) -> Price | None:
+    current_money = make_money(amount, currency)
+    if current_money is None:
+        return None
+
+    return Price(
+        current=current_money,
+        compare_at=make_money(compare_at, currency),
+        cost=make_money(cost, currency),
+        min_price=make_money(min_price, currency),
+        max_price=make_money(max_price, currency),
+    )
+
+
+def make_identifiers(values: dict[str, Any]) -> tuple[dict[str, str], Identifiers | None]:
+    cleaned = _clean_identifier_values(values)
+    return cleaned, (Identifiers(values=cleaned) if cleaned else None)
+
+
+def finalize_product_typed_fields(product: Product, *, source_url: str) -> Product:
+    if product.source_v2 is None:
+        product.source_v2 = SourceRef(
+            platform=product.platform,
+            id=product.id,
+            slug=product.slug,
+            url=source_url,
+        )
+
+    if product.taxonomy_v2 is None and product.categories_v2:
+        paths = [list(path) for path in product.categories_v2 if path]
+        if paths:
+            product.taxonomy_v2 = CategorySet(paths=paths, primary=list(paths[0]))
+
+    if product.taxonomy_v2 is not None:
+        if not product.categories_v2:
+            product.categories_v2 = [list(path) for path in product.taxonomy_v2.paths if path]
+
+    if product.identifiers_v2 is not None:
+        product.identifiers = dict(product.identifiers_v2.values)
+    for variant in product.variants:
+        if variant.identifiers_v2 is not None:
+            variant.identifiers = dict(variant.identifiers_v2.values)
+    return product
