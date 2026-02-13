@@ -2,7 +2,7 @@ import re
 
 from slugify import slugify
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from . import utils
 
 _WIX_HEADER = (
@@ -72,7 +72,7 @@ def _normalize_handle(value: str) -> str:
     return ""
 
 
-def _resolve_handle(product: ProductResult) -> str:
+def _resolve_handle(product: Product) -> str:
     if product.slug:
         handle = _normalize_handle(product.slug)
         if handle:
@@ -88,7 +88,7 @@ def _resolve_handle(product: ProductResult) -> str:
     return handle or "product-item"
 
 
-def _resolve_price(product: ProductResult, variant: Variant | None = None) -> str:
+def _resolve_price(product: Product, variant: Variant | None = None) -> str:
     if variant and variant.price_amount is not None:
         return utils.format_number(variant.price_amount, decimals=2)
     if isinstance(product.price, dict):
@@ -98,7 +98,7 @@ def _resolve_price(product: ProductResult, variant: Variant | None = None) -> st
     return ""
 
 
-def _resolve_weight_kg(product: ProductResult, variant: Variant | None = None) -> str:
+def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
     grams = variant.weight if variant and variant.weight is not None else product.weight
     if grams is None:
         return ""
@@ -109,7 +109,7 @@ def _resolve_weight_kg(product: ProductResult, variant: Variant | None = None) -
     return utils.format_number(kg, decimals=6)
 
 
-def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
+def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
     option_names = utils.ordered_unique((product.options or {}).keys())
     if len(option_names) < _MAX_OPTIONS:
         for variant in variants:
@@ -132,7 +132,7 @@ def _fallback_option_value(variant: Variant, index: int) -> str:
 
 
 def _resolve_product_option_choices(
-    product: ProductResult,
+    product: Product,
     variants: list[Variant],
     option_name: str,
 ) -> str:
@@ -164,7 +164,7 @@ def _resolve_variant_option_choice(option_name: str, variant: Variant, *, index:
 def _set_option_fields(
     row: dict[str, str],
     option_names: list[str],
-    product: ProductResult,
+    product: Product,
     variants: list[Variant],
     *,
     variant: Variant | None,
@@ -179,7 +179,7 @@ def _set_option_fields(
             row[f"productOptionChoices{option_index}"] = _resolve_variant_option_choice(option_name, variant, index=index)
 
 
-def _variant_in_stock(product: ProductResult, variant: Variant) -> bool:
+def _variant_in_stock(product: Product, variant: Variant) -> bool:
     if variant.inventory_quantity is not None:
         try:
             return int(variant.inventory_quantity) > 0
@@ -190,7 +190,7 @@ def _variant_in_stock(product: ProductResult, variant: Variant) -> bool:
     return not product.track_quantity
 
 
-def _resolve_variant_inventory(product: ProductResult, variant: Variant) -> str:
+def _resolve_variant_inventory(product: Product, variant: Variant) -> str:
     qty = _format_inventory_qty(variant.inventory_quantity)
     if qty:
         return qty
@@ -201,7 +201,7 @@ def _resolve_variant_inventory(product: ProductResult, variant: Variant) -> str:
     return ""
 
 
-def _resolve_product_inventory(product: ProductResult, variants: list[Variant]) -> str:
+def _resolve_product_inventory(product: Product, variants: list[Variant]) -> str:
     quantities: list[int] = []
     for variant in variants:
         if variant.inventory_quantity is None:
@@ -222,7 +222,7 @@ def _resolve_product_inventory(product: ProductResult, variants: list[Variant]) 
     return "OUT_OF_STOCK"
 
 
-def product_to_wix_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
     handle = _resolve_handle(product)
     variants = utils.resolve_variants(product)
     images = utils.ordered_unique(product.images or [])
@@ -273,6 +273,6 @@ def product_to_wix_rows(product: ProductResult, *, publish: bool) -> list[dict[s
     return rows
 
 
-def product_to_wix_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
+def product_to_wix_csv(product: Product, *, publish: bool) -> tuple[str, str]:
     rows = product_to_wix_rows(product, publish=publish)
     return utils.dict_rows_to_csv(rows, WIX_COLUMNS), utils.make_export_filename("wix")

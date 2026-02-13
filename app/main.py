@@ -18,7 +18,7 @@ from .schemas import (
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
-from .models import ProductResult
+from .models import Product
 from .services.exporters import (
     product_to_bigcommerce_csv,
     product_to_shopify_csv,
@@ -91,7 +91,7 @@ def _normalize_url(product_url: str) -> str:
     return normalized
 
 
-def _run_import_product(product_url: str) -> ProductResult:
+def _run_import_product(product_url: str) -> Product:
     normalized_url = _normalize_url(product_url)
 
     if requires_rapidapi(normalized_url) and not settings.rapidapi_key:
@@ -120,7 +120,7 @@ def _run_import_product(product_url: str) -> ProductResult:
 
 
 def _export_csv_for_target(
-    product: ProductResult,
+    product: Product,
     *,
     target_platform: str,
     publish: bool,

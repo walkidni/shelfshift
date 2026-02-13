@@ -5,7 +5,7 @@ from urllib.parse import quote, urlparse
 
 import requests
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 from ..product_url_detection import detect_product_url, extract_woocommerce_store_api_product_token
 from .common import (
@@ -328,7 +328,7 @@ class WooCommerceClient(ProductClient):
 
         return parsed
 
-    def _parse_store_api_product(self, data: dict[str, Any], payload: Any) -> ProductResult:
+    def _parse_store_api_product(self, data: dict[str, Any], payload: Any) -> Product:
         title = pick_name(data.get("name")) or ""
         description = (
             pick_name(data.get("description"))
@@ -381,7 +381,7 @@ class WooCommerceClient(ProductClient):
         manage_stock = to_bool(data.get("manage_stock"))
         track_quantity = manage_stock if manage_stock is not None else True
 
-        return ProductResult(
+        return Product(
             platform=self.platform,
             id=product_id,
             title=title,
@@ -429,7 +429,7 @@ class WooCommerceClient(ProductClient):
             available=available,
         )
 
-    def _fetch_from_html(self, url: str) -> ProductResult:
+    def _fetch_from_html(self, url: str) -> Product:
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -506,7 +506,7 @@ class WooCommerceClient(ProductClient):
             strip_html_content=True,
         )
 
-        return ProductResult(
+        return Product(
             platform=self.platform,
             id=None,
             title=title,
@@ -551,7 +551,7 @@ class WooCommerceClient(ProductClient):
             urls.append(f"https://{host}/?product={product_id}")
         return dedupe(urls)
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         info = detect_product_url(url)
         if info.get("platform") != "woocommerce":
             raise ValueError("Not a WooCommerce URL.")

@@ -13,7 +13,7 @@ from app.models import (
     Media,
     Money,
     Price,
-    ProductResult,
+    Product,
     Variant,
     Weight,
     format_decimal,
@@ -52,7 +52,7 @@ class ProductClientFactory:
         return client
 
 
-def fetch_product_details(url: str, cfg: ApiConfig) -> ProductResult:
+def fetch_product_details(url: str, cfg: ApiConfig) -> Product:
     client = ProductClientFactory(cfg).for_url(url)
     return client.fetch_product(url)
 
@@ -73,7 +73,7 @@ __all__ = [
     "ApiConfig",
     "ProductClient",
     "ProductClientFactory",
-    "ProductResult",
+    "Product",
     "SquarespaceClient",
     "ShopifyClient",
     "Variant",

@@ -1,15 +1,15 @@
 from typing import Any
 
-from app.models import ProductResult
+from app.models import Product
 
 
 def patch_run_import_product(
     monkeypatch: Any,
     *,
     expected_url: str,
-    product: ProductResult,
+    product: Product,
 ) -> None:
-    def fake_run_import_product(product_url: str) -> ProductResult:
+    def fake_run_import_product(product_url: str) -> Product:
         assert product_url == expected_url
         return product
 

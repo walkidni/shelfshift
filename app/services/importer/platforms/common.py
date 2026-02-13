@@ -7,7 +7,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 
 def http_session(timeout: int = 20) -> requests.Session:
@@ -30,7 +30,7 @@ def http_session(timeout: int = 20) -> requests.Session:
 class ProductClient:
     platform: str = "generic"
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         raise NotImplementedError
 
 

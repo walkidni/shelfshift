@@ -5,7 +5,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 from ..product_url_detection import detect_product_url
 from .common import (
@@ -243,7 +243,7 @@ def _variant_product_options(variants: list[Variant]) -> dict[str, list[str]]:
     return {key: dedupe(values) for key, values in out.items() if values}
 
 
-def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slug: str | None) -> ProductResult:
+def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slug: str | None) -> Product:
     title = pick_name(product_data.get("name")) or ""
     description = pick_name(product_data.get("description")) or ""
 
@@ -316,7 +316,7 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
         or to_bool(product_data.get("isDownloadable"))
     )
 
-    return ProductResult(
+    return Product(
         platform="squarespace",
         id=(
             pick_name(product_data.get("productID"))
@@ -412,7 +412,7 @@ def _parse_page_json_product(
     *,
     source_url: str,
     slug: str | None,
-) -> ProductResult:
+) -> Product:
     structured_content = candidate.get("structuredContent") or {}
 
     title = (
@@ -581,7 +581,7 @@ def _parse_page_json_product(
         or str(structured_content.get("productType") or "").upper() == "DIGITAL"
     )
 
-    return ProductResult(
+    return Product(
         platform="squarespace",
         id=pick_name(candidate.get("id")) or inferred_slug,
         title=title,
@@ -622,7 +622,7 @@ class SquarespaceClient(ProductClient):
     def __init__(self):
         self._http = http_session()
 
-    def _fetch_from_page_json(self, url: str, *, slug: str | None) -> ProductResult:
+    def _fetch_from_page_json(self, url: str, *, slug: str | None) -> Product:
         response = self._http.get(
             _format_json_url(url),
             timeout=self._http.request_timeout,
@@ -636,7 +636,7 @@ class SquarespaceClient(ProductClient):
 
         return _parse_page_json_product(candidate, payload, source_url=url, slug=slug)
 
-    def _fetch_from_html(self, url: str, *, slug: str | None) -> ProductResult:
+    def _fetch_from_html(self, url: str, *, slug: str | None) -> Product:
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -662,7 +662,7 @@ class SquarespaceClient(ProductClient):
 
         return _parse_json_ld_product(selected, source_url=url, slug=slug)
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         info = detect_product_url(url)
         if info.get("platform") != "squarespace":
             raise ValueError("Not a Squarespace URL.")

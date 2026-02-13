@@ -3,7 +3,7 @@ from typing import Any
 from babel.numbers import get_currency_symbol
 
 from ...config import get_settings
-from app.models import ProductResult
+from app.models import Product
 
 _DEFAULT_DESCRIPTION_LIMITS = {
     "low": 80,
@@ -87,7 +87,7 @@ def _build_normal_variants(variants: list[dict[str, Any]], *, currency: str | No
 
 
 def product_result_to_loggable(
-    product: ProductResult,
+    product: Product,
     *,
     verbosity: str | None = None,
     debug_enabled: bool | None = None,

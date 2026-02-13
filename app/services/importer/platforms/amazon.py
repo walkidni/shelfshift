@@ -1,7 +1,7 @@
 import re
 from urllib.parse import parse_qs, urlparse
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 from ..product_url_detection import _AMAZON_ASIN_RE
 from .common import (
@@ -96,7 +96,7 @@ class AmazonRapidApiClient(ProductClient):
             return query["asin"][0]
         return None
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         if not self.cfg.rapidapi_key:
             raise ValueError("RapidAPI key not configured.")
         asin = self._extract_asin(url)
@@ -226,7 +226,7 @@ class AmazonRapidApiClient(ProductClient):
             except (ValueError, AttributeError):
                 pass
 
-        return ProductResult(
+        return Product(
             platform=self.platform,
             id=asin,
             title=title,

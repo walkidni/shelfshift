@@ -1,11 +1,11 @@
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_frame
 
 
 def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -85,7 +85,7 @@ def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None
 
 
 def test_bigcommerce_export_simple_product_uses_product_and_image_rows() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -117,7 +117,7 @@ def test_bigcommerce_export_simple_product_uses_product_and_image_rows() -> None
 
 
 def test_bigcommerce_export_uses_swatch_only_when_value_data_is_present() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -143,7 +143,7 @@ def test_bigcommerce_export_uses_swatch_only_when_value_data_is_present() -> Non
 
 
 def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() -> None:
-    product = ProductResult(
+    product = Product(
         platform="aliexpress",
         id="1005008518647948",
         title="LED Mask",
@@ -169,7 +169,7 @@ def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() ->
 
 
 def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -198,7 +198,7 @@ def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
 
 
 def test_bigcommerce_export_uses_modern_format_by_default() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",

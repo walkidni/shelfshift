@@ -2,7 +2,7 @@ import json
 import re
 from urllib.parse import urlparse
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 from ..product_url_detection import extract_shopify_slug_from_path
 from .common import (
@@ -28,7 +28,7 @@ class ShopifyClient(ProductClient):
             raise ValueError("Not a Shopify product path.")
         return parsed.netloc, handle
 
-    def _fetch_from_html(self, url: str) -> ProductResult:
+    def _fetch_from_html(self, url: str) -> Product:
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -103,7 +103,7 @@ class ShopifyClient(ProductClient):
             )
         ]
 
-        return ProductResult(
+        return Product(
             platform=self.platform,
             id=None,
             title=title,
@@ -126,7 +126,7 @@ class ShopifyClient(ProductClient):
             raw=product_ld,
         )
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         host, handle = self._extract(url)
         response = self._http.get(
             f"https://{host}/products/{handle}.json",
@@ -230,7 +230,7 @@ class ShopifyClient(ProductClient):
             is_digital = True
             requires_shipping = False
 
-        return ProductResult(
+        return Product(
             platform=self.platform,
             id=str(data.get("id", "")),
             title=title,

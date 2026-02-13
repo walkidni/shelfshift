@@ -1,11 +1,11 @@
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_frame
 
 
 def test_simple_product_maps_qty_stock() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -43,7 +43,7 @@ def test_simple_product_maps_qty_stock() -> None:
 
 
 def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
-    product = ProductResult(
+    product = Product(
         platform="aliexpress",
         id="1005008518647948",
         title="Therapy Mask",
@@ -102,7 +102,7 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
 
 
 def test_available_without_qty_does_not_emit_stock() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="123456789",
         title="Digital Template",
@@ -126,7 +126,7 @@ def test_available_without_qty_does_not_emit_stock() -> None:
 
 
 def test_multiple_variants_without_options_synthesizes_option_attribute() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",

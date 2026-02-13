@@ -4,14 +4,14 @@ from .common import ApiConfig, ProductClient
 from .squarespace import SquarespaceClient
 from .shopify import ShopifyClient
 from .woocommerce import WooCommerceClient
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 __all__ = [
     "AliExpressClient",
     "AmazonRapidApiClient",
     "ApiConfig",
     "ProductClient",
-    "ProductResult",
+    "Product",
     "SquarespaceClient",
     "ShopifyClient",
     "Variant",

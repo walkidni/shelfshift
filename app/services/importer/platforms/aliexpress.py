@@ -2,7 +2,7 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 from ..product_url_detection import _ALIEXPRESS_ITEM_RE, _ALIEXPRESS_X_OBJECT_RE
 from .common import (
@@ -16,7 +16,7 @@ from .common import (
 )
 
 
-def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
+def _parse_aliexpress_result(resp: dict, item_id: str) -> Product:
     result = resp.get("result", {}) if isinstance(resp, dict) else {}
     item = result.get("item", {}) if isinstance(result, dict) else {}
 
@@ -226,7 +226,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str) -> ProductResult:
         strip_html_content=True,
     )
 
-    return ProductResult(
+    return Product(
         platform="aliexpress",
         id=str(item_id),
         title=title,
@@ -277,7 +277,7 @@ class AliExpressClient(ProductClient):
 
         return None
 
-    def fetch_product(self, url: str) -> ProductResult:
+    def fetch_product(self, url: str) -> Product:
         if not self.cfg.rapidapi_key:
             raise ValueError("RapidAPI key not configured for AliExpress.")
         item_id = self._extract_item_id(url)

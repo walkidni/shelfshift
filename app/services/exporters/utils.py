@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import re
 from typing import Iterable
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 
 _SAFE_DEST_RE = re.compile(r"[^a-z0-9-]+")
 
@@ -56,7 +56,7 @@ def make_export_filename(destination: str, *, now: datetime | None = None) -> st
     return f"{cleaned}-{utc_timestamp_compact(now)}.csv"
 
 
-def resolve_variants(product: ProductResult) -> list[Variant]:
+def resolve_variants(product: Product) -> list[Variant]:
     variants = list(product.variants or [])
     if variants:
         return variants

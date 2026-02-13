@@ -1,10 +1,10 @@
 from decimal import Decimal
 
-from app.models import Media, Money, Price, ProductResult, Variant, Weight, format_decimal, normalize_currency, parse_decimal_money
+from app.models import Media, Money, Price, Product, Variant, Weight, format_decimal, normalize_currency, parse_decimal_money
 
 
 def test_models_module_exports_v1_and_v2_types() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="1",
         title="Demo",

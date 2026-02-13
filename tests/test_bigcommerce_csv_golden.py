@@ -4,7 +4,7 @@ import pandas as pd
 
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -13,7 +13,7 @@ def test_bigcommerce_csv_matches_golden_fixture_two_variants() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -61,7 +61,7 @@ def test_bigcommerce_csv_matches_golden_fixture_simple_product() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -92,7 +92,7 @@ def test_bigcommerce_csv_matches_golden_fixture_missing_optional_fields() -> Non
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="321",
         title="Minimal Product",
@@ -116,7 +116,7 @@ def test_bigcommerce_csv_matches_golden_fixture_edge_numbers() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="90210",
         title="Precision Scale",
@@ -148,7 +148,7 @@ def test_bigcommerce_csv_matches_golden_fixture_media_edge_cases() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="444",
         title="Media Heavy Tee",

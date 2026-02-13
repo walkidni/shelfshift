@@ -1,11 +1,11 @@
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_frame
 
 
 def test_wix_export_maps_product_and_variant_rows() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Guava Glow Set",
@@ -63,7 +63,7 @@ def test_wix_export_maps_product_and_variant_rows() -> None:
 
 
 def test_wix_export_synthesizes_option_column_when_variants_have_no_options() -> None:
-    product = ProductResult(
+    product = Product(
         platform="aliexpress",
         id="1005008518647948",
         title="Therapy Mask",
@@ -91,7 +91,7 @@ def test_wix_export_synthesizes_option_column_when_variants_have_no_options() ->
 
 
 def test_wix_export_emits_media_rows_for_additional_images() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -120,7 +120,7 @@ def test_wix_export_emits_media_rows_for_additional_images() -> None:
 
 
 def test_wix_export_truncates_name_and_plain_description_to_wix_limits() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="X" * 114,
@@ -144,7 +144,7 @@ def test_wix_export_truncates_using_utf16_units_for_wix_limits() -> None:
     # Python len("A" * 15999 + "😀") == 16000, but JS/UTF-16 length is 16001.
     description = ("A" * 15999) + "😀" + ("B" * 50)
     name = ("N" * 79) + "😀"
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title=name,

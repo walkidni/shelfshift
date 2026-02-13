@@ -3,7 +3,7 @@ from typing import Iterable
 
 from slugify import slugify
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from . import utils
 
 WOOCOMMERCE_COLUMNS: list[str] = [
@@ -63,7 +63,7 @@ def _platform_token(platform: str | None) -> str:
     return _PLATFORM_TOKEN.get((platform or "").strip().lower(), "SRC")
 
 
-def _resolve_product_key(product: ProductResult) -> str:
+def _resolve_product_key(product: Product) -> str:
     for candidate in (product.id, product.slug, product.title):
         key = _slug(candidate)
         if key:
@@ -71,7 +71,7 @@ def _resolve_product_key(product: ProductResult) -> str:
     return "item"
 
 
-def _resolve_parent_sku(product: ProductResult) -> str:
+def _resolve_parent_sku(product: Product) -> str:
     return f"{_platform_token(product.platform)}:{_resolve_product_key(product)}"
 
 
@@ -83,7 +83,7 @@ def _resolve_variant_key(variant: Variant, index: int) -> str:
     return str(index)
 
 
-def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
+def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
     names = utils.ordered_unique((product.options or {}).keys())
     if len(names) < 3:
         for variant in variants:
@@ -105,7 +105,7 @@ def _fallback_option_value(variant: Variant, index: int) -> str:
 
 
 def _resolve_parent_attribute_values(
-    product: ProductResult,
+    product: Product,
     variants: list[Variant],
     option_names: list[str],
 ) -> dict[str, list[str]]:
@@ -127,7 +127,7 @@ def _resolve_parent_attribute_values(
     return values_by_option
 
 
-def _resolve_price(product: ProductResult, variant: Variant | None = None) -> str:
+def _resolve_price(product: Product, variant: Variant | None = None) -> str:
     if variant and variant.price_amount is not None:
         return utils.format_number(variant.price_amount, decimals=6)
     if isinstance(product.price, dict):
@@ -137,7 +137,7 @@ def _resolve_price(product: ProductResult, variant: Variant | None = None) -> st
     return ""
 
 
-def _resolve_weight_kg(product: ProductResult, variant: Variant | None = None) -> str:
+def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
     grams = variant.weight if variant and variant.weight is not None else product.weight
     if grams is None:
         return ""
@@ -148,7 +148,7 @@ def _resolve_weight_kg(product: ProductResult, variant: Variant | None = None) -
     return utils.format_number(kg, decimals=6)
 
 
-def _resolve_tags(product: ProductResult) -> str:
+def _resolve_tags(product: Product) -> str:
     tags = sorted(utils.ordered_unique(product.tags or []), key=str.lower)
     return ",".join(tags)
 
@@ -162,7 +162,7 @@ def _strip_html(text: str | None) -> str:
     return " ".join(cleaned.split())
 
 
-def _resolve_short_description(product: ProductResult) -> str:
+def _resolve_short_description(product: Product) -> str:
     if product.meta_description:
         return product.meta_description
     return _strip_html(product.description)
@@ -170,7 +170,7 @@ def _resolve_short_description(product: ProductResult) -> str:
 
 def _set_common_product_fields(
     row: dict[str, str],
-    product: ProductResult,
+    product: Product,
     *,
     publish: bool,
     include_descriptions: bool = True,
@@ -227,7 +227,7 @@ def _set_attributes(
         row[f"Attribute {index} global"] = "0"
 
 
-def _is_variable_product(product: ProductResult, variants: list[Variant]) -> bool:
+def _is_variable_product(product: Product, variants: list[Variant]) -> bool:
     if len(variants) > 1:
         return True
     for values in (product.options or {}).values():
@@ -242,7 +242,7 @@ def _is_variable_product(product: ProductResult, variants: list[Variant]) -> boo
     return False
 
 
-def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
@@ -327,6 +327,6 @@ def product_to_woocommerce_rows(product: ProductResult, *, publish: bool) -> lis
     return rows
 
 
-def product_to_woocommerce_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
+def product_to_woocommerce_csv(product: Product, *, publish: bool) -> tuple[str, str]:
     rows = product_to_woocommerce_rows(product, publish=publish)
     return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename("woocommerce")

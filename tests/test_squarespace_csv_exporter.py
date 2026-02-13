@@ -1,11 +1,11 @@
 from app.services.exporters import product_to_squarespace_csv
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_frame
 
 
 def test_single_variant_maps_visible_and_hosted_images() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -51,7 +51,7 @@ def test_single_variant_maps_visible_and_hosted_images() -> None:
 
 
 def test_multi_variant_uses_first_row_for_product_fields() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -113,7 +113,7 @@ def test_multi_variant_uses_first_row_for_product_fields() -> None:
 
 
 def test_multiple_variants_without_options_synthesizes_option_column() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -144,7 +144,7 @@ def test_multiple_variants_without_options_synthesizes_option_column() -> None:
 
 
 def test_missing_inventory_defaults_to_unlimited_stock() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",

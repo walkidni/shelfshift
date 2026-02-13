@@ -9,7 +9,7 @@ from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._app_helpers import patch_run_import_product
 
 
@@ -52,7 +52,7 @@ def test_detect_squarespace_product_url() -> None:
 
 
 def test_import_endpoint_uses_service(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -91,7 +91,7 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
 
 
 def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="woocommerce",
         id="123",
         title="Adjustable Wrench Set",
@@ -130,7 +130,7 @@ def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:
 
 
 def test_import_endpoint_accepts_squarespace_url(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="squarespace",
         id="abc123",
         title="Custom Patchwork Shirt",
@@ -169,7 +169,7 @@ def test_import_endpoint_accepts_squarespace_url(monkeypatch) -> None:
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -229,7 +229,7 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
 
 
 def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -290,7 +290,7 @@ def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
 
 
 def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -324,7 +324,7 @@ def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
 
 
 def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -383,7 +383,7 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
 
 
 def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -453,7 +453,7 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
 
 
 def test_export_wix_csv_endpoint(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -527,7 +527,7 @@ def test_home_page_renders() -> None:
 
 
 def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -567,7 +567,7 @@ def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
 
 
 def test_web_export_csv_supports_bigcommerce_target(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -605,7 +605,7 @@ def test_web_export_csv_supports_bigcommerce_target(monkeypatch) -> None:
 
 
 def test_web_export_csv_supports_bigcommerce_legacy_format(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -640,7 +640,7 @@ def test_web_export_csv_supports_bigcommerce_legacy_format(monkeypatch) -> None:
 
 
 def test_export_bigcommerce_csv_endpoint_supports_legacy_format(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",
@@ -671,7 +671,7 @@ def test_export_bigcommerce_csv_endpoint_supports_legacy_format(monkeypatch) -> 
 
 
 def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch) -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="123",
         title="Demo Mug",

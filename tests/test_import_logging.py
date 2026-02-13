@@ -1,9 +1,9 @@
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from app.services.logging import product_result_to_loggable
 
 
-def _build_sample_product() -> ProductResult:
-    return ProductResult(
+def _build_sample_product() -> Product:
+    return Product(
         platform="aliexpress",
         id="1005008518647948",
         title="LED Mask",

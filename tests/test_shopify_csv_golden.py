@@ -4,7 +4,7 @@ import pandas as pd
 
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -13,7 +13,7 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == SHOPIFY_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="V-Neck T-Shirt",
@@ -61,7 +61,7 @@ def test_shopify_csv_matches_golden_fixture_simple_product() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == SHOPIFY_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",

@@ -1,4 +1,4 @@
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from . import utils
 
 SQUARESPACE_COLUMNS: list[str] = [
@@ -39,7 +39,7 @@ def _format_bool(value: bool) -> str:
     return "Yes" if value else "No"
 
 
-def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
+def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
     option_names = utils.ordered_unique((product.options or {}).keys())
     if len(option_names) < 3:
         for variant in variants:
@@ -56,7 +56,7 @@ def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> li
     return option_names[:3]
 
 
-def _resolve_price(product: ProductResult, variant: Variant) -> str:
+def _resolve_price(product: Product, variant: Variant) -> str:
     if variant.price_amount is not None:
         return utils.format_number(variant.price_amount, decimals=2)
     if isinstance(product.price, dict):
@@ -66,7 +66,7 @@ def _resolve_price(product: ProductResult, variant: Variant) -> str:
     return ""
 
 
-def _resolve_stock(product: ProductResult, variant: Variant) -> str:
+def _resolve_stock(product: Product, variant: Variant) -> str:
     if not product.track_quantity:
         return "Unlimited"
     if variant.inventory_quantity is None:
@@ -77,7 +77,7 @@ def _resolve_stock(product: ProductResult, variant: Variant) -> str:
         return "Unlimited"
 
 
-def _resolve_weight_kg(product: ProductResult, variant: Variant) -> str:
+def _resolve_weight_kg(product: Product, variant: Variant) -> str:
     grams = variant.weight if variant.weight is not None else product.weight
     if grams is None:
         return ""
@@ -88,12 +88,12 @@ def _resolve_weight_kg(product: ProductResult, variant: Variant) -> str:
     return utils.format_number(kg, decimals=6)
 
 
-def _resolve_tags(product: ProductResult) -> str:
+def _resolve_tags(product: Product) -> str:
     tags = sorted(utils.ordered_unique(product.tags or []), key=str.lower)
     return ",".join(tags)
 
 
-def _resolve_hosted_image_urls(product: ProductResult) -> str:
+def _resolve_hosted_image_urls(product: Product) -> str:
     return "\n".join(utils.ordered_unique(product.images or []))
 
 
@@ -117,7 +117,7 @@ def _set_variant_option_fields(
 
 
 def product_to_squarespace_rows(
-    product: ProductResult,
+    product: Product,
     *,
     publish: bool,
     product_page: str = "",
@@ -155,7 +155,7 @@ def product_to_squarespace_rows(
 
 
 def product_to_squarespace_csv(
-    product: ProductResult,
+    product: Product,
     *,
     publish: bool,
     product_page: str = "",

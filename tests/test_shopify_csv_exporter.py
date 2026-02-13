@@ -1,11 +1,11 @@
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_frame
 
 
 def test_single_variant_uses_default_title_option() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -29,7 +29,7 @@ def test_single_variant_uses_default_title_option() -> None:
 
 
 def test_multi_variant_maps_two_options() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Classic Tee",
@@ -83,7 +83,7 @@ def test_multi_variant_maps_two_options() -> None:
 
 
 def test_multiple_images_create_extra_rows() -> None:
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="202",
         title="Poster",
@@ -126,7 +126,7 @@ def test_multiple_images_create_extra_rows() -> None:
 
 def test_body_html_round_trips_quotes_commas_newlines() -> None:
     body = 'He said "hello", then left.\nSecond line, still in body.'
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -144,7 +144,7 @@ def test_body_html_round_trips_quotes_commas_newlines() -> None:
 
 
 def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B00ABC1234",
         title="Fancy Lamp 2.0!",
@@ -168,7 +168,7 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
 
 
 def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
-    product = ProductResult(
+    product = Product(
         platform="aliexpress",
         id="1005008518647948",
         title="Therapy Mask",
@@ -194,7 +194,7 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
 
 
 def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
-    product = ProductResult(
+    product = Product(
         platform="squarespace",
         id="4280546",
         title="Large Boxy Quilt Pouch (R)",

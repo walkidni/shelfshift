@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from slugify import slugify
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from . import utils
 
 SHOPIFY_COLUMNS: list[str] = [
@@ -76,7 +76,7 @@ def _normalize_handle(value: str) -> str:
     return ""
 
 
-def _resolve_handle(product: ProductResult) -> str:
+def _resolve_handle(product: Product) -> str:
     if product.slug:
         handle = _normalize_handle(product.slug)
         if handle:
@@ -92,7 +92,7 @@ def _resolve_handle(product: ProductResult) -> str:
     return handle or "product-item"
 
 
-def _resolve_option_names(product: ProductResult) -> list[str]:
+def _resolve_option_names(product: Product) -> list[str]:
     option_names = utils.ordered_unique(product.options.keys())
     if len(option_names) < 3:
         for variant in product.variants or []:
@@ -110,12 +110,12 @@ def _resolve_option_names(product: ProductResult) -> list[str]:
     return option_names[:3]
 
 
-def _resolve_tags(product: ProductResult) -> str:
+def _resolve_tags(product: Product) -> str:
     tags = sorted(utils.ordered_unique(product.tags or []), key=str.lower)
     return ",".join(tags)
 
 
-def _resolve_price(product: ProductResult, variant: Variant) -> str:
+def _resolve_price(product: Product, variant: Variant) -> str:
     if variant.price_amount is not None:
         return utils.format_number(variant.price_amount, decimals=2)
     if isinstance(product.price, dict):
@@ -150,7 +150,7 @@ def _resolve_shopify_product_images(images: list[str] | None) -> list[str]:
     return utils.ordered_unique(non_empty)
 
 
-def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def product_to_shopify_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
@@ -215,6 +215,6 @@ def product_to_shopify_rows(product: ProductResult, *, publish: bool) -> list[di
     return rows
 
 
-def product_to_shopify_csv(product: ProductResult, *, publish: bool) -> tuple[str, str]:
+def product_to_shopify_csv(product: Product, *, publish: bool) -> tuple[str, str]:
     rows = product_to_shopify_rows(product, publish=publish)
     return utils.dict_rows_to_csv(rows, SHOPIFY_COLUMNS), utils.make_export_filename("shopify")

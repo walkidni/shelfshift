@@ -2,7 +2,7 @@ import re
 from typing import Literal
 from slugify import slugify
 
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from . import utils
 
 # BigCommerce Modern Product Import/Export (v3) schema.
@@ -154,7 +154,7 @@ def _require_weight_kg(value: float | None, *, is_digital: bool) -> str:
     return formatted or "0"
 
 
-def _resolve_price(product: ProductResult, variant: Variant | None = None) -> str:
+def _resolve_price(product: Product, variant: Variant | None = None) -> str:
     if variant and variant.price_amount is not None:
         return _format_price(variant.price_amount)
     if isinstance(product.price, dict):
@@ -164,7 +164,7 @@ def _resolve_price(product: ProductResult, variant: Variant | None = None) -> st
     return ""
 
 
-def _resolve_product_key(product: ProductResult) -> str:
+def _resolve_product_key(product: Product) -> str:
     for candidate in (product.id, product.slug, product.title):
         key = slugify(str(candidate or ""), separator="-")
         if key:
@@ -176,7 +176,7 @@ def _platform_token(platform: str | None) -> str:
     return _PLATFORM_TOKEN.get((platform or "").strip().lower(), "SRC")
 
 
-def _resolve_parent_sku(product: ProductResult, variants: list[Variant], *, is_variable: bool) -> str:
+def _resolve_parent_sku(product: Product, variants: list[Variant], *, is_variable: bool) -> str:
     if not is_variable and variants:
         sku = (variants[0].sku or "").strip()
         if sku:
@@ -201,7 +201,7 @@ def _has_any_inventory_quantity(variants: list[Variant]) -> bool:
     return any(_resolve_inventory_qty(variant) != "" for variant in variants)
 
 
-def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> list[str]:
+def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
     option_names = utils.ordered_unique((product.options or {}).keys())
     for variant in variants:
         for option_name in utils.ordered_unique((variant.options or {}).keys()):
@@ -213,7 +213,7 @@ def _resolve_option_names(product: ProductResult, variants: list[Variant]) -> li
     return option_names
 
 
-def _is_variable_product(product: ProductResult, variants: list[Variant], option_names: list[str]) -> bool:
+def _is_variable_product(product: Product, variants: list[Variant], option_names: list[str]) -> bool:
     if len(variants) > 1:
         return True
     if option_names:
@@ -279,7 +279,7 @@ def _resolve_inventory_mode(*, is_variable: bool, has_inventory: bool) -> str:
     return _INVENTORY_PRODUCT
 
 
-def _resolve_product_url_slug(product: ProductResult) -> str:
+def _resolve_product_url_slug(product: Product) -> str:
     if product.slug:
         cleaned = slugify(product.slug, separator="-")
         if cleaned:
@@ -308,7 +308,7 @@ def _resolve_keywords_from_tags(tags: list[str] | None) -> str:
     return ",".join(utils.ordered_unique(tags or []))
 
 
-def _resolve_product_weight_grams(product: ProductResult, variants: list[Variant]) -> float | None:
+def _resolve_product_weight_grams(product: Product, variants: list[Variant]) -> float | None:
     for variant in variants:
         if variant.weight is not None:
             return variant.weight
@@ -322,14 +322,14 @@ def _resolve_category_details(category: str | None) -> str:
     return f"Category Name: {value}, Category Path: {value}"
 
 
-def _resolve_legacy_images(product: ProductResult) -> str:
+def _resolve_legacy_images(product: Product) -> str:
     urls = utils.ordered_unique(
         [url for url in (_normalize_image_url(image) for image in (product.images or [])) if url]
     )
     return "|".join(f"Product Image URL: {url}" for url in urls)
 
 
-def _product_to_bigcommerce_legacy_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -365,7 +365,7 @@ def _product_to_bigcommerce_legacy_rows(product: ProductResult, *, publish: bool
     return [row]
 
 
-def _product_to_bigcommerce_modern_rows(product: ProductResult, *, publish: bool) -> list[dict[str, str]]:
+def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -438,7 +438,7 @@ def _product_to_bigcommerce_modern_rows(product: ProductResult, *, publish: bool
 
 
 def product_to_bigcommerce_rows(
-    product: ProductResult,
+    product: Product,
     *,
     publish: bool,
     csv_format: BigCommerceCsvFormat = "modern",
@@ -451,7 +451,7 @@ def product_to_bigcommerce_rows(
 
 
 def product_to_bigcommerce_csv(
-    product: ProductResult,
+    product: Product,
     *,
     publish: bool,
     csv_format: BigCommerceCsvFormat = "modern",

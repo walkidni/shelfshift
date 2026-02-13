@@ -4,7 +4,7 @@ import pandas as pd
 
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import ProductResult, Variant
+from app.models import Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -13,7 +13,7 @@ def test_wix_csv_matches_golden_fixture_two_variants() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="101",
         title="Guava Glow Set",
@@ -54,7 +54,7 @@ def test_wix_csv_matches_golden_fixture_simple_product() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="amazon",
         id="B000111",
         title="Demo Mug",
@@ -85,7 +85,7 @@ def test_wix_csv_matches_golden_fixture_missing_optional_fields() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="321",
         title=None,
@@ -109,7 +109,7 @@ def test_wix_csv_matches_golden_fixture_edge_numbers() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="90210",
         title="Precision Scale",
@@ -141,7 +141,7 @@ def test_wix_csv_matches_golden_fixture_media_edge_cases() -> None:
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
-    product = ProductResult(
+    product = Product(
         platform="shopify",
         id="444",
         title="Media Heavy Tee",
