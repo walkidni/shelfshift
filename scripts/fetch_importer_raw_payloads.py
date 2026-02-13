@@ -37,11 +37,11 @@ def _args() -> argparse.Namespace:
             "Fetch raw upstream importer payloads (pre-normalization) for all supported import platforms."
         )
     )
-    parser.add_argument("--shopify-url", required=True, help="Shopify product URL")
-    parser.add_argument("--woocommerce-url", required=True, help="WooCommerce product URL")
-    parser.add_argument("--squarespace-url", required=True, help="Squarespace product URL")
-    parser.add_argument("--amazon-url", required=True, help="Amazon product URL")
-    parser.add_argument("--aliexpress-url", required=True, help="AliExpress product URL")
+    parser.add_argument("--shopify-url", help="Shopify product URL")
+    parser.add_argument("--woocommerce-url", help="WooCommerce product URL")
+    parser.add_argument("--squarespace-url", help="Squarespace product URL")
+    parser.add_argument("--amazon-url", help="Amazon product URL")
+    parser.add_argument("--aliexpress-url", help="AliExpress product URL")
     parser.add_argument(
         "--output-dir",
         default="tmp/importer-raw-payloads",
@@ -83,23 +83,35 @@ def main() -> int:
     cfg = ApiConfig(rapidapi_key=settings.rapidapi_key, amazon_country=settings.amazon_country)
     factory = ProductClientFactory(cfg)
 
-    urls_by_platform = {
+    urls_by_platform: dict[str, str | None] = {
         "shopify": args.shopify_url,
         "woocommerce": args.woocommerce_url,
         "squarespace": args.squarespace_url,
         "amazon": args.amazon_url,
         "aliexpress": args.aliexpress_url,
     }
+    requested = {platform: url for platform, url in urls_by_platform.items() if url}
+    if not requested:
+        print(
+            "No platform URLs were provided. Pass at least one of: "
+            "--shopify-url, --woocommerce-url, --squarespace-url, --amazon-url, --aliexpress-url",
+            file=sys.stderr,
+        )
+        return 2
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     errors: list[tuple[str, str]] = []
     for platform in SUPPORTED_PLATFORMS:
+        platform_url = requested.get(platform)
+        if not platform_url:
+            print(f"[skip] {platform}: no URL provided")
+            continue
         try:
             snapshot = _fetch_snapshot(
                 platform=platform,
-                url=urls_by_platform[platform],
+                url=platform_url,
                 cfg=cfg,
                 factory=factory,
             )
