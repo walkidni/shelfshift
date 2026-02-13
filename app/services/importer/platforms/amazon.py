@@ -1,12 +1,12 @@
 import re
 from urllib.parse import parse_qs, urlparse
 
+from app.models import ProductResult, Variant
+
 from ..product_url_detection import _AMAZON_ASIN_RE
 from .common import (
     ApiConfig,
     ProductClient,
-    ProductResult,
-    Variant,
     append_default_variant_if_empty,
     dedupe,
     http_session,

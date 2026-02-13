@@ -1,4 +1,4 @@
-from ..importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from . import utils
 
 SQUARESPACE_COLUMNS: list[str] = [

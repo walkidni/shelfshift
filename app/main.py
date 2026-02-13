@@ -18,6 +18,7 @@ from .schemas import (
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
+from .models import ProductResult
 from .services.exporters import (
     product_to_bigcommerce_csv,
     product_to_shopify_csv,
@@ -28,7 +29,6 @@ from .services.exporters import (
 from .services.logging import product_result_to_loggable
 from .services.importer import (
     ApiConfig,
-    ProductResult,
     detect_product_url,
     fetch_product_details,
     requires_rapidapi,

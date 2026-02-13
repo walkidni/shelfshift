@@ -2,7 +2,7 @@ import re
 
 from slugify import slugify
 
-from ..importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from . import utils
 
 _WIX_HEADER = (

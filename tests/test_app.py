@@ -9,7 +9,7 @@ from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.services.importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from tests._app_helpers import patch_run_import_product
 
 

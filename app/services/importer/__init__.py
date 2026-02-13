@@ -3,15 +3,23 @@ from .platforms import (
     AmazonRapidApiClient,
     ApiConfig,
     ProductClient,
-    ProductResult,
     SquarespaceClient,
     ShopifyClient,
-    Variant,
     WooCommerceClient,
     _parse_aliexpress_result,
 )
-from .model_v2 import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
 from .product_url_detection import detect_product_url
+from app.models import (
+    Media,
+    Money,
+    Price,
+    ProductResult,
+    Variant,
+    Weight,
+    format_decimal,
+    normalize_currency,
+    parse_decimal_money,
+)
 
 
 class ProductClientFactory:

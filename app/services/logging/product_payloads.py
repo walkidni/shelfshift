@@ -3,7 +3,7 @@ from typing import Any
 from babel.numbers import get_currency_symbol
 
 from ...config import get_settings
-from ..importer.platforms.common import ProductResult
+from app.models import ProductResult
 
 _DEFAULT_DESCRIPTION_LIMITS = {
     "low": 80,

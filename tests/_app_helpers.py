@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.services.importer import ProductResult
+from app.models import ProductResult
 
 
 def patch_run_import_product(

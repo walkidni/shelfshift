@@ -3,7 +3,7 @@ from typing import Iterable
 
 from slugify import slugify
 
-from ..importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from . import utils
 
 WOOCOMMERCE_COLUMNS: list[str] = [

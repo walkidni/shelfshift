@@ -1,10 +1,6 @@
 from decimal import Decimal
 
-from app.services.importer import Media as FacadeMedia
-from app.services.importer import Money as FacadeMoney
-from app.services.importer import Price as FacadePrice
-from app.services.importer import Weight as FacadeWeight
-from app.services.importer.model_v2 import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
+from app.models import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
 
 
 def test_parse_decimal_money_uses_string_conversion_for_floats() -> None:
@@ -51,10 +47,3 @@ def test_v2_dataclasses_have_safe_defaults() -> None:
     weight = Weight()
     assert weight.value is None
     assert weight.unit == "g"
-
-
-def test_v2_types_are_available_from_importer_facade() -> None:
-    assert FacadeMoney is Money
-    assert FacadePrice is Price
-    assert FacadeWeight is Weight
-    assert FacadeMedia is Media

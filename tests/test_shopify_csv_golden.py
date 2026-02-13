@@ -4,7 +4,7 @@ import pandas as pd
 
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
-from app.services.importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 

@@ -2,11 +2,11 @@ import json
 import re
 from urllib.parse import urlparse
 
+from app.models import ProductResult, Variant
+
 from ..product_url_detection import extract_shopify_slug_from_path
 from .common import (
     ProductClient,
-    ProductResult,
-    Variant,
     append_default_variant_if_empty,
     dedupe,
     http_session,

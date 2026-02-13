@@ -1,6 +1,6 @@
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.services.importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from tests._csv_helpers import read_frame
 
 

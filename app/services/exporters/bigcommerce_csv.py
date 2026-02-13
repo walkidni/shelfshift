@@ -2,7 +2,7 @@ import re
 from typing import Literal
 from slugify import slugify
 
-from ..importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from . import utils
 
 # BigCommerce Modern Product Import/Export (v3) schema.

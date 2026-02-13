@@ -5,11 +5,11 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 
+from app.models import ProductResult, Variant
+
 from ..product_url_detection import detect_product_url
 from .common import (
     ProductClient,
-    ProductResult,
-    Variant,
     append_default_variant_if_empty,
     dedupe,
     extract_product_json_ld_nodes,

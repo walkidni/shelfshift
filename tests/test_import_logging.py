@@ -1,4 +1,4 @@
-from app.services.importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from app.services.logging import product_result_to_loggable
 
 

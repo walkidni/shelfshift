@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import re
 from typing import Iterable
 
-from ..importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 
 _SAFE_DEST_RE = re.compile(r"[^a-z0-9-]+")
 

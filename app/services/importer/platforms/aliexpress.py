@@ -2,12 +2,12 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
+from app.models import ProductResult, Variant
+
 from ..product_url_detection import _ALIEXPRESS_ITEM_RE, _ALIEXPRESS_X_OBJECT_RE
 from .common import (
     ApiConfig,
     ProductClient,
-    ProductResult,
-    Variant,
     append_default_variant_if_empty,
     dedupe,
     http_session,

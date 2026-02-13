@@ -4,7 +4,7 @@ import pandas as pd
 
 from app.services.exporters import product_to_squarespace_csv
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
-from app.services.importer import ProductResult, Variant
+from app.models import ProductResult, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
