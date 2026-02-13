@@ -1,0 +1,60 @@
+{
+  "brand": "ST-P SEWS",
+  "category": null,
+  "description": "Handmade shirt",
+  "id": "custom-patchwork-shirt-snzgy",
+  "images": [
+    "https://images.example.com/front.jpg"
+  ],
+  "is_digital": false,
+  "meta_description": "Handmade shirt",
+  "meta_title": "Custom Patchwork Shirt",
+  "options": {
+    "Option": [
+      "Blue / S",
+      "Red / M"
+    ]
+  },
+  "platform": "squarespace",
+  "price": {
+    "amount": 120.0,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "custom-patchwork-shirt-snzgy",
+  "tags": [],
+  "title": "Custom Patchwork Shirt",
+  "track_quantity": true,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": "SQ-001",
+      "image": null,
+      "inventory_quantity": null,
+      "options": {
+        "Option": "Blue / S"
+      },
+      "price_amount": 120.0,
+      "sku": "SQ-001",
+      "title": "Blue / S",
+      "weight": null
+    },
+    {
+      "available": false,
+      "currency": "USD",
+      "id": "SQ-002",
+      "image": null,
+      "inventory_quantity": null,
+      "options": {
+        "Option": "Red / M"
+      },
+      "price_amount": 130.0,
+      "sku": "SQ-002",
+      "title": "Red / M",
+      "weight": null
+    }
+  ],
+  "vendor": "ST-P SEWS",
+  "weight": null
+}

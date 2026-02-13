@@ -1,0 +1,38 @@
+{
+  "item": {
+    "id": "abc123",
+    "recordTypeLabel": "product",
+    "title": "Custom Patchwork Shirt",
+    "urlId": "custom-patchwork-shirt-snzgy",
+    "assetUrl": "https://images.example.com/front.jpg",
+    "tags": ["patchwork", "shirt"],
+    "categories": ["Tops"],
+    "structuredContent": {
+      "description": "<p>Handmade shirt.</p>",
+      "productType": "PHYSICAL",
+      "variantOptions": [
+        {"name": "Color", "values": [{"value": "Blue"}, {"value": "Red"}]},
+        {"name": "Size", "values": [{"value": "S"}, {"value": "M"}]}
+      ],
+      "variants": [
+        {
+          "id": "v1",
+          "sku": "SQ-001",
+          "optionValues": ["Blue", "S"],
+          "priceMoney": {"value": "120.00", "currency": "USD"},
+          "inStock": true,
+          "stock": 4,
+          "image": {"assetUrl": "https://images.example.com/blue-s.jpg"}
+        },
+        {
+          "id": "v2",
+          "sku": "SQ-002",
+          "optionValues": ["Red", "M"],
+          "priceMoney": {"value": "130.00", "currency": "USD"},
+          "inStock": false,
+          "stock": 0
+        }
+      ]
+    }
+  }
+}

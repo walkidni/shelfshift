@@ -1,0 +1,16 @@
+[
+  {
+    "id": 101,
+    "name": "Adjustable Wrench Set",
+    "slug": "adjustable-wrench-set",
+    "description": "<p>Heavy duty set</p>",
+    "prices": {
+      "currency_code": "USD",
+      "currency_minor_unit": 2,
+      "price": "2900"
+    },
+    "images": [{"src": "https://demo-store.com/wp-content/uploads/wrench.jpg"}],
+    "is_in_stock": true,
+    "attributes": [{"name": "Material", "terms": [{"name": "Steel"}]}]
+  }
+]

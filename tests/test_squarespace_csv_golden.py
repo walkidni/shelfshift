@@ -62,3 +62,43 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
 
     assert list(actual.columns) == SQUARESPACE_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_squarespace_csv_matches_golden_fixture_simple_product() -> None:
+    fixture_path = Path(__file__).resolve().parent / "fixtures" / "squarespace_one_simple_product_full.csv"
+    expected = read_fixture_frame(fixture_path)
+    assert list(expected.columns) == SQUARESPACE_COLUMNS
+
+    product = ProductResult(
+        platform="amazon",
+        id="B000111",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[
+            "https://cdn.example.com/mug-front.jpg",
+            "https://cdn.example.com/mug-side.jpg",
+        ],
+        variants=[
+            Variant(
+                id="v1",
+                sku="AMZ-MUG-001",
+                price_amount=12.0,
+                inventory_quantity=0,
+                weight=250,
+            )
+        ],
+        raw={},
+    )
+
+    csv_text, filename = product_to_squarespace_csv(
+        product,
+        publish=False,
+        product_page="shop",
+        product_url="demo-mug",
+    )
+    assert filename == "squarespace-20260208T000000Z.csv"
+    actual = read_frame(csv_text)
+
+    assert list(actual.columns) == SQUARESPACE_COLUMNS
+    pd.testing.assert_frame_equal(actual, expected)

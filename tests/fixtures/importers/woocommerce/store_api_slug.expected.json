@@ -1,0 +1,43 @@
+{
+  "brand": null,
+  "category": null,
+  "description": "<p>Heavy duty set</p>",
+  "id": "101",
+  "images": [
+    "https://demo-store.com/wp-content/uploads/wrench.jpg"
+  ],
+  "is_digital": false,
+  "meta_description": "Heavy duty set",
+  "meta_title": "Adjustable Wrench Set",
+  "options": {
+    "Material": [
+      "Steel"
+    ]
+  },
+  "platform": "woocommerce",
+  "price": {
+    "amount": 29.0,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "adjustable-wrench-set",
+  "tags": [],
+  "title": "Adjustable Wrench Set",
+  "track_quantity": true,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": "101",
+      "image": null,
+      "inventory_quantity": null,
+      "options": {},
+      "price_amount": 29.0,
+      "sku": null,
+      "title": null,
+      "weight": null
+    }
+  ],
+  "vendor": null,
+  "weight": null
+}

@@ -1,0 +1,70 @@
+{
+  "brand": "Acme Apparel",
+  "category": "Shirts",
+  "description": "<p>Soft cotton tee</p>",
+  "id": "101",
+  "images": [
+    "https://cdn.example.com/tee-1.jpg",
+    "https://cdn.example.com/tee-2.jpg"
+  ],
+  "is_digital": false,
+  "meta_description": "Soft cotton tee",
+  "meta_title": "Classic Tee",
+  "options": {
+    "Color": [
+      "Black",
+      "White"
+    ],
+    "Size": [
+      "M",
+      "L"
+    ]
+  },
+  "platform": "shopify",
+  "price": {
+    "amount": 19.99,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "classic-tee",
+  "tags": [
+    "tee",
+    "cotton"
+  ],
+  "title": "Classic Tee",
+  "track_quantity": true,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": "111",
+      "image": null,
+      "inventory_quantity": 4,
+      "options": {
+        "Color": "Black",
+        "Size": "M"
+      },
+      "price_amount": 19.99,
+      "sku": "TEE-BLK-M-111",
+      "title": "Black / M",
+      "weight": 220
+    },
+    {
+      "available": false,
+      "currency": "USD",
+      "id": "112",
+      "image": null,
+      "inventory_quantity": 0,
+      "options": {
+        "Color": "White",
+        "Size": "L"
+      },
+      "price_amount": 21.99,
+      "sku": "TEE-WHT-L-112",
+      "title": "White / L",
+      "weight": 230
+    }
+  ],
+  "vendor": "Acme Apparel",
+  "weight": 220
+}

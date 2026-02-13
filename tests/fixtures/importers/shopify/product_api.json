@@ -1,0 +1,42 @@
+{
+  "product": {
+    "id": 101,
+    "title": "Classic Tee",
+    "body_html": "<p>Soft cotton tee</p>",
+    "vendor": "Acme Apparel",
+    "product_type": "Shirts",
+    "tags": "tee, cotton",
+    "images": [
+      {"src": "https://cdn.example.com/tee-1.jpg"},
+      {"src": "https://cdn.example.com/tee-2.jpg"}
+    ],
+    "options": [
+      {"name": "Color", "values": ["Black", "White"]},
+      {"name": "Size", "values": ["M", "L"]}
+    ],
+    "variants": [
+      {
+        "id": 111,
+        "sku": "TEE-BLK-M-",
+        "title": "Black / M",
+        "option1": "Black",
+        "option2": "M",
+        "price": "19.99",
+        "available": true,
+        "inventory_quantity": 4,
+        "weight": 220
+      },
+      {
+        "id": 112,
+        "sku": "TEE-WHT-L-",
+        "title": "White / L",
+        "option1": "White",
+        "option2": "L",
+        "price": "21.99",
+        "available": false,
+        "inventory_quantity": 0,
+        "weight": 230
+      }
+    ]
+  }
+}

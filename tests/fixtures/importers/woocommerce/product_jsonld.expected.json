@@ -1,0 +1,37 @@
+{
+  "brand": null,
+  "category": null,
+  "description": "Fallback product",
+  "id": null,
+  "images": [],
+  "is_digital": false,
+  "meta_description": "Fallback product",
+  "meta_title": "Brake Disc Rotor",
+  "options": {},
+  "platform": "woocommerce",
+  "price": {
+    "amount": 19.99,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "brake-disc-rotor",
+  "tags": [],
+  "title": "Brake Disc Rotor",
+  "track_quantity": true,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": null,
+      "image": null,
+      "inventory_quantity": null,
+      "options": {},
+      "price_amount": 19.99,
+      "sku": null,
+      "title": null,
+      "weight": null
+    }
+  ],
+  "vendor": null,
+  "weight": null
+}

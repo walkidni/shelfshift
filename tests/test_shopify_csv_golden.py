@@ -54,3 +54,35 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
 
     assert list(actual.columns) == SHOPIFY_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_shopify_csv_matches_golden_fixture_simple_product() -> None:
+    fixture_path = Path(__file__).resolve().parent / "fixtures" / "shopify_one_simple_product_full.csv"
+    expected = read_fixture_frame(fixture_path)
+    assert list(expected.columns) == SHOPIFY_COLUMNS
+
+    product = ProductResult(
+        platform="amazon",
+        id="B000111",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug.jpg"],
+        variants=[
+            Variant(
+                id="v1",
+                sku="AMZ-MUG-001",
+                price_amount=12.0,
+                inventory_quantity=0,
+                weight=250,
+            )
+        ],
+        raw={},
+    )
+
+    csv_text, filename = product_to_shopify_csv(product, publish=False)
+    assert filename == "shopify-20260208T000000Z.csv"
+    actual = read_frame(csv_text)
+
+    assert list(actual.columns) == SHOPIFY_COLUMNS
+    pd.testing.assert_frame_equal(actual, expected)

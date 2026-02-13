@@ -1,0 +1,70 @@
+{
+  "brand": null,
+  "category": "Tops",
+  "description": "<p>Handmade shirt.</p>",
+  "id": "abc123",
+  "images": [
+    "https://images.example.com/front.jpg",
+    "https://images.example.com/blue-s.jpg"
+  ],
+  "is_digital": false,
+  "meta_description": "Handmade shirt.",
+  "meta_title": "Custom Patchwork Shirt",
+  "options": {
+    "Color": [
+      "Blue",
+      "Red"
+    ],
+    "Size": [
+      "S",
+      "M"
+    ]
+  },
+  "platform": "squarespace",
+  "price": {
+    "amount": 120.0,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "custom-patchwork-shirt-snzgy",
+  "tags": [
+    "patchwork",
+    "shirt"
+  ],
+  "title": "Custom Patchwork Shirt",
+  "track_quantity": true,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": "v1",
+      "image": "https://images.example.com/blue-s.jpg",
+      "inventory_quantity": 4,
+      "options": {
+        "Color": "Blue",
+        "Size": "S"
+      },
+      "price_amount": 120.0,
+      "sku": "SQ-001",
+      "title": null,
+      "weight": null
+    },
+    {
+      "available": false,
+      "currency": "USD",
+      "id": "v2",
+      "image": null,
+      "inventory_quantity": 0,
+      "options": {
+        "Color": "Red",
+        "Size": "M"
+      },
+      "price_amount": 130.0,
+      "sku": "SQ-002",
+      "title": null,
+      "weight": null
+    }
+  ],
+  "vendor": null,
+  "weight": null
+}

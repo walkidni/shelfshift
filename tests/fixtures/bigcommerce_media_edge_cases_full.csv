@@ -1,0 +1,6 @@
+Item,ID,Name,Type,SKU,Options,Inventory Tracking,Current Stock,Low Stock,Price,Cost Price,Retail Price,Sale Price,Brand ID,Channels,Categories,Description,Custom Fields,Page Title,Product URL,Meta Description,Search Keywords,Meta Keywords,Bin Picking Number,UPC/EAN,Global Trade Number,Manufacturer Part Number,Free Shipping,Fixed Shipping Cost,Weight,Width,Height,Depth,Is Visible,Is Featured,Warranty,Tax Class,Product Condition,Show Product Condition,Sort Order,Variant Image URL,Internal Image URL (Export),Image URL (Import),Image Description,Image is Thumbnail,Image Sort Order,YouTube ID,Video Title,Video Description,Video Sort Order
+Product,,Media Heavy Tee,physical,SH-444,,variant,0,0,25,,,,,,,Lots of media edge cases,,,/media-heavy-tee/,,,,,,,,FALSE,,0,,,,TRUE,FALSE,,0,New,FALSE,0,,,,,,,,,,
+Variant,,,,TEE-BLK,Type=Rectangle|Name=Color|Value=Black,,3,0,25,,,,,,,,,,,,,,,,,,FALSE,,,,,,TRUE,,,,,FALSE,,https://cdn.example.com/tee-black.jpg,,,,,,,,,
+Variant,,,,TEE-WHT,Type=Rectangle|Name=Color|Value=White,,2,0,25,,,,,,,,,,,,,,,,,,FALSE,,,,,,TRUE,,,,,FALSE,,https://cdn.example.com/tee-white.jpg,,,,,,,,,
+Image,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.example.com/tee-1.jpg,,TRUE,0,,,,
+Image,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.example.com/tee-2.jpg,,FALSE,1,,,,

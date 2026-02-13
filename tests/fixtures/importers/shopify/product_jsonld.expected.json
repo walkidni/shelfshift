@@ -1,0 +1,40 @@
+{
+  "brand": "Mug Co",
+  "category": "Home",
+  "description": "Handmade mug",
+  "id": null,
+  "images": [
+    "https://cdn.example.com/mug-front.jpg",
+    "https://cdn.example.com/mug-side.jpg"
+  ],
+  "is_digital": false,
+  "meta_description": "Handmade mug",
+  "meta_title": "Fallback Mug",
+  "options": {},
+  "platform": "shopify",
+  "price": {
+    "amount": 34.5,
+    "currency": "USD"
+  },
+  "requires_shipping": true,
+  "slug": "fallback-mug",
+  "tags": [],
+  "title": "Fallback Mug",
+  "track_quantity": false,
+  "variants": [
+    {
+      "available": true,
+      "currency": "USD",
+      "id": null,
+      "image": null,
+      "inventory_quantity": null,
+      "options": {},
+      "price_amount": 34.5,
+      "sku": null,
+      "title": "Fallback Mug",
+      "weight": null
+    }
+  ],
+  "vendor": "Mug Co",
+  "weight": null
+}
