@@ -128,13 +128,65 @@ class Media:
     variant_skus: list[str] = field(default_factory=list)
 
 
+@dataclass
+class OptionDef:
+    name: str
+    values: list[str] = field(default_factory=list)
+
+
+@dataclass
+class OptionValue:
+    name: str
+    value: str
+
+
+@dataclass
+class Inventory:
+    track_quantity: bool | None = None
+    quantity: int | None = None
+    available: bool | None = None
+    allow_backorder: bool | None = None
+
+
+@dataclass
+class Seo:
+    title: str | None = None
+    description: str | None = None
+
+
+@dataclass
+class SourceRef:
+    platform: str
+    id: str | None = None
+    slug: str | None = None
+    url: str | None = None
+
+
+@dataclass
+class CategorySet:
+    paths: list[list[str]] = field(default_factory=list)
+    primary: list[str] | None = None
+
+
+@dataclass
+class Identifiers:
+    values: dict[str, str] = field(default_factory=dict)
+
+
 __all__ = [
+    "CategorySet",
     "Currency",
+    "Identifiers",
+    "Inventory",
     "Media",
     "MediaType",
     "Money",
+    "OptionDef",
+    "OptionValue",
     "Price",
     "Product",
+    "Seo",
+    "SourceRef",
     "Variant",
     "Weight",
     "WeightUnit",

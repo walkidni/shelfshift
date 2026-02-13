@@ -1,10 +1,17 @@
 from decimal import Decimal
 
 from app.models import (
+    CategorySet,
+    Identifiers,
+    Inventory,
     Media,
     Money,
+    OptionDef,
+    OptionValue,
     Price,
     Product,
+    Seo,
+    SourceRef,
     Variant,
     Weight,
     format_decimal,
@@ -139,3 +146,41 @@ def test_resolve_primary_image_url_prefers_variant_then_product_and_dedupes_all_
         "https://cdn.example.com/p-hero.jpg",
         "https://cdn.example.com/p-2.jpg",
     ]
+
+
+def test_phase1_structured_dataclasses_have_safe_defaults() -> None:
+    option_def_a = OptionDef(name="Color")
+    option_def_b = OptionDef(name="Size")
+    option_def_a.values.append("Black")
+    assert option_def_b.values == []
+
+    option_value = OptionValue(name="Color", value="Black")
+    assert option_value.name == "Color"
+    assert option_value.value == "Black"
+
+    inventory = Inventory()
+    assert inventory.track_quantity is None
+    assert inventory.quantity is None
+    assert inventory.available is None
+    assert inventory.allow_backorder is None
+
+    seo = Seo()
+    assert seo.title is None
+    assert seo.description is None
+
+    source = SourceRef(platform="shopify")
+    assert source.platform == "shopify"
+    assert source.id is None
+    assert source.slug is None
+    assert source.url is None
+
+    category_set_a = CategorySet()
+    category_set_b = CategorySet()
+    category_set_a.paths.append(["Men", "Shoes"])
+    assert category_set_b.paths == []
+    assert category_set_a.primary is None
+
+    identifiers_a = Identifiers()
+    identifiers_b = Identifiers()
+    identifiers_a.values["gtin"] = "1234567890123"
+    assert identifiers_b.values == {}
