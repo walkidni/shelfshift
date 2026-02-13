@@ -27,6 +27,7 @@ from .helpers import (
     resolve_taxonomy_paths,
     resolve_variant_option_values,
 )
+from .serialization import serialize_product_for_api, serialize_variant_for_api
 
 __all__ = [
     "Currency",
@@ -54,4 +55,6 @@ __all__ = [
     "resolve_primary_image_url",
     "resolve_taxonomy_paths",
     "resolve_variant_option_values",
+    "serialize_product_for_api",
+    "serialize_variant_for_api",
 ]

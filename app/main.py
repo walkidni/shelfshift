@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import logging
+from typing import Literal
 
 from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +19,7 @@ from .schemas import (
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
-from .models import Product
+from .models import Product, serialize_product_for_api
 from .services.exporters import (
     product_to_bigcommerce_csv,
     product_to_shopify_csv,
@@ -200,9 +201,19 @@ def detect(url: str = Query(..., description="Product URL to classify")) -> dict
 
 
 @app.post("/api/v1/import")
-def import_from_api(payload: ImportRequest) -> dict:
+def import_from_api(
+    payload: ImportRequest,
+    response_profile: Literal["typed", "legacy"] = Query(
+        settings.import_api_default_profile,
+        description="Response shape profile for normalized product payloads.",
+    ),
+) -> dict:
     product = _run_import_product(payload.product_url)
-    return product.to_dict(include_raw=settings.debug)
+    return serialize_product_for_api(
+        product,
+        profile=response_profile,
+        include_raw=settings.debug,
+    )
 
 
 @app.post("/api/v1/export/shopify.csv")

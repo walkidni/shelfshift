@@ -86,7 +86,7 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json()["platform"] == "shopify"
+    assert response.json()["source"]["platform"] == "shopify"
     assert response.json()["title"] == "Demo Mug"
 
 
@@ -125,7 +125,7 @@ def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json()["platform"] == "woocommerce"
+    assert response.json()["source"]["platform"] == "woocommerce"
     assert response.json()["title"] == "Adjustable Wrench Set"
 
 
@@ -164,8 +164,64 @@ def test_import_endpoint_accepts_squarespace_url(monkeypatch) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json()["platform"] == "squarespace"
+    assert response.json()["source"]["platform"] == "squarespace"
     assert response.json()["title"] == "Custom Patchwork Shirt"
+
+
+def test_import_endpoint_legacy_profile_returns_legacy_payload(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/api/v1/import?response_profile=legacy",
+        json={"product_url": "https://demo.myshopify.com/products/mug"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["platform"] == "shopify"
+    assert payload["title"] == "Demo Mug"
+    assert "source" not in payload
+
+
+def test_import_endpoint_rejects_invalid_response_profile(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/api/v1/import?response_profile=invalid",
+        json={"product_url": "https://demo.myshopify.com/products/mug"},
+    )
+
+    assert response.status_code == 422
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:
