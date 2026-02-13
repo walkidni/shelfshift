@@ -94,6 +94,32 @@ def _clean_identifier_map(value: object) -> dict[str, str]:
     return cleaned
 
 
+def _normalize_image_url(value: object) -> str | None:
+    url = _clean_text(value)
+    if not url:
+        return None
+    if url.startswith("//"):
+        return f"https:{url}"
+    return url
+
+
+def _resolve_media_image_urls(*, media: list[object], primary_first: bool) -> list[str]:
+    primary: list[str] = []
+    regular: list[str] = []
+    for item in media:
+        if getattr(item, "type", None) != "image":
+            continue
+        url = _normalize_image_url(getattr(item, "url", None))
+        if not url:
+            continue
+        if primary_first and getattr(item, "is_primary", False):
+            primary.append(url)
+        regular.append(url)
+    if primary_first:
+        return ordered_unique(primary + regular)
+    return ordered_unique(regular)
+
+
 def resolve_price_amount(product: Product, variant: Variant | None = None) -> float | None:
     money = model_resolve_current_money(product, variant)
     if money is None or money.amount is None:
@@ -118,6 +144,26 @@ def resolve_primary_image_url(product: Product, variant: Variant | None = None) 
 
 def resolve_all_image_urls(product: Product) -> list[str]:
     return model_resolve_all_image_urls(product)
+
+
+def resolve_product_image_urls(product: Product) -> list[str]:
+    typed_urls = _resolve_media_image_urls(media=product.media_v2, primary_first=True)
+    if typed_urls:
+        return typed_urls
+
+    legacy_urls: list[str] = []
+    for url in product.images or []:
+        normalized = _normalize_image_url(url)
+        if normalized:
+            legacy_urls.append(normalized)
+    return ordered_unique(legacy_urls)
+
+
+def resolve_variant_image_url(variant: Variant) -> str:
+    typed_urls = _resolve_media_image_urls(media=variant.media_v2, primary_first=True)
+    if typed_urls:
+        return typed_urls[0]
+    return _normalize_image_url(variant.image) or ""
 
 
 def resolve_option_defs(product: Product) -> list[OptionDef]:

@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
-from app.models import Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -225,3 +227,55 @@ def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
     assert frame.loc[0, "Image Src"] == SHOPIFY_DEFAULT_IMAGE_URL
     assert frame.loc[1, "Image Src"] == "https://cdn.example.com/large-boxy-pouch.jpg"
     assert frame.loc[0, "Variant Image"] == SHOPIFY_DEFAULT_IMAGE_URL
+
+
+def test_typed_fields_override_legacy_values_when_present() -> None:
+    product = Product(
+        platform="shopify",
+        id="900",
+        title="Typed Hoodie",
+        description="Typed description",
+        price={"amount": 99.99, "currency": "USD"},
+        images=["https://cdn.example.com/legacy-product.jpg"],
+        options={"LegacyOption": ["LegacyValue"]},
+        category="Legacy Category",
+        variants=[
+            Variant(
+                id="v-typed-1",
+                sku="LEGACY-SKU-1",
+                options={"LegacyOption": "LegacyValue"},
+                price_amount=77.77,
+                inventory_quantity=None,
+                image="https://cdn.example.com/legacy-variant.jpg",
+            )
+        ],
+        raw={},
+    )
+    product.price_v2 = Price(current=Money(amount=Decimal("55.5"), currency="eur"))
+    product.media_v2 = [
+        Media(url="https://cdn.example.com/typed-main.jpg", is_primary=True),
+        Media(url="https://cdn.example.com/typed-gallery.jpg"),
+    ]
+    product.options_v2 = [OptionDef(name="Color", values=["Blue"])]
+    product.taxonomy_v2 = CategorySet(paths=[["Men", "Outerwear"]], primary=["Men", "Outerwear"])
+
+    variant = product.variants[0]
+    variant.price_v2 = Price(current=Money(amount=Decimal("12.34"), currency="cad"))
+    variant.media_v2 = [Media(url="https://cdn.example.com/typed-variant.jpg", is_primary=True)]
+    variant.option_values_v2 = [OptionValue(name="Color", value="Blue")]
+    variant.inventory_v2 = Inventory(track_quantity=True, quantity=7, available=True)
+
+    csv_text, _ = product_to_shopify_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == SHOPIFY_COLUMNS
+    assert len(frame) == 2
+    assert frame.loc[0, "Option1 Name"] == "Color"
+    assert frame.loc[0, "Option1 Value"] == "Blue"
+    assert frame.loc[0, "Type"] == "Men > Outerwear"
+    assert frame.loc[0, "Variant Price"] == "12.34"
+    assert frame.loc[0, "Variant Inventory Tracker"] == "shopify"
+    assert frame.loc[0, "Variant Inventory Qty"] == "7"
+    assert frame.loc[0, "Image Src"] == "https://cdn.example.com/typed-main.jpg"
+    assert frame.loc[1, "Image Src"] == "https://cdn.example.com/typed-gallery.jpg"
+    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/typed-variant.jpg"
