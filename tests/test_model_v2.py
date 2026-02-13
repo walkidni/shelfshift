@@ -19,7 +19,10 @@ from app.models import (
     parse_decimal_money,
     resolve_all_image_urls,
     resolve_current_money,
+    resolve_option_defs,
     resolve_primary_image_url,
+    resolve_taxonomy_paths,
+    resolve_variant_option_values,
 )
 
 
@@ -83,11 +86,19 @@ def test_product_and_variant_phase2_fields_have_safe_defaults() -> None:
     assert product.media_v2 == []
     assert product.categories_v2 == []
     assert product.identifiers == {}
+    assert product.options_v2 == []
+    assert product.seo_v2 is None
+    assert product.source_v2 is None
+    assert product.taxonomy_v2 is None
+    assert product.identifiers_v2 is None
     assert product.provenance == {}
 
     assert variant.price_v2 is None
     assert variant.media_v2 == []
     assert variant.identifiers == {}
+    assert variant.option_values_v2 == []
+    assert variant.inventory_v2 is None
+    assert variant.identifiers_v2 is None
 
 
 def test_resolve_current_money_prefers_v2_then_v1_variant_then_v1_product() -> None:
@@ -184,3 +195,79 @@ def test_phase1_structured_dataclasses_have_safe_defaults() -> None:
     identifiers_b = Identifiers()
     identifiers_a.values["gtin"] = "1234567890123"
     assert identifiers_b.values == {}
+
+
+def test_resolve_option_defs_prefers_typed_then_falls_back_to_legacy_sources() -> None:
+    product = Product(
+        platform="shopify",
+        id="p-1",
+        title="Demo",
+        description="Demo",
+        price={"amount": 49.0, "currency": "USD"},
+        options={"Color": ["Black"]},
+        variants=[Variant(id="v-1", options={"Color": "White", "Material": "Cotton"})],
+    )
+    product.options_v2 = [
+        OptionDef(name="Size", values=["M", "L"]),
+        OptionDef(name="Color", values=["Blue"]),
+    ]
+
+    resolved = resolve_option_defs(product)
+    assert resolved == [
+        OptionDef(name="Size", values=["M", "L"]),
+        OptionDef(name="Color", values=["Blue"]),
+    ]
+
+    product.options_v2 = []
+    resolved = resolve_option_defs(product)
+    assert resolved == [
+        OptionDef(name="Color", values=["Black", "White"]),
+        OptionDef(name="Material", values=["Cotton"]),
+    ]
+
+
+def test_resolve_variant_option_values_prefers_typed_then_falls_back_to_legacy_options() -> None:
+    product = Product(
+        platform="shopify",
+        id="p-1",
+        title="Demo",
+        description="Demo",
+        price={"amount": 49.0, "currency": "USD"},
+        options={"Color": ["Black", "White"], "Size": ["M", "L"]},
+    )
+    variant = Variant(id="v-1", options={"Color": "White", "Size": "L"})
+    variant.option_values_v2 = [OptionValue(name="Material", value="Cotton")]
+
+    resolved = resolve_variant_option_values(product, variant)
+    assert resolved == [OptionValue(name="Material", value="Cotton")]
+
+    variant.option_values_v2 = []
+    resolved = resolve_variant_option_values(product, variant)
+    assert resolved == [
+        OptionValue(name="Color", value="White"),
+        OptionValue(name="Size", value="L"),
+    ]
+
+
+def test_resolve_taxonomy_paths_prefers_typed_then_categories_v2_then_legacy_category() -> None:
+    product = Product(
+        platform="shopify",
+        id="p-1",
+        title="Demo",
+        description="Demo",
+        price={"amount": 49.0, "currency": "USD"},
+        category="Legacy Category",
+    )
+    product.categories_v2 = [["Women", "Dresses"]]
+    product.taxonomy_v2 = CategorySet(paths=[["Men", "Shoes"], ["Sale"]], primary=["Men", "Shoes"])
+
+    resolved = resolve_taxonomy_paths(product)
+    assert resolved == [["Men", "Shoes"], ["Sale"]]
+
+    product.taxonomy_v2 = None
+    resolved = resolve_taxonomy_paths(product)
+    assert resolved == [["Women", "Dresses"]]
+
+    product.categories_v2 = []
+    resolved = resolve_taxonomy_paths(product)
+    assert resolved == [["Legacy Category"]]

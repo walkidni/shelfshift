@@ -23,6 +23,9 @@ class Variant:
     price_v2: "Price | None" = None
     media_v2: list["Media"] = field(default_factory=list)
     identifiers: dict[str, str] = field(default_factory=dict)
+    option_values_v2: list["OptionValue"] = field(default_factory=list)
+    inventory_v2: "Inventory | None" = None
+    identifiers_v2: "Identifiers | None" = None
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
         data = {
@@ -68,6 +71,11 @@ class Product:
     media_v2: list["Media"] = field(default_factory=list)
     categories_v2: list[list[str]] = field(default_factory=list)
     identifiers: dict[str, str] = field(default_factory=dict)
+    options_v2: list["OptionDef"] = field(default_factory=list)
+    seo_v2: "Seo | None" = None
+    source_v2: "SourceRef | None" = None
+    taxonomy_v2: "CategorySet | None" = None
+    identifiers_v2: "Identifiers | None" = None
     provenance: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
