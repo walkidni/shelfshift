@@ -1,10 +1,11 @@
 from pathlib import Path
+from decimal import Decimal
 
 import pandas as pd
 
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import Product, Variant
+from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -18,28 +19,36 @@ def test_wix_csv_matches_golden_fixture_two_variants() -> None:
         id="101",
         title="Guava Glow Set",
         description="Glow kit",
-        price={"amount": 29.99, "currency": "USD"},
-        images=["https://example.com/img1.jpg"],
-        options={"Size": ["Small", "Medium"]},
+        price={"amount": 999.99, "currency": "USD"},
+        images=["https://example.com/legacy-wrong.jpg"],
+        options={"Legacy": ["Wrong"]},
         variants=[
             Variant(
                 id="v1",
                 sku="GG-S",
-                options={"Size": "Small"},
-                price_amount=29.99,
-                inventory_quantity=10,
+                options={"Legacy": "Wrong-S"},
+                price_amount=111.11,
+                inventory_quantity=999,
             ),
             Variant(
                 id="v2",
                 sku="GG-M",
-                options={"Size": "Medium"},
-                price_amount=29.99,
-                inventory_quantity=8,
+                options={"Legacy": "Wrong-M"},
+                price_amount=222.22,
+                inventory_quantity=999,
             ),
         ],
         slug="guava-glow-set",
         raw={},
     )
+    product.options_v2 = [OptionDef(name="Size", values=["Small", "Medium"])]
+    product.media_v2 = [Media(url="https://example.com/img1.jpg", is_primary=True)]
+    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("29.99"), currency="USD"))
+    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("29.99"), currency="USD"))
+    product.variants[0].option_values_v2 = [OptionValue(name="Size", value="Small")]
+    product.variants[1].option_values_v2 = [OptionValue(name="Size", value="Medium")]
+    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=10, available=True)
+    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=8, available=True)
 
     csv_text, filename = product_to_wix_csv(product, publish=True)
     assert filename == "wix-20260208T000000Z.csv"
@@ -59,18 +68,21 @@ def test_wix_csv_matches_golden_fixture_simple_product() -> None:
         id="B000111",
         title="Demo Mug",
         description="Demo description",
-        price={"amount": 12.0, "currency": "USD"},
-        images=["https://cdn.example.com/mug.jpg"],
+        price={"amount": 999.0, "currency": "USD"},
+        images=["https://cdn.example.com/legacy-wrong-mug.jpg"],
         variants=[
             Variant(
                 id="v1",
                 sku="AMZ-MUG-001",
-                price_amount=12.0,
-                inventory_quantity=0,
+                price_amount=999.0,
+                inventory_quantity=999,
             )
         ],
         raw={},
     )
+    product.media_v2 = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
+    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
+    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=0, available=False)
 
     csv_text, filename = product_to_wix_csv(product, publish=False)
     assert filename == "wix-20260208T000000Z.csv"
@@ -114,19 +126,21 @@ def test_wix_csv_matches_golden_fixture_edge_numbers() -> None:
         id="90210",
         title="Precision Scale",
         description="Measures with high precision",
-        price={"amount": 12.3456, "currency": "USD"},
+        price={"amount": 999.9999, "currency": "USD"},
         images=[],
         variants=[
             Variant(
                 id="v1",
                 sku="PRECISION-1",
-                price_amount=12.3456,
-                inventory_quantity=0,
+                price_amount=111.1111,
+                inventory_quantity=999,
                 weight=333,
             )
         ],
         raw={},
     )
+    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("12.3456"), currency="USD"))
+    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=0, available=False)
 
     csv_text, filename = product_to_wix_csv(product, publish=True)
     assert filename == "wix-20260208T000000Z.csv"
@@ -146,31 +160,42 @@ def test_wix_csv_matches_golden_fixture_media_edge_cases() -> None:
         id="444",
         title="Media Heavy Tee",
         description="Lots of media edge cases",
-        price={"amount": 25.0, "currency": "USD"},
+        price={"amount": 999.0, "currency": "USD"},
         images=[
-            "https://cdn.example.com/tee-1.jpg",
-            "https://cdn.example.com/tee-1.jpg",
-            "https://cdn.example.com/tee-2.jpg",
+            "https://cdn.example.com/legacy-wrong-1.jpg",
+            "https://cdn.example.com/legacy-wrong-2.jpg",
         ],
-        options={"Color": ["Black", "White"]},
+        options={"Legacy": ["Wrong"]},
         variants=[
             Variant(
                 id="v1",
                 sku="TEE-BLK",
-                options={"Color": "Black"},
-                price_amount=25.0,
-                inventory_quantity=3,
+                options={"Legacy": "Wrong-BLK"},
+                price_amount=111.0,
+                inventory_quantity=999,
             ),
             Variant(
                 id="v2",
                 sku="TEE-WHT",
-                options={"Color": "White"},
-                price_amount=25.0,
-                inventory_quantity=2,
+                options={"Legacy": "Wrong-WHT"},
+                price_amount=222.0,
+                inventory_quantity=999,
             ),
         ],
         raw={},
     )
+    product.options_v2 = [OptionDef(name="Color", values=["Black", "White"])]
+    product.media_v2 = [
+        Media(url="https://cdn.example.com/tee-1.jpg", is_primary=True),
+        Media(url="https://cdn.example.com/tee-1.jpg"),
+        Media(url="https://cdn.example.com/tee-2.jpg"),
+    ]
+    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
+    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
+    product.variants[0].option_values_v2 = [OptionValue(name="Color", value="Black")]
+    product.variants[1].option_values_v2 = [OptionValue(name="Color", value="White")]
+    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=3, available=True)
+    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=2, available=True)
 
     csv_text, filename = product_to_wix_csv(product, publish=True)
     assert filename == "wix-20260208T000000Z.csv"

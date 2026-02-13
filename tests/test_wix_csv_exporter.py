@@ -1,6 +1,8 @@
+from decimal import Decimal
+
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import Product, Variant
+from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -163,3 +165,53 @@ def test_wix_export_truncates_using_utf16_units_for_wix_limits() -> None:
 
     assert exported_name == "N" * 79
     assert exported_description == "A" * 15999
+
+
+def test_wix_export_prefers_typed_fields_when_present() -> None:
+    product = Product(
+        platform="shopify",
+        id="900",
+        title="Typed Set",
+        description="Typed description",
+        price={"amount": 999.99, "currency": "USD"},
+        images=["https://cdn.example.com/legacy-wrong-product.jpg"],
+        options={"Legacy": ["Wrong"]},
+        variants=[
+            Variant(
+                id="v1",
+                sku="TS-BLUE",
+                options={"Legacy": "Wrong"},
+                price_amount=111.11,
+                inventory_quantity=999,
+            )
+        ],
+        raw={},
+    )
+    product.options_v2 = [OptionDef(name="Color", values=["Blue"])]
+    product.media_v2 = [
+        Media(url="https://cdn.example.com/typed-product-1.jpg", is_primary=True),
+        Media(url="https://cdn.example.com/typed-product-2.jpg"),
+    ]
+
+    variant = product.variants[0]
+    variant.price_v2 = Price(current=Money(amount=Decimal("12.34"), currency="USD"))
+    variant.option_values_v2 = [OptionValue(name="Color", value="Blue")]
+    variant.inventory_v2 = Inventory(track_quantity=True, quantity=7, available=True)
+
+    csv_text, _ = product_to_wix_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert list(frame.columns) == WIX_COLUMNS
+    assert len(frame) == 3
+    assert frame.loc[0, "fieldType"] == "PRODUCT"
+    assert frame.loc[0, "price"] == "12.34"
+    assert frame.loc[0, "inventory"] == "7"
+    assert frame.loc[0, "productOptionName1"] == "Color"
+    assert frame.loc[0, "productOptionChoices1"] == "Blue"
+    assert frame.loc[0, "media"] == "https://cdn.example.com/typed-product-1.jpg"
+    assert frame.loc[1, "fieldType"] == "VARIANT"
+    assert frame.loc[1, "price"] == "12.34"
+    assert frame.loc[1, "inventory"] == "7"
+    assert frame.loc[1, "productOptionChoices1"] == "Blue"
+    assert frame.loc[2, "fieldType"] == "MEDIA"
+    assert frame.loc[2, "media"] == "https://cdn.example.com/typed-product-2.jpg"
