@@ -2,8 +2,9 @@
 
 This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, BigCommerce, Wix, Squarespace, and WooCommerce.
 
-I use this structure:
+Project surface:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
+- URL detection endpoint (`GET /api/v1/detect`)
 - FastAPI CSV export endpoints:
   - `POST /api/v1/export/shopify.csv`
   - `POST /api/v1/export/bigcommerce.csv`
@@ -75,7 +76,7 @@ Export Shopify CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/shopify.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"g"}' \
   -o product.csv
 ```
 
@@ -84,7 +85,7 @@ Export Squarespace CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/squarespace.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"product_page":"shop","squarespace_product_url":"lemons"}' \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"product_page":"shop","squarespace_product_url":"lemons","weight_unit":"kg"}' \
   -o product.csv
 ```
 
@@ -93,7 +94,7 @@ Export Wix CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/wix.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"kg"}' \
   -o product.csv
 ```
 
@@ -102,7 +103,7 @@ Export WooCommerce CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/woocommerce.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"kg"}' \
   -o product.csv
 ```
 
@@ -111,9 +112,17 @@ Export BigCommerce CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/bigcommerce.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false}' \
+  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"csv_format":"modern","weight_unit":"kg"}' \
   -o product.csv
 ```
+
+## Export request options
+
+- Shopify: `publish`, `weight_unit` (`g`, `kg`, `lb`, `oz`)
+- BigCommerce: `publish`, `csv_format` (`modern`, `legacy`), `weight_unit` (`g`, `kg`, `lb`, `oz`)
+- Wix: `publish`, `weight_unit` (`kg`, `lb`)
+- Squarespace: `publish`, `product_page`, `squarespace_product_url`, `weight_unit` (`kg`, `lb`)
+- WooCommerce: `publish`, `weight_unit` (`kg`)
 
 ## Response behavior (`raw` field)
 
@@ -161,6 +170,14 @@ app/
     templates/index.html
     static/styles.css
 tests/
+  api/
+  exporters/
+  importers/
+  models/
+  helpers/
+  fixtures/
+    exporter/<platform>/*.csv
+    importers/<platform>/*
 ```
 
 ## Tests
