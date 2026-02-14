@@ -122,6 +122,25 @@ def test_wix_export_emits_media_rows_for_additional_images() -> None:
     assert frame.loc[3, "media"] == "https://cdn.example.com/tee-3.jpg"
 
 
+def test_wix_export_supports_lb_weight_unit() -> None:
+    product = Product(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        images=["https://cdn.example.com/tee-1.jpg"],
+        variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4, weight=333)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_wix_csv(product, publish=True, weight_unit="lb")
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "weight"] == "0.734139"
+    assert frame.loc[1, "weight"] == "0.734139"
+
+
 def test_wix_export_truncates_name_and_plain_description_to_wix_limits() -> None:
     product = Product(
         platform="shopify",

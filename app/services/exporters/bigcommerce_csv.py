@@ -4,6 +4,7 @@ from slugify import slugify
 
 from app.models import Product, Variant
 from . import utils
+from .weight_units import resolve_weight_unit
 
 # BigCommerce Modern Product Import/Export (v3) schema.
 BIGCOMMERCE_COLUMNS: list[str] = [
@@ -127,30 +128,19 @@ def _format_price(value: float | None) -> str:
     return utils.format_number(value, decimals=6) if value is not None else ""
 
 
-def _format_weight_kg(value: float | None) -> str:
+def _format_weight(value: float | None, *, weight_unit: str, decimals: int) -> str:
     if value is None:
         return ""
-    try:
-        kilograms = float(value) / 1000.0
-    except (TypeError, ValueError):
+    converted = utils.convert_weight_from_grams(value, unit=weight_unit)
+    if converted is None:
         return ""
-    return utils.format_number(kilograms, decimals=6)
+    return utils.format_number(converted, decimals=decimals)
 
 
-def _format_weight_kg_legacy(value: float | None) -> str:
-    if value is None:
-        return ""
-    try:
-        kilograms = float(value) / 1000.0
-    except (TypeError, ValueError):
-        return ""
-    return utils.format_number(kilograms, decimals=4)
-
-
-def _require_weight_kg(value: float | None, *, is_digital: bool) -> str:
+def _require_weight(value: float | None, *, is_digital: bool, weight_unit: str) -> str:
     if is_digital:
         return ""
-    formatted = _format_weight_kg(value)
+    formatted = _format_weight(value, weight_unit=weight_unit, decimals=6)
     return formatted or "0"
 
 
@@ -327,7 +317,12 @@ def _resolve_legacy_images(product: Product) -> str:
     return "|".join(f"Product Image URL: {url}" for url in urls)
 
 
-def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
+def _product_to_bigcommerce_legacy_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str,
+) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -346,7 +341,7 @@ def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> l
     row["Calculated Price"] = _resolve_price(product, first_variant)
     row["Fixed Shipping Price"] = "0.0000"
     row["Free Shipping"] = "Y" if not product.requires_shipping else "N"
-    row["Weight"] = _format_weight_kg_legacy(_resolve_product_weight_grams(product, variants))
+    row["Weight"] = _format_weight(_resolve_product_weight_grams(product, variants), weight_unit=weight_unit, decimals=4)
     row["Allow Purchases"] = "Y"
     row["Product Visible"] = "Y" if publish else "N"
     row["Product Inventoried"] = "Y" if inventory_mode != _INVENTORY_NONE else "N"
@@ -363,7 +358,12 @@ def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> l
     return [row]
 
 
-def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
+def _product_to_bigcommerce_modern_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str,
+) -> list[dict[str, str]]:
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -383,9 +383,10 @@ def _product_to_bigcommerce_modern_rows(product: Product, *, publish: bool) -> l
     product_row["SKU"] = parent_sku
     product_row["Price"] = _resolve_price(product, first_variant)
     product_row["Categories"] = _resolve_modern_categories(product)
-    product_row["Weight"] = _require_weight_kg(
+    product_row["Weight"] = _require_weight(
         _resolve_product_weight_grams(product, variants),
         is_digital=product.is_digital,
+        weight_unit=weight_unit,
     )
     product_row["Inventory Tracking"] = inventory_mode
     product_row["Current Stock"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
@@ -447,11 +448,21 @@ def product_to_bigcommerce_rows(
     *,
     publish: bool,
     csv_format: BigCommerceCsvFormat = "modern",
+    weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
+    resolved_weight_unit = resolve_weight_unit("bigcommerce", weight_unit)
     if csv_format == "modern":
-        return _product_to_bigcommerce_modern_rows(product, publish=publish)
+        return _product_to_bigcommerce_modern_rows(
+            product,
+            publish=publish,
+            weight_unit=resolved_weight_unit,
+        )
     if csv_format == "legacy":
-        return _product_to_bigcommerce_legacy_rows(product, publish=publish)
+        return _product_to_bigcommerce_legacy_rows(
+            product,
+            publish=publish,
+            weight_unit=resolved_weight_unit,
+        )
     raise ValueError("csv_format must be one of: modern, legacy")
 
 
@@ -460,7 +471,13 @@ def product_to_bigcommerce_csv(
     *,
     publish: bool,
     csv_format: BigCommerceCsvFormat = "modern",
+    weight_unit: str = "kg",
 ) -> tuple[str, str]:
-    rows = product_to_bigcommerce_rows(product, publish=publish, csv_format=csv_format)
+    rows = product_to_bigcommerce_rows(
+        product,
+        publish=publish,
+        csv_format=csv_format,
+        weight_unit=weight_unit,
+    )
     columns = BIGCOMMERCE_COLUMNS if csv_format == "modern" else BIGCOMMERCE_LEGACY_COLUMNS
     return utils.dict_rows_to_csv(rows, columns), utils.make_export_filename("bigcommerce")

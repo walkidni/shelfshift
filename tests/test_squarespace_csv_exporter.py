@@ -169,6 +169,30 @@ def test_missing_inventory_defaults_to_unlimited_stock() -> None:
     assert frame.loc[0, "Stock"] == "Unlimited"
 
 
+def test_squarespace_export_supports_lb_weight_unit() -> None:
+    product = Product(
+        platform="amazon",
+        id="B000111",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        variants=[Variant(id="v1", sku="AMZ-MUG-001", price_amount=12.0, weight=250)],
+        raw={},
+    )
+
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=False,
+        product_page="shop",
+        product_url="lemons",
+        weight_unit="lb",
+    )
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Weight"] == "0.551156"
+
+
 def test_typed_fields_override_legacy_values_when_present() -> None:
     product = Product(
         platform="shopify",

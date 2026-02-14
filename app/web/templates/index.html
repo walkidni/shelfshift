@@ -53,6 +53,16 @@
             </select>
           </div>
 
+          {% set selected_weight_unit = form.weight_unit if form.weight_unit else weight_unit_defaults[form.target_platform] %}
+          <label for="weight_unit">Weight Unit</label>
+          <div class="select-wrap">
+            <select id="weight_unit" name="weight_unit" required>
+              {% for unit in weight_unit_allowlist[form.target_platform] %}
+              <option value="{{ unit }}" {% if selected_weight_unit == unit %}selected{% endif %}>{{ unit|upper }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
           <div
             id="bigcommerce-fields"
             class="conditional-fields{% if form.target_platform != "bigcommerce" %} is-hidden{% endif %}"
@@ -121,16 +131,36 @@
     <script>
       (() => {
         const targetPlatform = document.getElementById("target_platform");
+        const weightUnit = document.getElementById("weight_unit");
         const bigcommerceFields = document.getElementById("bigcommerce-fields");
         const squarespaceFields = document.getElementById("squarespace-fields");
-        if (!targetPlatform || !squarespaceFields || !bigcommerceFields) {
+        if (!targetPlatform || !weightUnit || !squarespaceFields || !bigcommerceFields) {
           return;
         }
+        const weightUnitAllowlist = {{ weight_unit_allowlist | tojson }};
+        const weightUnitDefaults = {{ weight_unit_defaults | tojson }};
 
         const bigcommerceInputs = bigcommerceFields.querySelectorAll("select, input");
         const squarespaceInputs = squarespaceFields.querySelectorAll("input");
 
-        const syncSquarespaceFields = () => {
+        const syncConditionalFields = () => {
+          const currentWeightUnit = weightUnit.value;
+          const allowedWeightUnits = weightUnitAllowlist[targetPlatform.value] || [];
+          const defaultWeightUnit = weightUnitDefaults[targetPlatform.value] || allowedWeightUnits[0] || "kg";
+          const selectedWeightUnit = allowedWeightUnits.includes(currentWeightUnit)
+            ? currentWeightUnit
+            : defaultWeightUnit;
+          weightUnit.innerHTML = "";
+          allowedWeightUnits.forEach((unit) => {
+            const option = document.createElement("option");
+            option.value = unit;
+            option.textContent = unit.toUpperCase();
+            if (unit === selectedWeightUnit) {
+              option.selected = true;
+            }
+            weightUnit.appendChild(option);
+          });
+
           const showBigCommerceFields = targetPlatform.value === "bigcommerce";
           bigcommerceFields.classList.toggle("is-hidden", !showBigCommerceFields);
           bigcommerceFields.setAttribute("aria-hidden", showBigCommerceFields ? "false" : "true");
@@ -146,8 +176,8 @@
           });
         };
 
-        targetPlatform.addEventListener("change", syncSquarespaceFields);
-        syncSquarespaceFields();
+        targetPlatform.addEventListener("change", syncConditionalFields);
+        syncConditionalFields();
       })();
     </script>
   </body>

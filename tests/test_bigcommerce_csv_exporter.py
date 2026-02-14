@@ -175,6 +175,31 @@ def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() ->
     assert frame.loc[0, "Weight"] == "0.1"
 
 
+def test_bigcommerce_export_supports_lb_weight_unit() -> None:
+    product = Product(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Demo description",
+        price={"amount": 19.99, "currency": "USD"},
+        variants=[
+            Variant(
+                id="v1",
+                sku="TEE-BLK-M",
+                price_amount=19.99,
+                weight=220,
+            )
+        ],
+        raw={},
+    )
+
+    csv_text, _ = product_to_bigcommerce_csv(product, publish=False, weight_unit="lb")
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Item"] == "Product"
+    assert frame.loc[0, "Weight"] == "0.485017"
+
+
 def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
     product = Product(
         platform="shopify",

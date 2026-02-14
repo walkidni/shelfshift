@@ -5,6 +5,7 @@ from slugify import slugify
 
 from app.models import Product, Variant
 from . import utils
+from .weight_units import resolve_weight_unit
 
 SHOPIFY_COLUMNS: list[str] = [
     "Handle",
@@ -134,7 +135,13 @@ def _resolve_shopify_product_images(images: list[str] | None) -> list[str]:
     return utils.ordered_unique(non_empty)
 
 
-def product_to_shopify_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
+def product_to_shopify_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "g",
+) -> list[dict[str, str]]:
+    resolved_weight_unit = resolve_weight_unit("shopify", weight_unit)
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
@@ -157,7 +164,7 @@ def product_to_shopify_rows(product: Product, *, publish: bool) -> list[dict[str
         grams = _format_grams(utils.resolve_weight_grams(product, variant))
         if grams:
             row["Variant Grams"] = grams
-            row["Variant Weight Unit"] = "g"
+            row["Variant Weight Unit"] = resolved_weight_unit
 
         qty = _format_inventory_qty(utils.resolve_variant_inventory_quantity(variant))
         if qty:
@@ -199,6 +206,11 @@ def product_to_shopify_rows(product: Product, *, publish: bool) -> list[dict[str
     return rows
 
 
-def product_to_shopify_csv(product: Product, *, publish: bool) -> tuple[str, str]:
-    rows = product_to_shopify_rows(product, publish=publish)
+def product_to_shopify_csv(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "g",
+) -> tuple[str, str]:
+    rows = product_to_shopify_rows(product, publish=publish, weight_unit=weight_unit)
     return utils.dict_rows_to_csv(rows, SHOPIFY_COLUMNS), utils.make_export_filename("shopify")

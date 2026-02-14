@@ -4,6 +4,7 @@ from slugify import slugify
 
 from app.models import Product, Variant
 from . import utils
+from .weight_units import resolve_weight_unit
 
 _WIX_HEADER = (
     "handle,fieldType,name,visible,plainDescription,media,mediaAltText,ribbon,brand,price,strikethroughPrice,"
@@ -93,15 +94,12 @@ def _resolve_price(product: Product, variant: Variant | None = None) -> str:
     return utils.format_number(amount, decimals=2) if amount is not None else ""
 
 
-def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
+def _resolve_weight(product: Product, variant: Variant | None = None, *, weight_unit: str) -> str:
     grams = utils.resolve_weight_grams(product, variant)
-    if grams is None:
+    converted = utils.convert_weight_from_grams(grams, unit=weight_unit)
+    if converted is None:
         return ""
-    try:
-        kg = float(grams) / 1000.0
-    except (TypeError, ValueError):
-        return ""
-    return utils.format_number(kg, decimals=6)
+    return utils.format_number(converted, decimals=6)
 
 
 def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str]:
@@ -220,7 +218,13 @@ def _resolve_product_inventory(product: Product, variants: list[Variant]) -> str
     return "OUT_OF_STOCK"
 
 
-def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
+def product_to_wix_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]:
+    resolved_weight_unit = resolve_weight_unit("wix", weight_unit)
     handle = _resolve_handle(product)
     variants = utils.resolve_variants(product)
     images = utils.resolve_product_image_urls(product)
@@ -245,7 +249,7 @@ def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, st
     product_row["price"] = _resolve_price(product, first_variant)
     product_row["inventory"] = _resolve_product_inventory(product, variants)
     product_row["sku"] = str((first_variant.sku if first_variant else None) or product.source.id or "")
-    product_row["weight"] = _resolve_weight_kg(product, first_variant)
+    product_row["weight"] = _resolve_weight(product, first_variant, weight_unit=resolved_weight_unit)
     if images:
         product_row["media"] = images[0]
         product_row["mediaAltText"] = (product.title or "").strip()
@@ -271,7 +275,7 @@ def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, st
         variant_row["price"] = _resolve_price(product, variant)
         variant_row["inventory"] = _resolve_variant_inventory(product, variant)
         variant_row["sku"] = str(variant.sku or variant.id or "")
-        variant_row["weight"] = _resolve_weight_kg(product, variant)
+        variant_row["weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
 
         _set_option_fields(
             variant_row,
@@ -296,6 +300,11 @@ def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, st
     return rows
 
 
-def product_to_wix_csv(product: Product, *, publish: bool) -> tuple[str, str]:
-    rows = product_to_wix_rows(product, publish=publish)
+def product_to_wix_csv(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> tuple[str, str]:
+    rows = product_to_wix_rows(product, publish=publish, weight_unit=weight_unit)
     return utils.dict_rows_to_csv(rows, WIX_COLUMNS), utils.make_export_filename("wix")

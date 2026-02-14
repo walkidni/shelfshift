@@ -26,6 +26,11 @@ from .services.exporters import (
     product_to_wix_csv,
     product_to_woocommerce_csv,
 )
+from .services.exporters.weight_units import (
+    DEFAULT_WEIGHT_UNIT_BY_TARGET,
+    WEIGHT_UNIT_ALLOWLIST_BY_TARGET,
+    resolve_weight_unit,
+)
 from .services.logging import product_result_to_loggable
 from .services.importer import (
     ApiConfig,
@@ -119,31 +124,47 @@ def _run_import_product(product_url: str) -> Product:
         raise HTTPException(status_code=500, detail=f"Internal import error: {exc}") from exc
 
 
+def _resolve_weight_unit_or_422(target_platform: str, weight_unit: str) -> str:
+    try:
+        return resolve_weight_unit(target_platform, weight_unit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 def _export_csv_for_target(
     product: Product,
     *,
     target_platform: str,
     publish: bool,
+    weight_unit: str,
     bigcommerce_csv_format: str,
     squarespace_product_page: str,
     squarespace_product_url: str,
 ) -> tuple[str, str]:
     target = (target_platform or "").strip().lower()
+    resolved_weight_unit = _resolve_weight_unit_or_422(target, weight_unit)
+
     if target == "shopify":
-        return product_to_shopify_csv(product, publish=publish)
+        return product_to_shopify_csv(product, publish=publish, weight_unit=resolved_weight_unit)
     if target == "bigcommerce":
-        return product_to_bigcommerce_csv(product, publish=publish, csv_format=bigcommerce_csv_format)
+        return product_to_bigcommerce_csv(
+            product,
+            publish=publish,
+            csv_format=bigcommerce_csv_format,
+            weight_unit=resolved_weight_unit,
+        )
     if target == "wix":
-        return product_to_wix_csv(product, publish=publish)
+        return product_to_wix_csv(product, publish=publish, weight_unit=resolved_weight_unit)
     if target == "squarespace":
         return product_to_squarespace_csv(
             product,
             publish=publish,
             product_page=squarespace_product_page,
             product_url=squarespace_product_url,
+            weight_unit=resolved_weight_unit,
         )
     if target == "woocommerce":
-        return product_to_woocommerce_csv(product, publish=publish)
+        return product_to_woocommerce_csv(product, publish=publish, weight_unit=resolved_weight_unit)
 
     raise HTTPException(
         status_code=422,
@@ -165,6 +186,7 @@ def _render_index(
     error: str | None,
     product_url: str,
     target_platform: str,
+    weight_unit: str,
     bigcommerce_csv_format: str,
     squarespace_product_page: str,
     squarespace_product_url: str,
@@ -179,10 +201,16 @@ def _render_index(
             "form": {
                 "product_url": product_url,
                 "target_platform": target_platform,
+                "weight_unit": weight_unit,
                 "bigcommerce_csv_format": bigcommerce_csv_format,
                 "squarespace_product_page": squarespace_product_page,
                 "squarespace_product_url": squarespace_product_url,
             },
+            "weight_unit_allowlist": {
+                platform: list(units)
+                for platform, units in WEIGHT_UNIT_ALLOWLIST_BY_TARGET.items()
+            },
+            "weight_unit_defaults": dict(DEFAULT_WEIGHT_UNIT_BY_TARGET),
             "examples": EXAMPLE_URLS,
         },
         status_code=status_code,
@@ -211,7 +239,11 @@ def import_from_api(payload: ImportRequest) -> dict:
 @app.post("/api/v1/export/shopify.csv")
 def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
-    csv_text, filename = product_to_shopify_csv(product, publish=payload.publish)
+    csv_text, filename = product_to_shopify_csv(
+        product,
+        publish=payload.publish,
+        weight_unit=payload.weight_unit,
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -222,6 +254,7 @@ def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Re
         product,
         publish=payload.publish,
         csv_format=payload.csv_format,
+        weight_unit=payload.weight_unit,
     )
     return _csv_attachment_response(csv_text, filename)
 
@@ -229,7 +262,11 @@ def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Re
 @app.post("/api/v1/export/wix.csv")
 def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
-    csv_text, filename = product_to_wix_csv(product, publish=payload.publish)
+    csv_text, filename = product_to_wix_csv(
+        product,
+        publish=payload.publish,
+        weight_unit=payload.weight_unit,
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -241,6 +278,7 @@ def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Re
         publish=payload.publish,
         product_page=payload.product_page,
         product_url=payload.squarespace_product_url,
+        weight_unit=payload.weight_unit,
     )
     return _csv_attachment_response(csv_text, filename)
 
@@ -248,7 +286,11 @@ def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Re
 @app.post("/api/v1/export/woocommerce.csv")
 def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Response:
     product = _run_import_product(payload.product_url)
-    csv_text, filename = product_to_woocommerce_csv(product, publish=payload.publish)
+    csv_text, filename = product_to_woocommerce_csv(
+        product,
+        publish=payload.publish,
+        weight_unit=payload.weight_unit,
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -259,6 +301,7 @@ def home(request: Request) -> HTMLResponse:
         error=None,
         product_url="",
         target_platform="shopify",
+        weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
         bigcommerce_csv_format="modern",
         squarespace_product_page="",
         squarespace_product_url="",
@@ -269,9 +312,14 @@ def home(request: Request) -> HTMLResponse:
 def export_shopify_csv_from_web(
     product_url: str = Form(...),
     publish: bool = Form(False),
+    weight_unit: str = Form("g"),
 ) -> Response:
     product = _run_import_product(product_url)
-    csv_text, filename = product_to_shopify_csv(product, publish=publish)
+    csv_text, filename = product_to_shopify_csv(
+        product,
+        publish=publish,
+        weight_unit=_resolve_weight_unit_or_422("shopify", weight_unit),
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -280,9 +328,15 @@ def export_bigcommerce_csv_from_web(
     product_url: str = Form(...),
     publish: bool = Form(False),
     csv_format: str = Form("modern"),
+    weight_unit: str = Form("kg"),
 ) -> Response:
     product = _run_import_product(product_url)
-    csv_text, filename = product_to_bigcommerce_csv(product, publish=publish, csv_format=csv_format)
+    csv_text, filename = product_to_bigcommerce_csv(
+        product,
+        publish=publish,
+        csv_format=csv_format,
+        weight_unit=_resolve_weight_unit_or_422("bigcommerce", weight_unit),
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -290,9 +344,14 @@ def export_bigcommerce_csv_from_web(
 def export_wix_csv_from_web(
     product_url: str = Form(...),
     publish: bool = Form(False),
+    weight_unit: str = Form("kg"),
 ) -> Response:
     product = _run_import_product(product_url)
-    csv_text, filename = product_to_wix_csv(product, publish=publish)
+    csv_text, filename = product_to_wix_csv(
+        product,
+        publish=publish,
+        weight_unit=_resolve_weight_unit_or_422("wix", weight_unit),
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -302,6 +361,7 @@ def export_squarespace_csv_from_web(
     publish: bool = Form(False),
     squarespace_product_page: str = Form(default=""),
     squarespace_product_url: str = Form(default=""),
+    weight_unit: str = Form("kg"),
 ) -> Response:
     product = _run_import_product(product_url)
     csv_text, filename = product_to_squarespace_csv(
@@ -309,6 +369,7 @@ def export_squarespace_csv_from_web(
         publish=publish,
         product_page=squarespace_product_page,
         product_url=squarespace_product_url,
+        weight_unit=_resolve_weight_unit_or_422("squarespace", weight_unit),
     )
     return _csv_attachment_response(csv_text, filename)
 
@@ -317,9 +378,14 @@ def export_squarespace_csv_from_web(
 def export_woocommerce_csv_from_web(
     product_url: str = Form(...),
     publish: bool = Form(False),
+    weight_unit: str = Form("kg"),
 ) -> Response:
     product = _run_import_product(product_url)
-    csv_text, filename = product_to_woocommerce_csv(product, publish=publish)
+    csv_text, filename = product_to_woocommerce_csv(
+        product,
+        publish=publish,
+        weight_unit=_resolve_weight_unit_or_422("woocommerce", weight_unit),
+    )
     return _csv_attachment_response(csv_text, filename)
 
 
@@ -329,6 +395,7 @@ def export_csv_from_web(
     product_url: str = Form(...),
     target_platform: str = Form(...),
     publish: bool = Form(False),
+    weight_unit: str = Form(default=""),
     bigcommerce_csv_format: str = Form("modern"),
     squarespace_product_page: str = Form(default=""),
     squarespace_product_url: str = Form(default=""),
@@ -339,6 +406,7 @@ def export_csv_from_web(
             product,
             target_platform=target_platform,
             publish=publish,
+            weight_unit=weight_unit,
             bigcommerce_csv_format=bigcommerce_csv_format,
             squarespace_product_page=squarespace_product_page,
             squarespace_product_url=squarespace_product_url,
@@ -350,6 +418,7 @@ def export_csv_from_web(
             error=exc.detail,
             product_url=product_url,
             target_platform=target_platform,
+            weight_unit=weight_unit,
             bigcommerce_csv_format=bigcommerce_csv_format,
             squarespace_product_page=squarespace_product_page,
             squarespace_product_url=squarespace_product_url,

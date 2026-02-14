@@ -282,3 +282,21 @@ def resolve_weight_grams(product: Product, variant: Variant | None = None) -> fl
     if unit == "oz":
         return value * 28.349523125
     return value
+
+
+def convert_weight_from_grams(value_grams: float | None, *, unit: str) -> float | None:
+    if value_grams is None:
+        return None
+    try:
+        grams = float(value_grams)
+    except (TypeError, ValueError):
+        return None
+
+    target = str(unit or "g").strip().lower()
+    if target == "kg":
+        return grams / 1000.0
+    if target == "lb":
+        return grams / 453.59237
+    if target == "oz":
+        return grams / 28.349523125
+    return grams

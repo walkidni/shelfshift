@@ -5,6 +5,7 @@ from slugify import slugify
 
 from app.models import Product, Variant
 from . import utils
+from .weight_units import resolve_weight_unit
 
 WOOCOMMERCE_COLUMNS: list[str] = [
     "Type",
@@ -217,7 +218,13 @@ def _is_variable_product(product: Product, variants: list[Variant]) -> bool:
     return False
 
 
-def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict[str, str]]:
+def product_to_woocommerce_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]:
+    resolve_weight_unit("woocommerce", weight_unit)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
@@ -315,6 +322,11 @@ def product_to_woocommerce_rows(product: Product, *, publish: bool) -> list[dict
     return rows
 
 
-def product_to_woocommerce_csv(product: Product, *, publish: bool) -> tuple[str, str]:
-    rows = product_to_woocommerce_rows(product, publish=publish)
+def product_to_woocommerce_csv(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> tuple[str, str]:
+    rows = product_to_woocommerce_rows(product, publish=publish, weight_unit=weight_unit)
     return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename("woocommerce")

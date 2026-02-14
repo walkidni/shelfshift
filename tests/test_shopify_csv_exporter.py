@@ -170,6 +170,32 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
     assert frame.loc[0, "Variant Inventory Policy"] == "deny"
 
 
+def test_shopify_export_allows_weight_unit_override_without_changing_grams() -> None:
+    product = Product(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        images=[],
+        variants=[
+            Variant(
+                id="v1",
+                sku="TEE-BLK-M",
+                price_amount=19.99,
+                weight=250,
+            )
+        ],
+        raw={},
+    )
+
+    csv_text, _ = product_to_shopify_csv(product, publish=True, weight_unit="lb")
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Variant Grams"] == "250"
+    assert frame.loc[0, "Variant Weight Unit"] == "lb"
+
+
 def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
     product = Product(
         platform="aliexpress",

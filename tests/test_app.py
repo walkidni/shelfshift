@@ -569,6 +569,36 @@ def test_export_wix_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[1, "inventory"] == "10"
 
 
+def test_export_wix_csv_endpoint_rejects_unsupported_weight_unit(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/api/v1/export/wix.csv",
+        json={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "weight_unit": "oz",
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
@@ -578,6 +608,7 @@ def test_home_page_renders() -> None:
     assert "<option value=\"bigcommerce\"" in response.text
     assert "<option value=\"wix\"" in response.text
     assert 'id="squarespace-fields"' in response.text
+    assert 'name="weight_unit"' in response.text
     assert "conditional-fields is-hidden" in response.text
     assert "Export CSV" in response.text
     assert "Result JSON" not in response.text
@@ -659,6 +690,39 @@ def test_web_export_csv_supports_bigcommerce_target(monkeypatch) -> None:
     assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "SKU"] == "MUG-001"
     assert frame.loc[1, "Item"] == "Image"
+
+
+def test_web_export_csv_uses_selected_weight_unit_for_bigcommerce(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[Variant(id="var-1", sku="MUG-001", price_amount=12.0, inventory_quantity=5, weight=250)],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/export.csv",
+        data={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "target_platform": "bigcommerce",
+            "weight_unit": "lb",
+        },
+    )
+
+    assert response.status_code == 200
+    frame = pd.read_csv(io.StringIO(response.text), dtype=str, keep_default_na=False)
+    assert frame.loc[0, "Weight"] == "0.551156"
 
 
 def test_web_export_csv_supports_bigcommerce_legacy_format(monkeypatch) -> None:
@@ -757,3 +821,36 @@ def test_web_export_csv_invalid_target_platform_returns_error_panel(monkeypatch)
     assert response.status_code == 422
     assert "Export Error" in response.text
     assert "target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce" in response.text
+
+
+def test_web_export_csv_invalid_weight_unit_returns_error_panel(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    response = client.post(
+        "/export.csv",
+        data={
+            "product_url": "https://demo.myshopify.com/products/mug",
+            "target_platform": "wix",
+            "weight_unit": "oz",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "Export Error" in response.text
+    assert "weight_unit must be one of: kg, lb for target_platform=wix" in response.text

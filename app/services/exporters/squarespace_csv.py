@@ -1,5 +1,6 @@
 from app.models import Product, Variant
 from . import utils
+from .weight_units import resolve_weight_unit
 
 SQUARESPACE_COLUMNS: list[str] = [
     "Product ID [Non Editable]",
@@ -60,15 +61,12 @@ def _resolve_stock(product: Product, variant: Variant) -> str:
     return str(qty)
 
 
-def _resolve_weight_kg(product: Product, variant: Variant) -> str:
+def _resolve_weight(product: Product, variant: Variant, *, weight_unit: str) -> str:
     grams = utils.resolve_weight_grams(product, variant)
-    if grams is None:
+    converted = utils.convert_weight_from_grams(grams, unit=weight_unit)
+    if converted is None:
         return ""
-    try:
-        kg = float(grams) / 1000.0
-    except (TypeError, ValueError):
-        return ""
-    return utils.format_number(kg, decimals=6)
+    return utils.format_number(converted, decimals=6)
 
 
 def _resolve_tags(product: Product) -> str:
@@ -106,7 +104,9 @@ def product_to_squarespace_rows(
     publish: bool,
     product_page: str = "",
     product_url: str = "",
+    weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
+    resolved_weight_unit = resolve_weight_unit("squarespace", weight_unit)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     hosted_image_urls = _resolve_hosted_image_urls(product)
@@ -136,7 +136,7 @@ def product_to_squarespace_rows(
             row["Description"] = product.description or ""
             row["Categories"] = utils.resolve_primary_category(product)
             row["Tags"] = _resolve_tags(product)
-            row["Weight"] = _resolve_weight_kg(product, variant)
+            row["Weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
             row["Visible"] = _format_bool(publish)
             row["Hosted Image URLs"] = hosted_image_urls
 
@@ -151,11 +151,13 @@ def product_to_squarespace_csv(
     publish: bool,
     product_page: str = "",
     product_url: str = "",
+    weight_unit: str = "kg",
 ) -> tuple[str, str]:
     rows = product_to_squarespace_rows(
         product,
         publish=publish,
         product_page=product_page,
         product_url=product_url,
+        weight_unit=weight_unit,
     )
     return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename("squarespace")
