@@ -22,6 +22,8 @@ from .common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
+    extract_image_urls as _extract_image_urls,
+    extract_names as _extract_names,
     extract_product_json_ld_nodes,
     finalize_product_typed_fields,
     http_session,
@@ -31,15 +33,10 @@ from .common import (
     normalize_url,
     parse_money_to_float,
     pick_name,
+    slug_token as _slug_token,
     to_bool,
     to_int,
 )
-
-
-def _slug_token(value: Any) -> str:
-    token = re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
-    return token
-
 
 def _minor_unit(value: Any) -> int:
     parsed = to_int(value)
@@ -88,51 +85,6 @@ def _parse_price_components(prices: Any) -> tuple[float | None, str, float | Non
     if current is None:
         current = regular if regular is not None else sale
     return current, currency, regular, sale
-
-
-def _extract_names(items: Any) -> list[str]:
-    names: list[str] = []
-    if isinstance(items, str):
-        stripped = items.strip()
-        if stripped:
-            names.append(stripped)
-    elif isinstance(items, list):
-        for item in items:
-            if isinstance(item, str):
-                stripped = item.strip()
-                if stripped:
-                    names.append(stripped)
-            elif isinstance(item, dict):
-                candidate = pick_name(item.get("name")) or pick_name(item.get("slug")) or pick_name(
-                    item.get("value")
-                )
-                if candidate:
-                    names.append(candidate)
-    return dedupe(names)
-
-
-def _extract_image_urls(items: Any) -> list[str]:
-    urls: list[str] = []
-    if isinstance(items, str):
-        normalized = normalize_url(items)
-        if normalized:
-            urls.append(normalized)
-    elif isinstance(items, list):
-        for item in items:
-            if isinstance(item, str):
-                normalized = normalize_url(item)
-            elif isinstance(item, dict):
-                normalized = normalize_url(item.get("url")) or normalize_url(item.get("src"))
-            else:
-                normalized = None
-            if normalized:
-                urls.append(normalized)
-    elif isinstance(items, dict):
-        normalized = normalize_url(items.get("url")) or normalize_url(items.get("src"))
-        if normalized:
-            urls.append(normalized)
-    return dedupe(urls)
-
 
 class WooCommerceClient(ProductClient):
     platform = "woocommerce"
@@ -347,7 +299,7 @@ class WooCommerceClient(ProductClient):
 
             variant_key = _slug_token(variant_id or title or str(index)) or str(index)
             resolved_sku = sku or f"WC:{product_key}:{variant_key}"
-            variant_identifiers, variant_typed_identifiers = make_identifiers(
+            variant_identifiers = make_identifiers(
                 {
                     "source_variant_id": variant_id,
                     "sku": resolved_sku,
@@ -422,7 +374,7 @@ class WooCommerceClient(ProductClient):
             default_track_quantity=track_quantity,
             default_allow_backorder=allow_backorder,
         )
-        default_variant_identifiers, default_variant_typed_identifiers = make_identifiers(
+        default_variant_identifiers = make_identifiers(
             {
                 "source_variant_id": data.get("id"),
                 "sku": data.get("sku"),
@@ -480,7 +432,7 @@ class WooCommerceClient(ProductClient):
             for index, image_url in enumerate(image_urls, start=1)
         ]
         taxonomy_paths = [[name] for name in categories] if categories else []
-        product_identifiers, product_typed_identifiers = make_identifiers(
+        product_identifiers = make_identifiers(
             {
                 "source_product_id": product_id,
                 "sku": data.get("sku"),
@@ -537,7 +489,7 @@ class WooCommerceClient(ProductClient):
         if not any((variant_id, sku, amount is not None, available is not None)):
             return None
 
-        variant_identifiers, variant_typed_identifiers = make_identifiers(
+        variant_identifiers = make_identifiers(
             {
                 "source_variant_id": variant_id,
                 "sku": sku,
@@ -641,7 +593,7 @@ class WooCommerceClient(ProductClient):
             strip_html_content=True,
         )
 
-        product_identifiers, product_typed_identifiers = make_identifiers(
+        product_identifiers = make_identifiers(
             {
                 "source_product_id": info.get("product_id") or info.get("slug"),
             }

@@ -181,7 +181,7 @@ class AmazonRapidApiClient(ProductClient):
                                         is_available = var.get("is_available", False)
                                         break
 
-                    variant_identifiers, variant_typed_identifiers = make_identifiers(
+                    variant_identifiers = make_identifiers(
                         {
                             "source_variant_id": var_asin,
                             "asin": var_asin,
@@ -260,7 +260,7 @@ class AmazonRapidApiClient(ProductClient):
             if names:
                 taxonomy_paths.append(names)
 
-        product_identifiers, product_typed_identifiers = make_identifiers(
+        product_identifiers = make_identifiers(
             {
                 "source_product_id": asin,
                 "asin": asin,

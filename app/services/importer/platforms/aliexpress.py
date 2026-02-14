@@ -168,7 +168,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str, *, source_url: str | None
         sku_id = str(sku.get("skuId") or "").strip()
         canonical_sku = f"AE:{item_id}:{sku_id}" if sku_id else None
         compare_at_amount = parse_money_to_float(str(sku.get("price") or "").replace("$", ""))
-        variant_identifiers, variant_typed_identifiers = make_identifiers(
+        variant_identifiers = make_identifiers(
             {
                 "source_variant_id": sku_id,
                 "sku": canonical_sku,
@@ -293,7 +293,7 @@ def _parse_aliexpress_result(resp: dict, item_id: str, *, source_url: str | None
         description if len(description) > 160 else None,
         strip_html_content=True,
     )
-    product_identifiers, product_typed_identifiers = make_identifiers(
+    product_identifiers = make_identifiers(
         {
             "source_product_id": item_id,
             "item_id": item_id,

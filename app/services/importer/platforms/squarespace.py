@@ -1,5 +1,4 @@
 import json
-import re
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -22,6 +21,8 @@ from .common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
+    extract_image_urls,
+    extract_names,
     extract_product_json_ld_nodes,
     finalize_product_typed_fields,
     http_session,
@@ -31,59 +32,25 @@ from .common import (
     normalize_url,
     parse_money_to_float,
     pick_name,
+    slug_token as _slug_token,
     to_bool,
     to_int,
 )
 
 
-def _slug_token(value: Any) -> str:
-    token = re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
-    return token
+_SQUARESPACE_IMAGE_DICT_KEYS = ("assetUrl", "originalSizeUrl", "imageUrl", "src", "url")
 
 
 def _extract_names(items: Any) -> list[str]:
-    names: list[str] = []
-    if isinstance(items, str):
-        for token in items.split(","):
-            stripped = token.strip()
-            if stripped:
-                names.append(stripped)
-    elif isinstance(items, list):
-        for item in items:
-            if isinstance(item, str):
-                stripped = item.strip()
-                if stripped:
-                    names.append(stripped)
-            elif isinstance(item, dict):
-                candidate = pick_name(item.get("value")) or pick_name(item.get("name")) or pick_name(item.get("title"))
-                if candidate:
-                    names.append(candidate)
-    return dedupe(names)
+    return extract_names(items, split_commas=True)
 
 
 def _extract_image_urls(items: Any) -> list[str]:
-    urls: list[str] = []
-    if isinstance(items, str):
-        normalized = normalize_url(items)
-        if normalized:
-            urls.append(normalized)
-    elif isinstance(items, list):
-        for item in items:
-            urls.extend(_extract_image_urls(item))
-    elif isinstance(items, dict):
-        for key in ("assetUrl", "originalSizeUrl", "imageUrl", "src"):
-            normalized = normalize_url(items.get(key))
-            if normalized:
-                urls.append(normalized)
-        if str(items.get("@type") or "").lower() == "imageobject":
-            normalized = normalize_url(items.get("url"))
-            if normalized:
-                urls.append(normalized)
-        if items.get("image") is not None:
-            urls.extend(_extract_image_urls(items.get("image")))
-        if items.get("images") is not None:
-            urls.extend(_extract_image_urls(items.get("images")))
-    return dedupe(urls)
+    return extract_image_urls(
+        items,
+        recursive=True,
+        dict_keys=_SQUARESPACE_IMAGE_DICT_KEYS,
+    )
 
 
 def _parse_money(raw_value: Any, *, raw_currency: Any = None) -> tuple[float | None, str | None]:
@@ -156,7 +123,7 @@ def _parse_offer_variant(raw_offer: Any) -> Variant | None:
     if not any((variant_id, sku, title, amount is not None, available is not None, image, options)):
         return None
 
-    variant_identifiers, variant_typed_identifiers = make_identifiers(
+    variant_identifiers = make_identifiers(
         {
             "source_variant_id": variant_id,
             "sku": sku,
@@ -408,7 +375,7 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
     )
     option_defs = [OptionDef(name=name, values=values) for name, values in option_map.items()]
     taxonomy_paths = [[category]] if category else []
-    product_identifiers, product_typed_identifiers = make_identifiers(
+    product_identifiers = make_identifiers(
         {
             "source_product_id": (
                 pick_name(product_data.get("productID"))
@@ -629,7 +596,7 @@ def _parse_page_json_product(
 
             variant_key = _slug_token(variant_id or title_value or str(index)) or str(index)
             resolved_sku = sku or f"SQ:{_slug_token(slug or title or candidate.get('id') or 'item')}:{variant_key}"
-            variant_identifiers, variant_typed_identifiers = make_identifiers(
+            variant_identifiers = make_identifiers(
                 {
                     "source_variant_id": variant_id,
                     "sku": resolved_sku,
@@ -742,7 +709,7 @@ def _parse_page_json_product(
         or to_bool(structured_content.get("isDownloadable"))
         or str(structured_content.get("productType") or "").upper() == "DIGITAL"
     )
-    product_identifiers, product_typed_identifiers = make_identifiers(
+    product_identifiers = make_identifiers(
         {
             "source_product_id": pick_name(candidate.get("id")) or inferred_slug,
         }

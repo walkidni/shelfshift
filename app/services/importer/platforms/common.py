@@ -67,22 +67,13 @@ def dedupe(seq: Iterable[str]) -> list[str]:
 
 
 def parse_money_to_float(x: Any) -> float | None:
-    if x is None:
+    parsed = parse_decimal_money(x)
+    if parsed is None:
         return None
-    if isinstance(x, (int, float)):
-        try:
-            return float(x)
-        except Exception:
-            return None
-    if isinstance(x, str):
-        s = x.strip()
-        s = s.replace(",", "")
-        s = re.sub(r"[^\d\.]", "", s)  # drop currency symbols/letters
-        try:
-            return float(s) if s else None
-        except Exception:
-            return None
-    return None
+    try:
+        return float(parsed)
+    except (TypeError, ValueError):
+        return None
 
 
 def append_default_variant_if_empty(variants: list[Variant], default_variant: Variant | None) -> None:
@@ -158,6 +149,74 @@ def normalize_url(value: Any) -> str | None:
     return stripped
 
 
+def slug_token(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
+
+
+def extract_names(items: Any, *, split_commas: bool = False) -> list[str]:
+    names: list[str] = []
+    if isinstance(items, str):
+        tokens = items.split(",") if split_commas else [items]
+        for token in tokens:
+            stripped = token.strip()
+            if stripped:
+                names.append(stripped)
+    elif isinstance(items, list):
+        for item in items:
+            if isinstance(item, str):
+                stripped = item.strip()
+                if stripped:
+                    names.append(stripped)
+                continue
+            if not isinstance(item, dict):
+                continue
+            candidate = pick_name(item.get("value")) or pick_name(item.get("name")) or pick_name(item.get("title"))
+            if candidate:
+                names.append(candidate)
+    return dedupe(names)
+
+
+def extract_image_urls(
+    items: Any,
+    *,
+    recursive: bool = False,
+    dict_keys: tuple[str, ...] = ("url", "src"),
+) -> list[str]:
+    urls: list[str] = []
+    if isinstance(items, str):
+        normalized = normalize_url(items)
+        if normalized:
+            urls.append(normalized)
+    elif isinstance(items, list):
+        for item in items:
+            if recursive:
+                urls.extend(extract_image_urls(item, recursive=True, dict_keys=dict_keys))
+                continue
+            if isinstance(item, str):
+                normalized = normalize_url(item)
+            elif isinstance(item, dict):
+                normalized = None
+                for key in dict_keys:
+                    normalized = normalize_url(item.get(key))
+                    if normalized:
+                        break
+            else:
+                normalized = None
+            if normalized:
+                urls.append(normalized)
+    elif isinstance(items, dict):
+        for key in dict_keys:
+            normalized = normalize_url(items.get(key))
+            if normalized:
+                urls.append(normalized)
+        if recursive:
+            for key in ("image", "images", "items"):
+                nested = items.get(key)
+                if nested is not None:
+                    urls.extend(extract_image_urls(nested, recursive=True, dict_keys=dict_keys))
+    return dedupe(urls)
+
+
 def _extract_json_ld_nodes(data: Any, *, target_type: str) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     if isinstance(data, dict):
@@ -226,10 +285,9 @@ def make_price(
     )
 
 
-def make_identifiers(values: dict[str, Any]) -> tuple[Identifiers, Identifiers]:
+def make_identifiers(values: dict[str, Any]) -> Identifiers:
     cleaned = _clean_identifier_values(values)
-    identifiers = Identifiers(values=cleaned)
-    return identifiers, identifiers
+    return Identifiers(values=cleaned)
 
 
 def finalize_product_typed_fields(product: Product, *, source_url: str) -> Product:

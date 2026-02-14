@@ -179,7 +179,7 @@ class ShopifyClient(ProductClient):
                 else CategorySet()
             ),
         )
-        product.identifiers, _ = make_identifiers({})
+        product.identifiers = make_identifiers({})
         return product
 
     def fetch_product(self, url: str) -> Product:
@@ -271,7 +271,7 @@ class ShopifyClient(ProductClient):
                             )
                         )
 
-                variant_identifiers, variant_typed_identifiers = make_identifiers(
+                variant_identifiers = make_identifiers(
                     {
                         "source_variant_id": variant_id,
                         "sku": raw_sku,
@@ -349,7 +349,7 @@ class ShopifyClient(ProductClient):
                     )
                 ]
 
-        product_identifiers, product_typed_identifiers = make_identifiers(
+        product_identifiers = make_identifiers(
             {
                 "source_product_id": data.get("id"),
                 "handle": handle,
