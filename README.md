@@ -4,6 +4,8 @@ This app ingests supported ecommerce product URLs and returns CSV files that are
 
 Project surface:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
+- CSV import API (`POST /api/v1/import/csv`)
+- Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`)
 - URL detection endpoint (`GET /api/v1/detect`)
 - FastAPI CSV export endpoints:
   - `POST /api/v1/export/shopify.csv`
@@ -12,6 +14,7 @@ Project surface:
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
 - Simple web UI for one-step CSV export (`/`)
+- Web CSV upload preview + conversion flow (`/import.csv` -> `/export-from-product.csv`)
 - Shared importer services for Shopify, WooCommerce, Squarespace, Amazon, and AliExpress
 
 ## Supported import sources
@@ -114,6 +117,23 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/bigcommerce.csv" \
   -H "Content-Type: application/json" \
   -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"csv_format":"modern","weight_unit":"kg"}' \
   -o product.csv
+```
+
+Import source CSV into canonical product JSON:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
+  -F "source_platform=shopify" \
+  -F "file=@./product.csv"
+```
+
+Export from canonical product JSON:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product":{...canonical product...},"target_platform":"woocommerce","publish":false}' \
+  -o converted.csv
 ```
 
 ## Export request options

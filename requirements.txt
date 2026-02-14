@@ -10,5 +10,5 @@ pandas>=2.2.0,<3.0.0
 Babel>=2.17.0,<3.0.0
 
 # Dev dependencies
-pcov
+pytest-cov
 pyflakes

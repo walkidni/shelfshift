@@ -232,6 +232,43 @@ code {
   line-height: 1.35;
 }
 
+.preview-json {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.preview-json code {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  word-wrap: break-word;
+  white-space: inherit;
+}
+
+.preview-disclosure {
+  margin: 0.25rem 0 0;
+}
+
+.preview-disclosure > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.preview-disclosure[open] > summary {
+  margin-bottom: 0.75rem;
+}
+
 @media (max-width: 860px) {
   .grid {
     grid-template-columns: 1fr;
