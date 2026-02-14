@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -251,19 +252,19 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
         ],
         raw={},
     )
-    product.price_v2 = Price(current=Money(amount=Decimal("55.5"), currency="eur"))
-    product.media_v2 = [
+    product.price = Price(current=Money(amount=Decimal("55.5"), currency="eur"))
+    product.media = [
         Media(url="https://cdn.example.com/typed-main.jpg", is_primary=True),
         Media(url="https://cdn.example.com/typed-gallery.jpg"),
     ]
-    product.options_v2 = [OptionDef(name="Color", values=["Blue"])]
-    product.taxonomy_v2 = CategorySet(paths=[["Men", "Outerwear"]], primary=["Men", "Outerwear"])
+    product.options = [OptionDef(name="Color", values=["Blue"])]
+    product.taxonomy = CategorySet(paths=[["Men", "Outerwear"]], primary=["Men", "Outerwear"])
 
     variant = product.variants[0]
-    variant.price_v2 = Price(current=Money(amount=Decimal("12.34"), currency="cad"))
-    variant.media_v2 = [Media(url="https://cdn.example.com/typed-variant.jpg", is_primary=True)]
-    variant.option_values_v2 = [OptionValue(name="Color", value="Blue")]
-    variant.inventory_v2 = Inventory(track_quantity=True, quantity=7, available=True)
+    variant.price = Price(current=Money(amount=Decimal("12.34"), currency="cad"))
+    variant.media = [Media(url="https://cdn.example.com/typed-variant.jpg", is_primary=True)]
+    variant.option_values = [OptionValue(name="Color", value="Blue")]
+    variant.inventory = Inventory(track_quantity=True, quantity=7, available=True)
 
     csv_text, _ = product_to_shopify_csv(product, publish=True)
     frame = read_frame(csv_text)

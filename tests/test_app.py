@@ -9,7 +9,7 @@ from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.models import Product, Variant
+from tests._model_builders import Product, Variant
 from tests._app_helpers import patch_run_import_product
 
 
@@ -168,7 +168,7 @@ def test_import_endpoint_accepts_squarespace_url(monkeypatch) -> None:
     assert response.json()["title"] == "Custom Patchwork Shirt"
 
 
-def test_import_endpoint_legacy_profile_returns_legacy_payload(monkeypatch) -> None:
+def test_import_endpoint_ignores_legacy_response_profile_query(monkeypatch) -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -193,12 +193,12 @@ def test_import_endpoint_legacy_profile_returns_legacy_payload(monkeypatch) -> N
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["platform"] == "shopify"
+    assert payload["source"]["platform"] == "shopify"
     assert payload["title"] == "Demo Mug"
-    assert "source" not in payload
+    assert "source" in payload
 
 
-def test_import_endpoint_rejects_invalid_response_profile(monkeypatch) -> None:
+def test_import_endpoint_ignores_invalid_response_profile_query(monkeypatch) -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -221,7 +221,8 @@ def test_import_endpoint_rejects_invalid_response_profile(monkeypatch) -> None:
         json={"product_url": "https://demo.myshopify.com/products/mug"},
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["source"]["platform"] == "shopify"
 
 
 def test_export_shopify_csv_endpoint(monkeypatch) -> None:

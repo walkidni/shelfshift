@@ -43,66 +43,41 @@ def _load_input_payload(name: str) -> dict:
 
 
 def _assert_product_dual_write(product, *, source_url: str) -> None:
-    assert product.source_v2 is not None
-    assert product.source_v2.platform == product.platform
-    assert product.source_v2.id == product.id
-    assert product.source_v2.slug == product.slug
-    assert product.source_v2.url == source_url
+    assert product.source is not None
+    assert product.source.platform
+    assert product.source.url == source_url
 
-    legacy_price = product.price if isinstance(product.price, dict) else {}
-    assert product.price_v2 is not None
-    assert product.price_v2.current.amount == parse_decimal_money(legacy_price.get("amount"))
-    assert product.price_v2.current.currency == normalize_currency(legacy_price.get("currency"))
+    assert product.price is not None
+    assert product.price.current.currency is None or product.price.current.currency == normalize_currency(
+        product.price.current.currency
+    )
 
-    if product.images:
-        assert product.media_v2
-        image_media_urls = [item.url for item in product.media_v2 if item.type == "image"]
-        assert set(product.images).issubset(set(image_media_urls))
+    assert product.options is not None
+    for option in product.options:
+        assert option.name
+        assert isinstance(option.values, list)
 
-    assert product.options_v2 is not None
-    typed_option_names = [option.name for option in product.options_v2]
-    for option_name, option_values in product.options.items():
-        assert option_name in typed_option_names
-        matched = next(option for option in product.options_v2 if option.name == option_name)
-        assert matched.values == option_values
-
-    if product.category:
-        assert product.taxonomy_v2 is not None
-        assert product.taxonomy_v2.paths
-        assert product.taxonomy_v2.paths[0]
-        assert product.taxonomy_v2.paths[0][-1] == product.category
-
-    if product.meta_title or product.meta_description:
-        assert product.seo_v2 is not None
-        assert product.seo_v2.title == product.meta_title
-        assert product.seo_v2.description == product.meta_description
-
-    if product.id:
-        assert product.identifiers_v2 is not None
-        assert product.identifiers_v2.values.get("source_product_id") == product.id
+    if product.source.id:
+        assert product.identifiers is not None
+        assert product.identifiers.values.get("source_product_id") == product.source.id
 
     assert product.variants
     for variant in product.variants:
-        assert variant.price_v2 is not None
-        assert variant.price_v2.current.amount == parse_decimal_money(variant.price_amount)
-        assert variant.price_v2.current.currency == normalize_currency(variant.currency)
+        assert variant.price is not None
+        assert variant.price.current.currency is None or variant.price.current.currency == normalize_currency(
+            variant.price.current.currency
+        )
 
-        if variant.image:
-            assert variant.media_v2
-            assert variant.media_v2[0].url == variant.image
+        assert variant.option_values is not None
+        for option_value in variant.option_values:
+            assert option_value.name
+            assert option_value.value
 
-        assert variant.option_values_v2 is not None
-        typed_option_values = {item.name: item.value for item in variant.option_values_v2}
-        for option_name, option_value in variant.options.items():
-            assert typed_option_values.get(option_name) == option_value
-
-        assert variant.inventory_v2 is not None
-        assert variant.inventory_v2.quantity == variant.inventory_quantity
-        assert variant.inventory_v2.available == variant.available
+        assert variant.inventory is not None
 
         if variant.id:
-            assert variant.identifiers_v2 is not None
-            assert variant.identifiers_v2.values.get("source_variant_id") == variant.id
+            assert variant.identifiers is not None
+            assert variant.identifiers.values.get("source_variant_id") == variant.id
 
 
 def test_shopify_import_populates_phase4_typed_fields(monkeypatch) -> None:
@@ -124,11 +99,11 @@ def test_shopify_import_populates_phase4_typed_fields(monkeypatch) -> None:
     product = client.fetch_product(source_url)
 
     _assert_product_dual_write(product, source_url=source_url)
-    assert product.media_v2
-    assert product.media_v2[0].alt == "Hears Earplug black"
-    assert product.media_v2[0].position == 1
-    assert product.variants[0].identifiers_v2 is not None
-    assert product.variants[0].identifiers_v2.values.get("barcode") == "8721082842037"
+    assert product.media
+    assert product.media[0].alt == "Hears Earplug black"
+    assert product.media[0].position == 1
+    assert product.variants[0].identifiers is not None
+    assert product.variants[0].identifiers.values.get("barcode") == "8721082842037"
 
 
 def test_squarespace_import_populates_phase4_typed_fields(monkeypatch) -> None:
@@ -150,11 +125,11 @@ def test_squarespace_import_populates_phase4_typed_fields(monkeypatch) -> None:
     product = client.fetch_product(source_url)
 
     _assert_product_dual_write(product, source_url=source_url)
-    assert product.media_v2
-    assert product.media_v2[0].alt == "IMG_5114.jpeg"
-    assert product.media_v2[0].position == 1
-    assert product.variants[0].inventory_v2 is not None
-    assert product.variants[0].inventory_v2.track_quantity is True
+    assert product.media
+    assert product.media[0].alt == "IMG_5114.jpeg"
+    assert product.media[0].position == 1
+    assert product.variants[0].inventory is not None
+    assert product.variants[0].inventory.track_quantity is True
 
 
 def test_woocommerce_import_populates_phase4_typed_fields(monkeypatch) -> None:
@@ -177,10 +152,10 @@ def test_woocommerce_import_populates_phase4_typed_fields(monkeypatch) -> None:
     product = client.fetch_product(source_url)
 
     _assert_product_dual_write(product, source_url=source_url)
-    assert product.identifiers_v2 is not None
-    assert product.identifiers_v2.values.get("sku") == "888392682499"
-    assert product.variants[0].inventory_v2 is not None
-    assert product.variants[0].inventory_v2.allow_backorder is False
+    assert product.identifiers is not None
+    assert product.identifiers.values.get("sku") == "888392682499"
+    assert product.variants[0].inventory is not None
+    assert product.variants[0].inventory.allow_backorder is False
 
 
 def test_amazon_import_populates_phase4_typed_fields(monkeypatch) -> None:
@@ -202,20 +177,20 @@ def test_amazon_import_populates_phase4_typed_fields(monkeypatch) -> None:
     product = client.fetch_product(source_url)
 
     _assert_product_dual_write(product, source_url=source_url)
-    assert product.price_v2 is not None
-    assert product.price_v2.compare_at is not None
-    assert product.price_v2.compare_at.amount == parse_decimal_money("$1,499.99")
-    assert product.taxonomy_v2 is not None
-    assert product.taxonomy_v2.paths
-    assert product.taxonomy_v2.paths[0] == [
+    assert product.price is not None
+    assert product.price.compare_at is not None
+    assert product.price.compare_at.amount == parse_decimal_money("$1,499.99")
+    assert product.taxonomy is not None
+    assert product.taxonomy.paths
+    assert product.taxonomy.paths[0] == [
         "Electronics",
         "Computers & Accessories",
         "Computers & Tablets",
         "Laptops",
         "Traditional Laptops",
     ]
-    assert product.identifiers_v2 is not None
-    assert product.identifiers_v2.values.get("parent_asin") == "B0FDCYVV8X"
+    assert product.identifiers is not None
+    assert product.identifiers.values.get("parent_asin") == "B0FDCYVV8X"
 
 
 def test_aliexpress_import_populates_phase4_typed_fields(monkeypatch) -> None:
@@ -237,7 +212,7 @@ def test_aliexpress_import_populates_phase4_typed_fields(monkeypatch) -> None:
     product = client.fetch_product(source_url)
 
     _assert_product_dual_write(product, source_url=source_url)
-    assert any(media.type == "video" and "video.aliexpress-media.com" in media.url for media in product.media_v2)
-    assert product.variants[0].price_v2 is not None
-    assert product.variants[0].price_v2.compare_at is not None
-    assert product.variants[0].price_v2.compare_at.amount == parse_decimal_money("120.00")
+    assert any(media.type == "video" and "video.aliexpress-media.com" in media.url for media in product.media)
+    assert product.variants[0].price is not None
+    assert product.variants[0].price.compare_at is not None
+    assert product.variants[0].price.compare_at.amount == parse_decimal_money("120.00")

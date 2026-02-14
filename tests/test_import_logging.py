@@ -1,4 +1,4 @@
-from app.models import Product, Variant
+from tests._model_builders import Product, Variant
 from app.services.logging import product_result_to_loggable
 
 
@@ -46,14 +46,14 @@ def test_product_result_to_loggable_extrahigh_is_full_and_includes_raw() -> None
 
     loggable = product_result_to_loggable(product, verbosity="extrahigh")
 
-    assert loggable["id"] == "1005008518647948"
-    assert loggable["price"] == {"amount": 50.4, "currency": "USD"}
-    assert isinstance(loggable["images"], list)
+    assert loggable["source"]["id"] == "1005008518647948"
+    assert loggable["price"]["current"] == {"amount": "50.4", "currency": "USD"}
+    assert isinstance(loggable["media"], list)
     assert isinstance(loggable["variants"], list)
     assert loggable["variants"][0]["sku"] == "SKU-1"
     assert loggable["raw"] == {"source": "payload"}
     assert loggable["description"] == "D" * 500
-    assert loggable["meta_description"] == "M" * 400
+    assert loggable["seo"]["description"] == "M" * 400
 
 
 def test_product_result_to_loggable_high_truncates_and_excludes_raw() -> None:
@@ -61,13 +61,13 @@ def test_product_result_to_loggable_high_truncates_and_excludes_raw() -> None:
 
     loggable = product_result_to_loggable(product, verbosity="high")
 
-    assert loggable["id"] == "1005008518647948"
-    assert loggable["price"] == {"amount": 50.4, "currency": "USD"}
-    assert isinstance(loggable["images"], list)
+    assert loggable["source"]["id"] == "1005008518647948"
+    assert loggable["price"]["current"] == {"amount": "50.4", "currency": "USD"}
+    assert isinstance(loggable["media"], list)
     assert loggable["variants"][0]["sku"] == "SKU-1"
     assert "raw" not in loggable
     assert loggable["description"].endswith("... [truncated]")
-    assert loggable["meta_description"].endswith("... [truncated]")
+    assert loggable["seo"]["description"].endswith("... [truncated]")
 
 
 def test_product_result_to_loggable_medium_omits_ids_and_sku_and_simplifies_variants() -> None:
@@ -77,7 +77,7 @@ def test_product_result_to_loggable_medium_omits_ids_and_sku_and_simplifies_vari
 
     assert "id" not in loggable
     assert loggable["price"] == "50.4$"
-    assert loggable["options"] == {"Color": ["White", "Black"]}
+    assert loggable["options"] == [{"name": "Color", "values": ["White", "Black"]}]
     assert loggable["images"] == {"count": 2}
     assert loggable["variants_count"] == 2
     assert len(loggable["variants"]) == 2

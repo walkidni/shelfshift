@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from app.models import Media, Money, Price, Product, Variant, Weight, format_decimal, normalize_currency, parse_decimal_money
+from app.models import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
+from tests._model_builders import Product, Variant
 
 
 def test_models_module_exports_v1_and_v2_types() -> None:
@@ -17,7 +18,7 @@ def test_models_module_exports_v1_and_v2_types() -> None:
     weight = Weight(value=Decimal("100"), unit="g")
     media = Media(url="https://cdn.example.com/img.jpg")
 
-    assert product.platform == "shopify"
+    assert product.source.platform == "shopify"
     assert variant.id == "v1"
     assert price.current == money
     assert weight.unit == "g"

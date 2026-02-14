@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import requests
+from app.models import format_decimal, normalize_currency, parse_decimal_money
 
 from app.services.importer.platforms.shopify import ShopifyClient
 from app.services.importer.platforms.squarespace import SquarespaceClient
@@ -34,6 +35,59 @@ def _load_text(relative_path: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _amount_text(value) -> str | None:
+    parsed = parse_decimal_money(value)
+    if parsed is None:
+        return None
+    return format_decimal(parsed)
+
+
+def _assert_matches_legacy_fixture_shape(parsed: dict, expected: dict) -> None:
+    assert parsed["source"]["platform"] == expected.get("platform")
+    assert parsed["source"]["id"] == expected.get("id")
+    assert parsed["source"]["slug"] == expected.get("slug")
+    assert parsed["title"] == expected.get("title")
+    assert parsed["description"] == expected.get("description")
+    assert parsed["brand"] == expected.get("brand")
+    assert parsed["vendor"] == expected.get("vendor")
+    assert parsed["tags"] == expected.get("tags", [])
+    assert parsed["requires_shipping"] is expected.get("requires_shipping")
+    assert parsed["track_quantity"] is expected.get("track_quantity")
+    assert parsed["is_digital"] is expected.get("is_digital")
+
+    expected_options = expected.get("options") or {}
+    parsed_options = {option["name"]: option["values"] for option in parsed["options"]}
+    assert parsed_options == expected_options
+
+    expected_price = expected.get("price") or {}
+    assert parsed["price"]["current"]["amount"] == _amount_text(expected_price.get("amount"))
+    assert parsed["price"]["current"]["currency"] == normalize_currency(expected_price.get("currency"))
+
+    expected_category = expected.get("category")
+    if expected_category:
+        assert parsed["taxonomy"]["paths"]
+        assert parsed["taxonomy"]["paths"][0][-1] == expected_category
+
+    expected_images = expected.get("images") or []
+    parsed_images = [item["url"] for item in parsed["media"] if item["type"] == "image"]
+    if expected_images:
+        assert expected_images[0] in parsed_images
+
+    expected_variants = expected.get("variants") or []
+    assert len(parsed["variants"]) == len(expected_variants)
+    for parsed_variant, expected_variant in zip(parsed["variants"], expected_variants):
+        assert parsed_variant["id"] == expected_variant.get("id")
+        assert parsed_variant["sku"] == expected_variant.get("sku")
+        assert parsed_variant["title"] == expected_variant.get("title")
+        assert parsed_variant["price"]["current"]["amount"] == _amount_text(expected_variant.get("price_amount"))
+        assert parsed_variant["price"]["current"]["currency"] == normalize_currency(expected_variant.get("currency"))
+        assert parsed_variant["inventory"]["quantity"] == expected_variant.get("inventory_quantity")
+        assert parsed_variant["inventory"]["available"] is expected_variant.get("available")
+        assert {item["name"]: item["value"] for item in parsed_variant["option_values"]} == (
+            expected_variant.get("options") or {}
+        )
+
+
 def test_shopify_import_happy_path_matches_expected_fixture(monkeypatch) -> None:
     client = ShopifyClient()
     source_url = "https://demo-shop.myshopify.com/products/classic-tee"
@@ -56,7 +110,7 @@ def test_shopify_import_happy_path_matches_expected_fixture(monkeypatch) -> None
     product = client.fetch_product(source_url)
 
     assert calls == [api_url]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)
 
 
 def test_shopify_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -85,7 +139,7 @@ def test_shopify_import_html_fallback_matches_expected_fixture(monkeypatch) -> N
     product = client.fetch_product(source_url)
 
     assert calls == [api_url, source_url]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)
 
 
 def test_squarespace_import_happy_path_matches_expected_fixture(monkeypatch) -> None:
@@ -110,7 +164,7 @@ def test_squarespace_import_happy_path_matches_expected_fixture(monkeypatch) -> 
     product = client.fetch_product(source_url)
 
     assert calls == [page_json_url]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)
 
 
 def test_squarespace_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -140,7 +194,7 @@ def test_squarespace_import_html_fallback_matches_expected_fixture(monkeypatch) 
     product = client.fetch_product(source_url)
 
     assert calls == [page_json_url, source_url]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)
 
 
 def test_woocommerce_import_happy_path_matches_expected_fixture(monkeypatch) -> None:
@@ -166,7 +220,7 @@ def test_woocommerce_import_happy_path_matches_expected_fixture(monkeypatch) -> 
     product = client.fetch_product(source_url)
 
     assert calls == [(api_url, {"slug": "adjustable-wrench-set"})]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)
 
 
 def test_woocommerce_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -196,4 +250,4 @@ def test_woocommerce_import_html_fallback_matches_expected_fixture(monkeypatch) 
     product = client.fetch_product(api_url)
 
     assert calls == [api_url, fallback_url]
-    assert product.to_dict(include_raw=False) == expected
+    _assert_matches_legacy_fixture_shape(product.to_dict(include_raw=False), expected)

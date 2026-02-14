@@ -491,6 +491,7 @@ class WooCommerceClient(ProductClient):
             title=title,
             description=description,
             variants=variants,
+            options=options,
             brand=brand,
             tags=tags,
             vendor=brand,

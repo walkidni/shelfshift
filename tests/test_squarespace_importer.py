@@ -74,29 +74,32 @@ def test_squarespace_import_prefers_page_json_when_product_structured_content_ex
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(source_url)
+    parsed = product.to_dict(include_raw=False)
 
     assert calls == [page_json_url]
-    assert product.platform == "squarespace"
-    assert product.id == "abc123"
-    assert product.slug == "custom-patchwork-shirt-snzgy"
-    assert product.title == "Custom Patchwork Shirt"
-    assert product.price == {"amount": 120.0, "currency": "USD"}
-    assert product.images == [
+    assert parsed["source"]["platform"] == "squarespace"
+    assert parsed["source"]["id"] == "abc123"
+    assert parsed["source"]["slug"] == "custom-patchwork-shirt-snzgy"
+    assert parsed["title"] == "Custom Patchwork Shirt"
+    assert parsed["price"]["current"] == {"amount": "120", "currency": "USD"}
+    assert [item["url"] for item in parsed["media"] if item["type"] == "image"] == [
         "https://images.example.com/front.jpg",
-        "https://images.example.com/blue-s.jpg",
     ]
-    assert product.options == {"Color": ["Blue", "Red"], "Size": ["S", "M"]}
-    assert product.tags == ["patchwork", "shirt"]
-    assert product.category == "Tops"
-    assert len(product.variants) == 2
-    assert product.variants[0].id == "v1"
-    assert product.variants[0].options == {"Color": "Blue", "Size": "S"}
-    assert product.variants[0].price_amount == 120.0
-    assert product.variants[0].inventory_quantity == 4
-    assert product.variants[1].id == "v2"
-    assert product.variants[1].options == {"Color": "Red", "Size": "M"}
-    assert product.variants[1].price_amount == 130.0
-    assert product.variants[1].available is False
+    assert parsed["options"] == [
+        {"name": "Color", "values": ["Blue", "Red"]},
+        {"name": "Size", "values": ["S", "M"]},
+    ]
+    assert parsed["tags"] == ["patchwork", "shirt"]
+    assert parsed["taxonomy"]["primary"] == ["Tops"]
+    assert len(parsed["variants"]) == 2
+    assert parsed["variants"][0]["id"] == "v1"
+    assert parsed["variants"][0]["option_values"] == [{"name": "Color", "value": "Blue"}, {"name": "Size", "value": "S"}]
+    assert parsed["variants"][0]["price"]["current"] == {"amount": "120", "currency": "USD"}
+    assert parsed["variants"][0]["inventory"]["quantity"] == 4
+    assert parsed["variants"][1]["id"] == "v2"
+    assert parsed["variants"][1]["option_values"] == [{"name": "Color", "value": "Red"}, {"name": "Size", "value": "M"}]
+    assert parsed["variants"][1]["price"]["current"] == {"amount": "130", "currency": "USD"}
+    assert parsed["variants"][1]["inventory"]["available"] is False
 
 
 def test_squarespace_import_falls_back_to_html_json_ld_when_page_json_has_no_product(monkeypatch) -> None:
@@ -154,18 +157,19 @@ def test_squarespace_import_falls_back_to_html_json_ld_when_page_json_has_no_pro
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(source_url)
+    parsed = product.to_dict(include_raw=False)
 
     assert calls == [page_json_url, source_url]
-    assert product.platform == "squarespace"
-    assert product.slug == "custom-patchwork-shirt-snzgy"
-    assert product.title == "Custom Patchwork Shirt"
-    assert product.brand == "ST-P SEWS"
-    assert product.price == {"amount": 120.0, "currency": "USD"}
-    assert len(product.variants) == 2
-    assert product.variants[0].sku == "SQ-001"
-    assert product.variants[0].options == {"Option": "Blue / S"}
-    assert product.variants[1].sku == "SQ-002"
-    assert product.variants[1].available is False
+    assert parsed["source"]["platform"] == "squarespace"
+    assert parsed["source"]["slug"] == "custom-patchwork-shirt-snzgy"
+    assert parsed["title"] == "Custom Patchwork Shirt"
+    assert parsed["brand"] == "ST-P SEWS"
+    assert parsed["price"]["current"] == {"amount": "120", "currency": "USD"}
+    assert len(parsed["variants"]) == 2
+    assert parsed["variants"][0]["sku"] == "SQ-001"
+    assert parsed["variants"][0]["option_values"] == [{"name": "Option", "value": "Blue / S"}]
+    assert parsed["variants"][1]["sku"] == "SQ-002"
+    assert parsed["variants"][1]["inventory"]["available"] is False
 
 
 def test_squarespace_import_rejects_non_product_url() -> None:

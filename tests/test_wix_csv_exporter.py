@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -187,16 +188,16 @@ def test_wix_export_prefers_typed_fields_when_present() -> None:
         ],
         raw={},
     )
-    product.options_v2 = [OptionDef(name="Color", values=["Blue"])]
-    product.media_v2 = [
+    product.options = [OptionDef(name="Color", values=["Blue"])]
+    product.media = [
         Media(url="https://cdn.example.com/typed-product-1.jpg", is_primary=True),
         Media(url="https://cdn.example.com/typed-product-2.jpg"),
     ]
 
     variant = product.variants[0]
-    variant.price_v2 = Price(current=Money(amount=Decimal("12.34"), currency="USD"))
-    variant.option_values_v2 = [OptionValue(name="Color", value="Blue")]
-    variant.inventory_v2 = Inventory(track_quantity=True, quantity=7, available=True)
+    variant.price = Price(current=Money(amount=Decimal("12.34"), currency="USD"))
+    variant.option_values = [OptionValue(name="Color", value="Blue")]
+    variant.inventory = Inventory(track_quantity=True, quantity=7, available=True)
 
     csv_text, _ = product_to_wix_csv(product, publish=True)
     frame = read_frame(csv_text)

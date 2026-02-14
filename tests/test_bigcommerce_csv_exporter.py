@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -125,6 +126,10 @@ def test_bigcommerce_export_uses_swatch_only_when_value_data_is_present() -> Non
         title="Classic Tee",
         description="Demo description",
         price={"amount": 19.99, "currency": "USD"},
+        options={
+            "Color": ["Black[#000000]"],
+            "Size": ["M"],
+        },
         variants=[
             Variant(
                 id="v1",
@@ -238,17 +243,17 @@ def test_bigcommerce_modern_prefers_typed_fields_when_present() -> None:
         ],
         raw={},
     )
-    product.options_v2 = [OptionDef(name="Color", values=["Blue"])]
-    product.taxonomy_v2 = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
-    product.media_v2 = [
+    product.options = [OptionDef(name="Color", values=["Blue"])]
+    product.taxonomy = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
+    product.media = [
         Media(url="https://cdn.example.com/typed-product-1.jpg", is_primary=True),
         Media(url="https://cdn.example.com/typed-product-2.jpg"),
     ]
     variant = product.variants[0]
-    variant.option_values_v2 = [OptionValue(name="Color", value="Blue")]
-    variant.price_v2 = Price(current=Money(amount=Decimal("12.34"), currency="USD"))
-    variant.inventory_v2 = Inventory(track_quantity=True, quantity=7, available=True)
-    variant.media_v2 = [Media(url="https://cdn.example.com/typed-variant.jpg", is_primary=True)]
+    variant.option_values = [OptionValue(name="Color", value="Blue")]
+    variant.price = Price(current=Money(amount=Decimal("12.34"), currency="USD"))
+    variant.inventory = Inventory(track_quantity=True, quantity=7, available=True)
+    variant.media = [Media(url="https://cdn.example.com/typed-variant.jpg", is_primary=True)]
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=True)
     frame = read_frame(csv_text)
@@ -285,11 +290,11 @@ def test_bigcommerce_legacy_prefers_typed_fields_when_present() -> None:
         ],
         raw={},
     )
-    product.taxonomy_v2 = CategorySet(paths=[["Drinkware", "Mugs"]], primary=["Drinkware", "Mugs"])
-    product.media_v2 = [Media(url="https://cdn.example.com/typed-mug.jpg", is_primary=True)]
+    product.taxonomy = CategorySet(paths=[["Drinkware", "Mugs"]], primary=["Drinkware", "Mugs"])
+    product.media = [Media(url="https://cdn.example.com/typed-mug.jpg", is_primary=True)]
     variant = product.variants[0]
-    variant.price_v2 = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
-    variant.inventory_v2 = Inventory(track_quantity=True, quantity=5, available=True)
+    variant.price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
+    variant.inventory = Inventory(track_quantity=True, quantity=5, available=True)
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=True, csv_format="legacy")
     frame = read_frame(csv_text)

@@ -9,10 +9,8 @@ from app.models import (
     OptionDef,
     OptionValue,
     Price,
-    Product,
     Seo,
     SourceRef,
-    Variant,
     Weight,
     format_decimal,
     normalize_currency,
@@ -24,6 +22,7 @@ from app.models import (
     resolve_taxonomy_paths,
     resolve_variant_option_values,
 )
+from tests._model_builders import Product, Variant
 
 
 def test_parse_decimal_money_uses_string_conversion_for_floats() -> None:
@@ -78,27 +77,23 @@ def test_product_and_variant_phase2_fields_have_safe_defaults() -> None:
         id="p-1",
         title="Demo",
         description="Demo",
-        price={"amount": 12.34, "currency": "USD"},
     )
     variant = Variant(id="v-1")
 
-    assert product.price_v2 is None
-    assert product.media_v2 == []
-    assert product.categories_v2 == []
-    assert product.identifiers == {}
-    assert product.options_v2 == []
-    assert product.seo_v2 is None
-    assert product.source_v2 is None
-    assert product.taxonomy_v2 is None
-    assert product.identifiers_v2 is None
+    assert product.price is None
+    assert product.media == []
+    assert product.identifiers.values == {}
+    assert product.options == []
+    assert product.seo is not None
+    assert product.source is not None
+    assert product.taxonomy is not None
     assert product.provenance == {}
 
-    assert variant.price_v2 is None
-    assert variant.media_v2 == []
-    assert variant.identifiers == {}
-    assert variant.option_values_v2 == []
-    assert variant.inventory_v2 is None
-    assert variant.identifiers_v2 is None
+    assert variant.price is None
+    assert variant.media == []
+    assert variant.identifiers.values == {}
+    assert variant.option_values == []
+    assert variant.inventory is not None
 
 
 def test_resolve_current_money_prefers_v2_then_v1_variant_then_v1_product() -> None:
@@ -114,12 +109,11 @@ def test_resolve_current_money_prefers_v2_then_v1_variant_then_v1_product() -> N
     resolved = resolve_current_money(product, variant)
     assert resolved == Money(amount=Decimal("19.99"), currency="USD")
 
-    variant.price_amount = None
-    variant.currency = None
+    variant.price = None
     resolved = resolve_current_money(product, variant)
     assert resolved == Money(amount=Decimal("49"), currency="USD")
 
-    variant.price_v2 = Price(current=Money(amount=Decimal("15.25"), currency="eur"))
+    variant.price = Price(current=Money(amount=Decimal("15.25"), currency="eur"))
     resolved = resolve_current_money(product, variant)
     assert resolved == Money(amount=Decimal("15.25"), currency="EUR")
 
@@ -133,7 +127,7 @@ def test_resolve_primary_image_url_prefers_variant_then_product_and_dedupes_all_
         price={"amount": 49.0, "currency": "USD"},
         images=["https://cdn.example.com/p-1.jpg", "https://cdn.example.com/p-2.jpg"],
     )
-    product.media_v2 = [
+    product.media = [
         Media(url="https://cdn.example.com/p-1.jpg", is_primary=False),
         Media(url="https://cdn.example.com/p-hero.jpg", is_primary=True),
         Media(url="https://cdn.example.com/p-2.jpg"),
@@ -142,7 +136,7 @@ def test_resolve_primary_image_url_prefers_variant_then_product_and_dedupes_all_
         id="v-1",
         sku="SKU-1",
         image="https://cdn.example.com/v-fallback.jpg",
-        media_v2=[
+        media=[
             Media(url="https://cdn.example.com/v-2.jpg"),
             Media(url="https://cdn.example.com/v-primary.jpg", is_primary=True),
         ],
@@ -207,7 +201,7 @@ def test_resolve_option_defs_prefers_typed_then_falls_back_to_legacy_sources() -
         options={"Color": ["Black"]},
         variants=[Variant(id="v-1", options={"Color": "White", "Material": "Cotton"})],
     )
-    product.options_v2 = [
+    product.options = [
         OptionDef(name="Size", values=["M", "L"]),
         OptionDef(name="Color", values=["Blue"]),
     ]
@@ -218,12 +212,9 @@ def test_resolve_option_defs_prefers_typed_then_falls_back_to_legacy_sources() -
         OptionDef(name="Color", values=["Blue"]),
     ]
 
-    product.options_v2 = []
+    product.options = []
     resolved = resolve_option_defs(product)
-    assert resolved == [
-        OptionDef(name="Color", values=["Black", "White"]),
-        OptionDef(name="Material", values=["Cotton"]),
-    ]
+    assert resolved == []
 
 
 def test_resolve_variant_option_values_prefers_typed_then_falls_back_to_legacy_options() -> None:
@@ -236,20 +227,17 @@ def test_resolve_variant_option_values_prefers_typed_then_falls_back_to_legacy_o
         options={"Color": ["Black", "White"], "Size": ["M", "L"]},
     )
     variant = Variant(id="v-1", options={"Color": "White", "Size": "L"})
-    variant.option_values_v2 = [OptionValue(name="Material", value="Cotton")]
+    variant.option_values = [OptionValue(name="Material", value="Cotton")]
 
     resolved = resolve_variant_option_values(product, variant)
     assert resolved == [OptionValue(name="Material", value="Cotton")]
 
-    variant.option_values_v2 = []
+    variant.option_values = []
     resolved = resolve_variant_option_values(product, variant)
-    assert resolved == [
-        OptionValue(name="Color", value="White"),
-        OptionValue(name="Size", value="L"),
-    ]
+    assert resolved == []
 
 
-def test_resolve_taxonomy_paths_prefers_typed_then_categories_v2_then_legacy_category() -> None:
+def test_resolve_taxonomy_paths_prefers_typed_when_present() -> None:
     product = Product(
         platform="shopify",
         id="p-1",
@@ -258,16 +246,11 @@ def test_resolve_taxonomy_paths_prefers_typed_then_categories_v2_then_legacy_cat
         price={"amount": 49.0, "currency": "USD"},
         category="Legacy Category",
     )
-    product.categories_v2 = [["Women", "Dresses"]]
-    product.taxonomy_v2 = CategorySet(paths=[["Men", "Shoes"], ["Sale"]], primary=["Men", "Shoes"])
+    product.taxonomy = CategorySet(paths=[["Men", "Shoes"], ["Sale"]], primary=["Men", "Shoes"])
 
     resolved = resolve_taxonomy_paths(product)
     assert resolved == [["Men", "Shoes"], ["Sale"]]
 
-    product.taxonomy_v2 = None
+    product.taxonomy = CategorySet(paths=[], primary=None)
     resolved = resolve_taxonomy_paths(product)
-    assert resolved == [["Women", "Dresses"]]
-
-    product.categories_v2 = []
-    resolved = resolve_taxonomy_paths(product)
-    assert resolved == [["Legacy Category"]]
+    assert resolved == []

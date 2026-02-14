@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_frame
 
 
@@ -184,19 +185,19 @@ def test_woocommerce_export_prefers_typed_fields_when_present() -> None:
         ],
         raw={},
     )
-    product.price_v2 = Price(current=Money(amount=Decimal("18.5"), currency="USD"))
-    product.options_v2 = [OptionDef(name="Color", values=["Black", "White"])]
-    product.taxonomy_v2 = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
-    product.media_v2 = [Media(url="https://cdn.example.com/typed-product.jpg", is_primary=True)]
+    product.price = Price(current=Money(amount=Decimal("18.5"), currency="USD"))
+    product.options = [OptionDef(name="Color", values=["Black", "White"])]
+    product.taxonomy = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
+    product.media = [Media(url="https://cdn.example.com/typed-product.jpg", is_primary=True)]
 
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("19.99"), currency="USD"))
-    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("21.99"), currency="USD"))
-    product.variants[0].option_values_v2 = [OptionValue(name="Color", value="Black")]
-    product.variants[1].option_values_v2 = [OptionValue(name="Color", value="White")]
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=4, available=True)
-    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=2, available=True)
-    product.variants[0].media_v2 = [Media(url="https://cdn.example.com/typed-v1.jpg", is_primary=True)]
-    product.variants[1].media_v2 = [Media(url="https://cdn.example.com/typed-v2.jpg", is_primary=True)]
+    product.variants[0].price = Price(current=Money(amount=Decimal("19.99"), currency="USD"))
+    product.variants[1].price = Price(current=Money(amount=Decimal("21.99"), currency="USD"))
+    product.variants[0].option_values = [OptionValue(name="Color", value="Black")]
+    product.variants[1].option_values = [OptionValue(name="Color", value="White")]
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=4, available=True)
+    product.variants[1].inventory = Inventory(track_quantity=True, quantity=2, available=True)
+    product.variants[0].media = [Media(url="https://cdn.example.com/typed-v1.jpg", is_primary=True)]
+    product.variants[1].media = [Media(url="https://cdn.example.com/typed-v2.jpg", is_primary=True)]
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
     frame = read_frame(csv_text)

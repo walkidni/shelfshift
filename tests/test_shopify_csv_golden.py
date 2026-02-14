@@ -4,7 +4,8 @@ import pandas as pd
 
 from app.services.exporters import product_to_shopify_csv
 from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -47,17 +48,17 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
         slug="v-neck-tee",
         raw={},
     )
-    product.options_v2 = [OptionDef(name="Size", values=["S", "M"])]
-    product.taxonomy_v2 = CategorySet(paths=[["Shirts"]], primary=["Shirts"])
-    product.media_v2 = [Media(url="https://cdn.example.com/v-neck-tee.jpg", is_primary=True)]
-    product.variants[0].price_v2 = Price(current=Money(amount=24.99, currency="USD"))
-    product.variants[1].price_v2 = Price(current=Money(amount=24.99, currency="USD"))
-    product.variants[0].option_values_v2 = [OptionValue(name="Size", value="S")]
-    product.variants[1].option_values_v2 = [OptionValue(name="Size", value="M")]
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=10, available=True)
-    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=8, available=True)
-    product.variants[0].media_v2 = [Media(url="https://cdn.example.com/v-neck-tee-size-s.jpg", is_primary=True)]
-    product.variants[1].media_v2 = [Media(url="https://cdn.example.com/v-neck-tee-size-m.jpg", is_primary=True)]
+    product.options = [OptionDef(name="Size", values=["S", "M"])]
+    product.taxonomy = CategorySet(paths=[["Shirts"]], primary=["Shirts"])
+    product.media = [Media(url="https://cdn.example.com/v-neck-tee.jpg", is_primary=True)]
+    product.variants[0].price = Price(current=Money(amount=24.99, currency="USD"))
+    product.variants[1].price = Price(current=Money(amount=24.99, currency="USD"))
+    product.variants[0].option_values = [OptionValue(name="Size", value="S")]
+    product.variants[1].option_values = [OptionValue(name="Size", value="M")]
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=10, available=True)
+    product.variants[1].inventory = Inventory(track_quantity=True, quantity=8, available=True)
+    product.variants[0].media = [Media(url="https://cdn.example.com/v-neck-tee-size-s.jpg", is_primary=True)]
+    product.variants[1].media = [Media(url="https://cdn.example.com/v-neck-tee-size-m.jpg", is_primary=True)]
 
     csv_text, filename = product_to_shopify_csv(product, publish=True)
     assert filename == "shopify-20260208T000000Z.csv"
@@ -90,9 +91,9 @@ def test_shopify_csv_matches_golden_fixture_simple_product() -> None:
         ],
         raw={},
     )
-    product.media_v2 = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
-    product.variants[0].price_v2 = Price(current=Money(amount=12.0, currency="USD"))
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=0, available=False)
+    product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
+    product.variants[0].price = Price(current=Money(amount=12.0, currency="USD"))
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=0, available=False)
 
     csv_text, filename = product_to_shopify_csv(product, publish=False)
     assert filename == "shopify-20260208T000000Z.csv"

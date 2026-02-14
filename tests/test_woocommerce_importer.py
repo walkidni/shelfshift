@@ -50,17 +50,20 @@ def test_woocommerce_storefront_url_uses_store_api_slug_and_parses_product(monke
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product("https://demo-store.com/product/adjustable-wrench-set/")
+    parsed = product.to_dict(include_raw=False)
 
     assert calls == [("https://demo-store.com/wp-json/wc/store/v1/products", {"slug": "adjustable-wrench-set"})]
-    assert product.platform == "woocommerce"
-    assert product.id == "101"
-    assert product.slug == "adjustable-wrench-set"
-    assert product.title == "Adjustable Wrench Set"
-    assert product.price == {"amount": 29.0, "currency": "USD"}
-    assert product.images == ["https://demo-store.com/wp-content/uploads/wrench.jpg"]
-    assert product.options == {"Material": ["Steel"]}
-    assert len(product.variants) == 1
-    assert product.variants[0].id == "101"
+    assert parsed["source"]["platform"] == "woocommerce"
+    assert parsed["source"]["id"] == "101"
+    assert parsed["source"]["slug"] == "adjustable-wrench-set"
+    assert parsed["title"] == "Adjustable Wrench Set"
+    assert parsed["price"]["current"] == {"amount": "29", "currency": "USD"}
+    assert [item["url"] for item in parsed["media"] if item["type"] == "image"] == [
+        "https://demo-store.com/wp-content/uploads/wrench.jpg"
+    ]
+    assert parsed["options"] == [{"name": "Material", "values": ["Steel"]}]
+    assert len(parsed["variants"]) == 1
+    assert parsed["variants"][0]["id"] == "101"
     assert product.raw == api_payload
 
 
@@ -104,15 +107,16 @@ def test_woocommerce_store_api_url_imports_directly_without_normalizing(monkeypa
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(api_url)
+    parsed = product.to_dict(include_raw=False)
 
     assert calls == [api_url]
-    assert product.platform == "woocommerce"
-    assert product.id == "321"
-    assert product.slug == "brake-disc-rotor"
-    assert len(product.variants) == 1
-    assert product.variants[0].id == "501"
-    assert product.variants[0].options == {"Size": "300mm"}
-    assert product.variants[0].inventory_quantity == 7
+    assert parsed["source"]["platform"] == "woocommerce"
+    assert parsed["source"]["id"] == "321"
+    assert parsed["source"]["slug"] == "brake-disc-rotor"
+    assert len(parsed["variants"]) == 1
+    assert parsed["variants"][0]["id"] == "501"
+    assert parsed["variants"][0]["option_values"] == [{"name": "Size", "value": "300mm"}]
+    assert parsed["variants"][0]["inventory"]["quantity"] == 7
     assert product.raw == api_payload
 
 
@@ -177,11 +181,12 @@ def test_woocommerce_store_api_failure_uses_heuristic_html_fallback(monkeypatch)
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(api_url)
+    parsed = product.to_dict(include_raw=False)
 
     assert calls == [api_url, fallback_url]
-    assert product.title == "Brake Disc Rotor"
-    assert product.price == {"amount": 19.99, "currency": "USD"}
-    assert len(product.variants) == 1
+    assert parsed["title"] == "Brake Disc Rotor"
+    assert parsed["price"]["current"] == {"amount": "19.99", "currency": "USD"}
+    assert len(parsed["variants"]) == 1
 
 
 def test_woocommerce_import_raises_value_error_when_api_and_fallback_fail(monkeypatch) -> None:

@@ -5,7 +5,8 @@ import pandas as pd
 
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price, Product, Variant
+from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from tests._model_builders import Product, Variant
 from tests._csv_helpers import read_fixture_frame, read_frame
 
 
@@ -48,28 +49,28 @@ def test_bigcommerce_csv_matches_golden_fixture_two_variants() -> None:
         slug="classic-tee",
         raw={},
     )
-    product.options_v2 = [
+    product.options = [
         OptionDef(name="Color", values=["Black", "White"]),
         OptionDef(name="Size", values=["M", "L"]),
     ]
-    product.media_v2 = [
+    product.media = [
         Media(url="https://cdn.example.com/tee-1.jpg", is_primary=True),
         Media(url="https://cdn.example.com/tee-2.jpg"),
     ]
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("19.99"), currency="USD"))
-    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("21.99"), currency="USD"))
-    product.variants[0].option_values_v2 = [
+    product.variants[0].price = Price(current=Money(amount=Decimal("19.99"), currency="USD"))
+    product.variants[1].price = Price(current=Money(amount=Decimal("21.99"), currency="USD"))
+    product.variants[0].option_values = [
         OptionValue(name="Color", value="Black"),
         OptionValue(name="Size", value="M"),
     ]
-    product.variants[1].option_values_v2 = [
+    product.variants[1].option_values = [
         OptionValue(name="Color", value="White"),
         OptionValue(name="Size", value="L"),
     ]
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=4, available=True)
-    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=2, available=True)
-    product.variants[0].media_v2 = [Media(url="https://cdn.example.com/tee-black-m.jpg", is_primary=True)]
-    product.variants[1].media_v2 = [Media(url="https://cdn.example.com/tee-white-l.jpg", is_primary=True)]
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=4, available=True)
+    product.variants[1].inventory = Inventory(track_quantity=True, quantity=2, available=True)
+    product.variants[0].media = [Media(url="https://cdn.example.com/tee-black-m.jpg", is_primary=True)]
+    product.variants[1].media = [Media(url="https://cdn.example.com/tee-white-l.jpg", is_primary=True)]
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=False)
     assert filename == "bigcommerce-20260208T000000Z.csv"
@@ -101,9 +102,9 @@ def test_bigcommerce_csv_matches_golden_fixture_simple_product() -> None:
         ],
         raw={},
     )
-    product.media_v2 = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
-    product.variants[0].media_v2 = [Media(url="https://cdn.example.com/mug-variant.jpg", is_primary=True)]
+    product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
+    product.variants[0].price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
+    product.variants[0].media = [Media(url="https://cdn.example.com/mug-variant.jpg", is_primary=True)]
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=True)
     assert filename == "bigcommerce-20260208T000000Z.csv"
@@ -160,7 +161,7 @@ def test_bigcommerce_csv_matches_golden_fixture_edge_numbers() -> None:
         ],
         raw={},
     )
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("19.9999"), currency="USD"))
+    product.variants[0].price = Price(current=Money(amount=Decimal("19.9999"), currency="USD"))
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=True)
     assert filename == "bigcommerce-20260208T000000Z.csv"
@@ -206,21 +207,21 @@ def test_bigcommerce_csv_matches_golden_fixture_media_edge_cases() -> None:
         ],
         raw={},
     )
-    product.options_v2 = [OptionDef(name="Color", values=["Black", "White"])]
-    product.media_v2 = [
+    product.options = [OptionDef(name="Color", values=["Black", "White"])]
+    product.media = [
         Media(url="https://cdn.example.com/tee-1.jpg", is_primary=True),
         Media(url="https://cdn.example.com/tee-1.jpg"),
         Media(url="//cdn.example.com/tee-2.jpg"),
         Media(url="not-a-url"),
     ]
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
-    product.variants[1].price_v2 = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
-    product.variants[0].option_values_v2 = [OptionValue(name="Color", value="Black")]
-    product.variants[1].option_values_v2 = [OptionValue(name="Color", value="White")]
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=3, available=True)
-    product.variants[1].inventory_v2 = Inventory(track_quantity=True, quantity=2, available=True)
-    product.variants[0].media_v2 = [Media(url="//cdn.example.com/tee-black.jpg", is_primary=True)]
-    product.variants[1].media_v2 = [Media(url="https://cdn.example.com/tee-white.jpg", is_primary=True)]
+    product.variants[0].price = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
+    product.variants[1].price = Price(current=Money(amount=Decimal("25.0"), currency="USD"))
+    product.variants[0].option_values = [OptionValue(name="Color", value="Black")]
+    product.variants[1].option_values = [OptionValue(name="Color", value="White")]
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=3, available=True)
+    product.variants[1].inventory = Inventory(track_quantity=True, quantity=2, available=True)
+    product.variants[0].media = [Media(url="//cdn.example.com/tee-black.jpg", is_primary=True)]
+    product.variants[1].media = [Media(url="https://cdn.example.com/tee-white.jpg", is_primary=True)]
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=True)
     assert filename == "bigcommerce-20260208T000000Z.csv"
@@ -247,13 +248,13 @@ def test_bigcommerce_legacy_csv_matches_golden_fixture_simple_product() -> None:
         slug="demo-mug",
         raw={},
     )
-    product.taxonomy_v2 = CategorySet(paths=[["Mugs"]], primary=["Mugs"])
-    product.media_v2 = [
+    product.taxonomy = CategorySet(paths=[["Mugs"]], primary=["Mugs"])
+    product.media = [
         Media(url="https://cdn.example.com/mug-front.jpg", is_primary=True),
         Media(url="https://cdn.example.com/mug-side.jpg"),
     ]
-    product.variants[0].price_v2 = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
-    product.variants[0].inventory_v2 = Inventory(track_quantity=True, quantity=5, available=True)
+    product.variants[0].price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
+    product.variants[0].inventory = Inventory(track_quantity=True, quantity=5, available=True)
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=True, csv_format="legacy")
     assert filename == "bigcommerce-20260208T000000Z.csv"
