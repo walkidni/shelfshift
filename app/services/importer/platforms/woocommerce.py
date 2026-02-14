@@ -400,10 +400,7 @@ class WooCommerceClient(ProductClient):
             if brands:
                 brand = brands[0]
 
-        category = None
         categories = _extract_names(data.get("categories"))
-        if categories:
-            category = categories[0]
 
         tags = _extract_names(data.get("tags"))
         slug = pick_name(data.get("slug"))

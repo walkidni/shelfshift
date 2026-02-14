@@ -8,9 +8,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from app.models import (
-    CategorySet,
     Identifiers,
-    Media,
     Money,
     Price,
     Product,

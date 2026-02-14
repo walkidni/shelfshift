@@ -223,10 +223,6 @@ class AmazonRapidApiClient(ProductClient):
             if byline.startswith("Visit the ") and byline.endswith(" Store"):
                 brand = byline[10:-6]
 
-        category = None
-        if data.get("category_path"):
-            category = data["category_path"][-1].get("name")
-
         meta_title = title
         meta_description = data["customers_say"][:400] if data.get("customers_say") else None
         slug = data.get("product_slug", "")

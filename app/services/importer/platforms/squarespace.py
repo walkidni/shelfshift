@@ -682,12 +682,9 @@ def _parse_page_json_product(
 
     tags = dedupe(_extract_names(candidate.get("tags")) + _extract_names(structured_content.get("tags")))
 
-    category = None
     categories = _extract_names(candidate.get("categories"))
     if not categories:
         categories = _extract_names(structured_content.get("categories"))
-    if categories:
-        category = categories[0]
     taxonomy_paths = [[name] for name in categories] if categories else []
 
     raw_brand = structured_content.get("brand")
