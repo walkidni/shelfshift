@@ -1,7 +1,6 @@
 from pathlib import Path
 import json
 import logging
-from typing import Literal
 
 from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -201,17 +200,10 @@ def detect(url: str = Query(..., description="Product URL to classify")) -> dict
 
 
 @app.post("/api/v1/import")
-def import_from_api(
-    payload: ImportRequest,
-    response_profile: Literal["typed", "legacy"] = Query(
-        settings.import_api_default_profile,
-        description="Response shape profile for normalized product payloads.",
-    ),
-) -> dict:
+def import_from_api(payload: ImportRequest) -> dict:
     product = _run_import_product(payload.product_url)
     return serialize_product_for_api(
         product,
-        profile=response_profile,
         include_raw=settings.debug,
     )
 

@@ -347,7 +347,7 @@ class WooCommerceClient(ProductClient):
 
             variant_key = _slug_token(variant_id or title or str(index)) or str(index)
             resolved_sku = sku or f"WC:{product_key}:{variant_key}"
-            variant_identifiers, variant_identifiers_v2 = make_identifiers(
+            variant_identifiers, variant_typed_identifiers = make_identifiers(
                 {
                     "source_variant_id": variant_id,
                     "sku": resolved_sku,
@@ -358,18 +358,12 @@ class WooCommerceClient(ProductClient):
                     id=variant_id,
                     sku=resolved_sku,
                     title=title,
-                    options=options,
-                    price_amount=price_amount,
-                    currency=currency or default_currency,
-                    image=image,
-                    available=available,
-                    inventory_quantity=inventory_quantity,
-                    price_v2=make_price(
+                    price=make_price(
                         amount=price_amount,
                         currency=currency or default_currency,
                         compare_at=compare_at_price,
                     ),
-                    media_v2=(
+                    media=(
                         [
                             Media(
                                 url=image,
@@ -382,22 +376,26 @@ class WooCommerceClient(ProductClient):
                         if image
                         else []
                     ),
-                    option_values_v2=[OptionValue(name=name, value=value) for name, value in options.items()],
-                    inventory_v2=Inventory(
+                    option_values=[OptionValue(name=name, value=value) for name, value in options.items()],
+                    inventory=Inventory(
                         track_quantity=track_quantity,
                         quantity=inventory_quantity,
                         available=available,
                         allow_backorder=allow_backorder,
                     ),
                     identifiers=variant_identifiers,
-                    identifiers_v2=variant_identifiers_v2,
                 )
             )
 
         if len(parsed) > 1:
             for index, variant in enumerate(parsed, start=1):
-                if not variant.options:
-                    variant.options = {"Option": str(variant.title or variant.sku or variant.id or f"Variant {index}")}
+                if not variant.option_values:
+                    variant.option_values = [
+                        OptionValue(
+                            name="Option",
+                            value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                        )
+                    ]
 
         return parsed
 
@@ -412,10 +410,8 @@ class WooCommerceClient(ProductClient):
         amount, currency, regular_price, _sale_price = _parse_price_components(data.get("prices"))
         if amount is None:
             amount = parse_money_to_float(data.get("price"))
-        price = {"amount": amount, "currency": currency}
-
         options = self._parse_options(data)
-        options_v2 = [OptionDef(name=name, values=values) for name, values in options.items()]
+        options = [OptionDef(name=name, values=values) for name, values in options.items()]
         manage_stock = to_bool(data.get("manage_stock"))
         track_quantity = manage_stock if manage_stock is not None else True
         allow_backorder = to_bool(data.get("is_on_backorder"))
@@ -426,7 +422,7 @@ class WooCommerceClient(ProductClient):
             default_track_quantity=track_quantity,
             default_allow_backorder=allow_backorder,
         )
-        default_variant_identifiers, default_variant_identifiers_v2 = make_identifiers(
+        default_variant_identifiers, default_variant_typed_identifiers = make_identifiers(
             {
                 "source_variant_id": data.get("id"),
                 "sku": data.get("sku"),
@@ -435,18 +431,14 @@ class WooCommerceClient(ProductClient):
         default_variant = Variant(
             id=str(data.get("id")) if data.get("id") is not None else None,
             sku=pick_name(data.get("sku")),
-            price_amount=amount,
-            currency=currency,
-            available=to_bool(data.get("is_in_stock")),
-            price_v2=make_price(amount=amount, currency=currency, compare_at=regular_price),
-            inventory_v2=Inventory(
+            price=make_price(amount=amount, currency=currency, compare_at=regular_price),
+            inventory=Inventory(
                 track_quantity=track_quantity,
                 quantity=to_int(data.get("stock_quantity")),
                 available=to_bool(data.get("is_in_stock")),
                 allow_backorder=allow_backorder,
             ),
             identifiers=default_variant_identifiers,
-            identifiers_v2=default_variant_identifiers_v2,
         )
         append_default_variant_if_empty(variants, default_variant)
 
@@ -478,7 +470,7 @@ class WooCommerceClient(ProductClient):
         is_digital = bool(to_bool(data.get("is_downloadable")) or to_bool(data.get("is_virtual")))
         requires_shipping = not is_digital
         image_urls = self._parse_images(data)
-        media_v2 = [
+        media = [
             Media(
                 url=image_url,
                 type="image",
@@ -488,7 +480,7 @@ class WooCommerceClient(ProductClient):
             for index, image_url in enumerate(image_urls, start=1)
         ]
         taxonomy_paths = [[name] for name in categories] if categories else []
-        product_identifiers, product_identifiers_v2 = make_identifiers(
+        product_identifiers, product_typed_identifiers = make_identifiers(
             {
                 "source_product_id": product_id,
                 "sku": data.get("sku"),
@@ -496,19 +488,10 @@ class WooCommerceClient(ProductClient):
         )
 
         return Product(
-            platform=self.platform,
-            id=product_id,
             title=title,
             description=description,
-            price=price,
-            images=image_urls,
-            options=options,
             variants=variants,
             brand=brand,
-            category=category,
-            meta_title=meta_title,
-            meta_description=meta_description,
-            slug=slug,
             tags=tags,
             vendor=brand,
             weight=None,
@@ -516,27 +499,24 @@ class WooCommerceClient(ProductClient):
             track_quantity=track_quantity,
             is_digital=is_digital,
             raw=payload,
-            price_v2=make_price(
+            price=make_price(
                 amount=amount,
                 currency=currency,
                 compare_at=regular_price,
             ),
-            media_v2=media_v2,
-            categories_v2=taxonomy_paths,
+            media=media,
             identifiers=product_identifiers,
-            options_v2=options_v2,
-            seo_v2=Seo(
+            seo=Seo(
                 title=meta_title,
                 description=meta_description,
             ),
-            source_v2=SourceRef(
+            source=SourceRef(
                 platform=self.platform,
                 id=product_id,
                 slug=slug,
                 url=source_url,
             ),
-            taxonomy_v2=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
-            identifiers_v2=product_identifiers_v2,
+            taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
         )
 
     def _parse_html_offer(self, raw_offer: Any) -> Variant | None:
@@ -556,7 +536,7 @@ class WooCommerceClient(ProductClient):
         if not any((variant_id, sku, amount is not None, available is not None)):
             return None
 
-        variant_identifiers, variant_identifiers_v2 = make_identifiers(
+        variant_identifiers, variant_typed_identifiers = make_identifiers(
             {
                 "source_variant_id": variant_id,
                 "sku": sku,
@@ -566,17 +546,13 @@ class WooCommerceClient(ProductClient):
         return Variant(
             id=variant_id,
             sku=sku,
-            price_amount=amount,
-            currency=currency,
-            available=available,
-            price_v2=make_price(amount=amount, currency=currency),
-            inventory_v2=Inventory(
+            price=make_price(amount=amount, currency=currency),
+            inventory=Inventory(
                 track_quantity=False,
                 quantity=None,
                 available=available,
             ),
             identifiers=variant_identifiers,
-            identifiers_v2=variant_identifiers_v2,
         )
 
     def _fetch_from_html(self, url: str) -> Product:
@@ -622,10 +598,10 @@ class WooCommerceClient(ProductClient):
         default_price = None
         default_currency = "USD"
         for variant in variants:
-            if variant.price_amount is not None:
-                default_price = variant.price_amount
-            if variant.currency:
-                default_currency = variant.currency
+            if variant.price and variant.price.current.amount is not None:
+                default_price = float(variant.price.current.amount)
+            if variant.price and variant.price.current.currency:
+                default_currency = variant.price.current.currency
             if default_price is not None and default_currency:
                 break
 
@@ -638,17 +614,19 @@ class WooCommerceClient(ProductClient):
             for index, variant in enumerate(variants, start=1):
                 if not variant.sku:
                     variant.sku = f"WC:{product_key}:{index}"
-                if not variant.options:
-                    variant.options = {"Option": str(variant.title or variant.sku or variant.id or f"Variant {index}")}
+                if not variant.option_values:
+                    variant.option_values = [
+                        OptionValue(
+                            name="Option",
+                            value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                        )
+                    ]
 
         info = detect_product_url(url)
         default_variant = Variant(
             id=(info.get("product_id") or info.get("slug") or _slug_token(title) or None),
-            price_amount=default_price,
-            currency=default_currency,
-            available=True,
-            price_v2=make_price(amount=default_price, currency=default_currency),
-            inventory_v2=Inventory(
+            price=make_price(amount=default_price, currency=default_currency),
+            inventory=Inventory(
                 track_quantity=False,
                 quantity=None,
                 available=True,
@@ -662,12 +640,12 @@ class WooCommerceClient(ProductClient):
             strip_html_content=True,
         )
 
-        product_identifiers, product_identifiers_v2 = make_identifiers(
+        product_identifiers, product_typed_identifiers = make_identifiers(
             {
                 "source_product_id": info.get("product_id") or info.get("slug"),
             }
         )
-        media_v2 = [
+        media = [
             Media(
                 url=image_url,
                 type="image",
@@ -680,19 +658,10 @@ class WooCommerceClient(ProductClient):
         taxonomy_paths = [[category_value]] if category_value else []
 
         return Product(
-            platform=self.platform,
-            id=None,
             title=title,
             description=description,
-            price={"amount": default_price, "currency": default_currency},
-            images=images,
-            options={},
             variants=variants,
             brand=brand,
-            category=category_value,
-            meta_title=meta_title,
-            meta_description=meta_description,
-            slug=info.get("slug"),
             tags=[],
             vendor=brand,
             weight=None,
@@ -700,23 +669,21 @@ class WooCommerceClient(ProductClient):
             track_quantity=True,
             is_digital=False,
             raw=product_data,
-            price_v2=make_price(amount=default_price, currency=default_currency),
-            media_v2=media_v2,
-            categories_v2=taxonomy_paths,
+            price=make_price(amount=default_price, currency=default_currency),
+            media=media,
             identifiers=product_identifiers,
-            options_v2=[],
-            seo_v2=Seo(
+            options=[],
+            seo=Seo(
                 title=meta_title,
                 description=meta_description,
             ),
-            source_v2=SourceRef(
+            source=SourceRef(
                 platform=self.platform,
                 id=None,
                 slug=info.get("slug"),
                 url=url,
             ),
-            taxonomy_v2=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
-            identifiers_v2=product_identifiers_v2,
+            taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
         )
 
     def _fallback_storefront_urls(self, url: str, info: dict[str, Any], *, is_api_url: bool) -> list[str]:

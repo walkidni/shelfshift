@@ -156,7 +156,7 @@ def _parse_offer_variant(raw_offer: Any) -> Variant | None:
     if not any((variant_id, sku, title, amount is not None, available is not None, image, options)):
         return None
 
-    variant_identifiers, variant_identifiers_v2 = make_identifiers(
+    variant_identifiers, variant_typed_identifiers = make_identifiers(
         {
             "source_variant_id": variant_id,
             "sku": sku,
@@ -167,13 +167,8 @@ def _parse_offer_variant(raw_offer: Any) -> Variant | None:
         id=variant_id,
         sku=sku,
         title=title,
-        options=options,
-        price_amount=amount,
-        currency=currency,
-        image=image,
-        available=available,
-        price_v2=make_price(amount=amount, currency=currency),
-        media_v2=(
+        price=make_price(amount=amount, currency=currency),
+        media=(
             [
                 Media(
                     url=image,
@@ -186,14 +181,13 @@ def _parse_offer_variant(raw_offer: Any) -> Variant | None:
             if image
             else []
         ),
-        option_values_v2=[OptionValue(name=name, value=value) for name, value in options.items()],
-        inventory_v2=Inventory(
+        option_values=[OptionValue(name=name, value=value) for name, value in options.items()],
+        inventory=Inventory(
             track_quantity=False,
             quantity=None,
             available=available,
         ),
         identifiers=variant_identifiers,
-        identifiers_v2=variant_identifiers_v2,
     )
 
 
@@ -278,11 +272,23 @@ def _fallback_options_from_variants(variants: list[Variant]) -> dict[str, list[s
 def _variant_product_options(variants: list[Variant]) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     for variant in variants:
-        for name, value in (variant.options or {}).items():
+        for option_value in variant.option_values:
+            name = option_value.name
+            value = option_value.value
             if not name or not value:
                 continue
             out.setdefault(name, []).append(value)
     return {key: dedupe(values) for key, values in out.items() if values}
+
+
+def _variant_primary_image_url(variant: Variant) -> str | None:
+    for media in variant.media:
+        if media.type != "image":
+            continue
+        normalized = normalize_url(media.url)
+        if normalized:
+            return normalized
+    return None
 
 
 def _page_json_media(candidate: dict[str, Any], structured_content: dict[str, Any]) -> list[Media]:
@@ -343,10 +349,10 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
     default_price = None
     default_currency = "USD"
     for variant in variants:
-        if variant.price_amount is not None:
-            default_price = variant.price_amount
-        if variant.currency:
-            default_currency = variant.currency
+        if variant.price and variant.price.current.amount is not None:
+            default_price = float(variant.price.current.amount)
+        if variant.price and variant.price.current.currency:
+            default_currency = variant.price.current.currency
         if default_price is not None and default_currency:
             break
 
@@ -354,15 +360,21 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
         default_price = parse_money_to_float(raw_offers.get("lowPrice"))
         default_currency = pick_name(raw_offers.get("priceCurrency")) or default_currency
 
-    options = _variant_product_options(variants)
-    if not options:
-        options = _fallback_options_from_variants(variants)
-        if options:
+    option_map = _variant_product_options(variants)
+    if not option_map:
+        option_map = _fallback_options_from_variants(variants)
+        if option_map:
             for index, variant in enumerate(variants, start=1):
-                variant.options = {"Option": str(variant.title or variant.sku or variant.id or f"Variant {index}")}
+                variant.option_values = [
+                    OptionValue(
+                        name="Option",
+                        value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                    )
+                ]
     for variant in variants:
-        if variant.image and variant.image not in images:
-            images.append(variant.image)
+        variant_image_url = _variant_primary_image_url(variant)
+        if variant_image_url and variant_image_url not in images:
+            images.append(variant_image_url)
 
     inferred_slug = slug
     if not inferred_slug:
@@ -376,11 +388,8 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
             or pick_name(product_data.get("mpn"))
             or inferred_slug
         ),
-        price_amount=default_price,
-        currency=default_currency,
-        available=True,
-        price_v2=make_price(amount=default_price, currency=default_currency),
-        inventory_v2=Inventory(track_quantity=False, quantity=None, available=True),
+        price=make_price(amount=default_price, currency=default_currency),
+        inventory=Inventory(track_quantity=False, quantity=None, available=True),
     )
     append_default_variant_if_empty(variants, default_variant)
 
@@ -397,9 +406,9 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
         or to_bool(product_data.get("isVirtual"))
         or to_bool(product_data.get("isDownloadable"))
     )
-    options_v2 = [OptionDef(name=name, values=values) for name, values in options.items()]
+    option_defs = [OptionDef(name=name, values=values) for name, values in option_map.items()]
     taxonomy_paths = [[category]] if category else []
-    product_identifiers, product_identifiers_v2 = make_identifiers(
+    product_identifiers, product_typed_identifiers = make_identifiers(
         {
             "source_product_id": (
                 pick_name(product_data.get("productID"))
@@ -413,24 +422,10 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
     )
 
     return Product(
-        platform="squarespace",
-        id=(
-            pick_name(product_data.get("productID"))
-            or pick_name(product_data.get("sku"))
-            or pick_name(product_data.get("mpn"))
-            or inferred_slug
-        ),
         title=title,
         description=description,
-        price={"amount": default_price, "currency": default_currency},
-        images=images,
-        options=options,
         variants=variants,
         brand=brand,
-        category=category,
-        meta_title=meta_title,
-        meta_description=meta_description,
-        slug=inferred_slug,
         tags=tags,
         vendor=brand,
         weight=None,
@@ -438,8 +433,8 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
         track_quantity=True,
         is_digital=is_digital,
         raw=product_data,
-        price_v2=make_price(amount=default_price, currency=default_currency),
-        media_v2=[
+        price=make_price(amount=default_price, currency=default_currency),
+        media=[
             Media(
                 url=image_url,
                 type="image",
@@ -448,14 +443,13 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
             )
             for index, image_url in enumerate(images, start=1)
         ],
-        categories_v2=taxonomy_paths,
+        options=option_defs,
         identifiers=product_identifiers,
-        options_v2=options_v2,
-        seo_v2=Seo(
+        seo=Seo(
             title=meta_title,
             description=meta_description,
         ),
-        source_v2=SourceRef(
+        source=SourceRef(
             platform="squarespace",
             id=(
                 pick_name(product_data.get("productID"))
@@ -466,8 +460,7 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
             slug=inferred_slug,
             url=source_url,
         ),
-        taxonomy_v2=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
-        identifiers_v2=product_identifiers_v2,
+        taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
     )
 
 
@@ -560,11 +553,10 @@ def _parse_page_json_product(
     images.extend(_extract_image_urls(structured_content.get("image")))
     images.extend(_extract_image_urls(structured_content.get("items")))
     images = dedupe(images)
-    media_v2 = _page_json_media(candidate, structured_content)
+    media = _page_json_media(candidate, structured_content)
 
-    options = _variant_options_catalog(structured_content)
-    options_v2 = [OptionDef(name=name, values=values) for name, values in options.items()]
-    option_names = list(options.keys())
+    option_map = _variant_options_catalog(structured_content)
+    option_names = list(option_map.keys())
 
     variants: list[Variant] = []
     raw_variants = structured_content.get("variants")
@@ -637,7 +629,7 @@ def _parse_page_json_product(
 
             variant_key = _slug_token(variant_id or title_value or str(index)) or str(index)
             resolved_sku = sku or f"SQ:{_slug_token(slug or title or candidate.get('id') or 'item')}:{variant_key}"
-            variant_identifiers, variant_identifiers_v2 = make_identifiers(
+            variant_identifiers, variant_typed_identifiers = make_identifiers(
                 {
                     "source_variant_id": variant_id,
                     "sku": resolved_sku,
@@ -648,18 +640,12 @@ def _parse_page_json_product(
                     id=variant_id,
                     sku=resolved_sku,
                     title=title_value,
-                    options=variant_options,
-                    price_amount=amount,
-                    currency=currency,
-                    image=image,
-                    available=available,
-                    inventory_quantity=inventory_quantity,
-                    price_v2=make_price(
+                    price=make_price(
                         amount=amount,
                         currency=currency,
                         compare_at=compare_at_amount,
                     ),
-                    media_v2=(
+                    media=(
                         [
                             Media(
                                 url=image,
@@ -672,24 +658,23 @@ def _parse_page_json_product(
                         if image
                         else []
                     ),
-                    option_values_v2=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
-                    inventory_v2=Inventory(
+                    option_values=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                    inventory=Inventory(
                         track_quantity=track_quantity,
                         quantity=inventory_quantity,
                         available=available,
                     ),
                     identifiers=variant_identifiers,
-                    identifiers_v2=variant_identifiers_v2,
                 )
             )
 
     default_price = None
     default_currency = "USD"
     for variant in variants:
-        if variant.price_amount is not None:
-            default_price = variant.price_amount
-        if variant.currency:
-            default_currency = variant.currency
+        if variant.price and variant.price.current.amount is not None:
+            default_price = float(variant.price.current.amount)
+        if variant.price and variant.price.current.currency:
+            default_currency = variant.price.current.currency
         if default_price is not None and default_currency:
             break
 
@@ -698,17 +683,23 @@ def _parse_page_json_product(
         if default_currency_candidate:
             default_currency = default_currency_candidate
 
-    if not options:
-        options = _variant_product_options(variants)
-    if not options:
-        options = _fallback_options_from_variants(variants)
-        if options:
+    if not option_map:
+        option_map = _variant_product_options(variants)
+    if not option_map:
+        option_map = _fallback_options_from_variants(variants)
+        if option_map:
             for index, variant in enumerate(variants, start=1):
-                variant.options = {"Option": str(variant.title or variant.sku or variant.id or f"Variant {index}")}
-    options_v2 = [OptionDef(name=name, values=values) for name, values in options.items()]
+                variant.option_values = [
+                    OptionValue(
+                        name="Option",
+                        value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                    )
+                ]
+    option_defs = [OptionDef(name=name, values=values) for name, values in option_map.items()]
     for variant in variants:
-        if variant.image and variant.image not in images:
-            images.append(variant.image)
+        variant_image_url = _variant_primary_image_url(variant)
+        if variant_image_url and variant_image_url not in images:
+            images.append(variant_image_url)
 
     inferred_slug = slug or pick_name(candidate.get("urlId")) or pick_name(structured_content.get("urlSlug"))
     if not inferred_slug:
@@ -717,11 +708,8 @@ def _parse_page_json_product(
 
     default_variant = Variant(
         id=pick_name(candidate.get("id")) or inferred_slug,
-        price_amount=default_price,
-        currency=default_currency,
-        available=True,
-        price_v2=make_price(amount=default_price, currency=default_currency),
-        inventory_v2=Inventory(track_quantity=True, quantity=None, available=True),
+        price=make_price(amount=default_price, currency=default_currency),
+        inventory=Inventory(track_quantity=True, quantity=None, available=True),
     )
     append_default_variant_if_empty(variants, default_variant)
 
@@ -754,26 +742,17 @@ def _parse_page_json_product(
         or to_bool(structured_content.get("isDownloadable"))
         or str(structured_content.get("productType") or "").upper() == "DIGITAL"
     )
-    product_identifiers, product_identifiers_v2 = make_identifiers(
+    product_identifiers, product_typed_identifiers = make_identifiers(
         {
             "source_product_id": pick_name(candidate.get("id")) or inferred_slug,
         }
     )
 
     return Product(
-        platform="squarespace",
-        id=pick_name(candidate.get("id")) or inferred_slug,
         title=title,
         description=description,
-        price={"amount": default_price, "currency": default_currency},
-        images=images,
-        options=options,
         variants=variants,
         brand=brand,
-        category=category,
-        meta_title=meta_title,
-        meta_description=meta_description,
-        slug=inferred_slug,
         tags=tags,
         vendor=brand,
         weight=None,
@@ -781,23 +760,21 @@ def _parse_page_json_product(
         track_quantity=True,
         is_digital=is_digital,
         raw=payload,
-        price_v2=make_price(amount=default_price, currency=default_currency),
-        media_v2=media_v2,
-        categories_v2=taxonomy_paths,
+        price=make_price(amount=default_price, currency=default_currency),
+        media=media,
+        options=option_defs,
         identifiers=product_identifiers,
-        options_v2=options_v2,
-        seo_v2=Seo(
+        seo=Seo(
             title=meta_title,
             description=meta_description,
         ),
-        source_v2=SourceRef(
+        source=SourceRef(
             platform="squarespace",
             id=pick_name(candidate.get("id")) or inferred_slug,
             slug=inferred_slug,
             url=source_url,
         ),
-        taxonomy_v2=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
-        identifiers_v2=product_identifiers_v2,
+        taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
     )
 
 

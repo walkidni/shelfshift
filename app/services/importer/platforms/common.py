@@ -226,32 +226,23 @@ def make_price(
     )
 
 
-def make_identifiers(values: dict[str, Any]) -> tuple[dict[str, str], Identifiers | None]:
+def make_identifiers(values: dict[str, Any]) -> tuple[Identifiers, Identifiers]:
     cleaned = _clean_identifier_values(values)
-    return cleaned, (Identifiers(values=cleaned) if cleaned else None)
+    identifiers = Identifiers(values=cleaned)
+    return identifiers, identifiers
 
 
 def finalize_product_typed_fields(product: Product, *, source_url: str) -> Product:
-    if product.source_v2 is None:
-        product.source_v2 = SourceRef(
-            platform=product.platform,
-            id=product.id,
-            slug=product.slug,
+    if product.source is None:
+        product.source = SourceRef(
+            platform="unknown",
+            id=None,
+            slug=None,
             url=source_url,
         )
+    elif not product.source.url:
+        product.source.url = source_url
 
-    if product.taxonomy_v2 is None and product.categories_v2:
-        paths = [list(path) for path in product.categories_v2 if path]
-        if paths:
-            product.taxonomy_v2 = CategorySet(paths=paths, primary=list(paths[0]))
-
-    if product.taxonomy_v2 is not None:
-        if not product.categories_v2:
-            product.categories_v2 = [list(path) for path in product.taxonomy_v2.paths if path]
-
-    if product.identifiers_v2 is not None:
-        product.identifiers = dict(product.identifiers_v2.values)
-    for variant in product.variants:
-        if variant.identifiers_v2 is not None:
-            variant.identifiers = dict(variant.identifiers_v2.values)
+    if product.taxonomy.primary is None and product.taxonomy.paths:
+        product.taxonomy.primary = list(product.taxonomy.paths[0])
     return product

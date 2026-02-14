@@ -67,7 +67,10 @@ def _format_price(value: Any, currency: str | None) -> str:
 
 def _truncate_meta_description(data: dict[str, Any], *, limit: int) -> None:
     data["description"] = _truncate_description(data.get("description"), limit=limit)
-    data["meta_description"] = _truncate_description(data.get("meta_description"), limit=limit)
+    seo = data.get("seo") if isinstance(data.get("seo"), dict) else {}
+    if isinstance(seo, dict):
+        seo["description"] = _truncate_description(seo.get("description"), limit=limit)
+        data["seo"] = seo
 
 
 def _build_normal_variants(variants: list[dict[str, Any]], *, currency: str | None) -> list[dict[str, Any]]:
@@ -75,12 +78,32 @@ def _build_normal_variants(variants: list[dict[str, Any]], *, currency: str | No
     for variant in variants:
         if not isinstance(variant, dict):
             continue
-        variant_currency = str(variant.get("currency") or currency or "").strip() or None
+        option_values = variant.get("option_values") if isinstance(variant.get("option_values"), list) else []
+        option_map: dict[str, str] = {}
+        for item in option_values:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "").strip()
+            value = str(item.get("value") or "").strip()
+            if not name or not value:
+                continue
+            option_map[name] = value
+
+        price_payload = variant.get("price") if isinstance(variant.get("price"), dict) else {}
+        current_payload = price_payload.get("current") if isinstance(price_payload.get("current"), dict) else {}
+        amount = current_payload.get("amount")
+        variant_currency = str(current_payload.get("currency") or currency or "").strip() or None
+        media = variant.get("media") if isinstance(variant.get("media"), list) else []
         output.append(
             {
-                "options": variant.get("options") if isinstance(variant.get("options"), dict) else {},
-                "price": _format_price(variant.get("price_amount"), variant_currency),
-                "has_image": bool(str(variant.get("image") or "").strip()),
+                "options": option_map,
+                "price": _format_price(amount, variant_currency),
+                "has_image": any(
+                    isinstance(item, dict)
+                    and str(item.get("type") or "").strip().lower() == "image"
+                    and bool(str(item.get("url") or "").strip())
+                    for item in media
+                ),
             }
         )
     return output
@@ -111,24 +134,37 @@ def product_result_to_loggable(
         return data
 
     price_payload = data.get("price") if isinstance(data.get("price"), dict) else {}
-    amount = price_payload.get("amount")
-    currency = str(price_payload.get("currency") or "").strip() or None
+    current_payload = price_payload.get("current") if isinstance(price_payload.get("current"), dict) else {}
+    amount = current_payload.get("amount")
+    currency = str(current_payload.get("currency") or "").strip() or None
     variants = data.get("variants") if isinstance(data.get("variants"), list) else []
+    source = data.get("source") if isinstance(data.get("source"), dict) else {}
+    taxonomy = data.get("taxonomy") if isinstance(data.get("taxonomy"), dict) else {}
+    taxonomy_primary = taxonomy.get("primary") if isinstance(taxonomy.get("primary"), list) else []
+    category = " > ".join(str(item).strip() for item in taxonomy_primary if str(item).strip())
+    media = data.get("media") if isinstance(data.get("media"), list) else []
+    image_count = sum(
+        1
+        for item in media
+        if isinstance(item, dict)
+        and str(item.get("type") or "").strip().lower() == "image"
+        and bool(str(item.get("url") or "").strip())
+    )
 
     summary = {
-        "platform": data.get("platform"),
+        "platform": source.get("platform"),
         "title": data.get("title"),
         "description": _truncate_description(data.get("description"), limit=_DEFAULT_DESCRIPTION_LIMITS["medium"]),
         "meta_description": _truncate_description(
-            data.get("meta_description"),
+            (data.get("seo") or {}).get("description") if isinstance(data.get("seo"), dict) else None,
             limit=_DEFAULT_DESCRIPTION_LIMITS["medium"],
         ),
         "brand": data.get("brand"),
-        "category": data.get("category"),
+        "category": category,
         "vendor": data.get("vendor"),
         "price": _format_price(amount, currency),
-        "options": data.get("options") if isinstance(data.get("options"), dict) else {},
-        "images": {"count": len(data.get("images") or [])},
+        "options": data.get("options") if isinstance(data.get("options"), list) else [],
+        "images": {"count": image_count},
         "variants_count": len(variants),
         "variants": _build_normal_variants(variants, currency=currency),
     }

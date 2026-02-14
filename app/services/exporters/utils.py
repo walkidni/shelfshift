@@ -147,23 +147,15 @@ def resolve_all_image_urls(product: Product) -> list[str]:
 
 
 def resolve_product_image_urls(product: Product) -> list[str]:
-    typed_urls = _resolve_media_image_urls(media=product.media_v2, primary_first=True)
-    if typed_urls:
-        return typed_urls
-
-    legacy_urls: list[str] = []
-    for url in product.images or []:
-        normalized = _normalize_image_url(url)
-        if normalized:
-            legacy_urls.append(normalized)
-    return ordered_unique(legacy_urls)
+    typed_urls = _resolve_media_image_urls(media=product.media, primary_first=True)
+    return typed_urls
 
 
 def resolve_variant_image_url(variant: Variant) -> str:
-    typed_urls = _resolve_media_image_urls(media=variant.media_v2, primary_first=True)
+    typed_urls = _resolve_media_image_urls(media=variant.media, primary_first=True)
     if typed_urls:
         return typed_urls[0]
-    return _normalize_image_url(variant.image) or ""
+    return ""
 
 
 def resolve_option_defs(product: Product) -> list[OptionDef]:
@@ -191,62 +183,50 @@ def resolve_primary_category(product: Product, *, separator: str = " > ") -> str
 
 
 def resolve_seo_title(product: Product) -> str:
-    if product.seo_v2:
-        title = _clean_text(product.seo_v2.title)
+    if product.seo:
+        title = _clean_text(product.seo.title)
         if title:
             return title
-    return _clean_text(product.meta_title)
+    return ""
 
 
 def resolve_seo_description(product: Product) -> str:
-    if product.seo_v2:
-        description = _clean_text(product.seo_v2.description)
+    if product.seo:
+        description = _clean_text(product.seo.description)
         if description:
             return description
-    return _clean_text(product.meta_description)
+    return ""
 
 
 def resolve_variant_track_quantity(product: Product, variant: Variant) -> bool:
-    if variant.inventory_v2 and variant.inventory_v2.track_quantity is not None:
-        return bool(variant.inventory_v2.track_quantity)
-    if variant.inventory_quantity is not None:
-        return True
+    if variant.inventory and variant.inventory.track_quantity is not None:
+        return bool(variant.inventory.track_quantity)
     return bool(product.track_quantity)
 
 
 def resolve_variant_inventory_quantity(variant: Variant) -> int | None:
-    if variant.inventory_v2 and variant.inventory_v2.quantity is not None:
-        return _coerce_non_negative_int(variant.inventory_v2.quantity)
-    return _coerce_non_negative_int(variant.inventory_quantity)
+    if variant.inventory and variant.inventory.quantity is not None:
+        return _coerce_non_negative_int(variant.inventory.quantity)
+    return None
 
 
 def resolve_variant_available(variant: Variant) -> bool | None:
-    if variant.inventory_v2 and variant.inventory_v2.available is not None:
-        return bool(variant.inventory_v2.available)
-    if variant.available is not None:
-        return bool(variant.available)
+    if variant.inventory and variant.inventory.available is not None:
+        return bool(variant.inventory.available)
     return None
 
 
 def resolve_variant_allow_backorder(variant: Variant) -> bool | None:
-    if variant.inventory_v2 and variant.inventory_v2.allow_backorder is not None:
-        return bool(variant.inventory_v2.allow_backorder)
+    if variant.inventory and variant.inventory.allow_backorder is not None:
+        return bool(variant.inventory.allow_backorder)
     return None
 
 
 def resolve_identifier_values(product: Product, *, variant: Variant | None = None) -> dict[str, str]:
     if variant:
-        typed_values = _clean_identifier_map(
-            variant.identifiers_v2.values if variant.identifiers_v2 else None
-        )
-        if typed_values:
-            return typed_values
-        return _clean_identifier_map(variant.identifiers)
+        return _clean_identifier_map(variant.identifiers.values)
 
-    typed_values = _clean_identifier_map(product.identifiers_v2.values if product.identifiers_v2 else None)
-    if typed_values:
-        return typed_values
-    return _clean_identifier_map(product.identifiers)
+    return _clean_identifier_map(product.identifiers.values)
 
 
 def resolve_identifier_value(
@@ -268,7 +248,37 @@ def resolve_variants(product: Product) -> list[Variant]:
         return variants
 
     default_price = None
-    if isinstance(product.price, dict) and isinstance(product.price.get("amount"), (int, float)):
-        default_price = float(product.price["amount"])
+    if product.price and product.price.current.amount is not None:
+        try:
+            default_price = float(product.price.current.amount)
+        except (TypeError, ValueError):
+            default_price = None
 
-    return [Variant(id=product.id, price_amount=default_price, weight=product.weight)]
+    return [
+        Variant(
+            id=product.source.id,
+            price={
+                "amount": default_price,
+                "currency": product.price.current.currency if product.price else None,
+            },
+            weight=product.weight,
+        )
+    ]
+
+
+def resolve_weight_grams(product: Product, variant: Variant | None = None) -> float | None:
+    candidate = variant.weight if variant and variant.weight is not None else product.weight
+    if candidate is None or candidate.value is None:
+        return None
+    try:
+        value = float(candidate.value)
+    except (TypeError, ValueError):
+        return None
+    unit = str(candidate.unit or "g").lower()
+    if unit == "kg":
+        return value * 1000.0
+    if unit == "lb":
+        return value * 453.59237
+    if unit == "oz":
+        return value * 28.349523125
+    return value

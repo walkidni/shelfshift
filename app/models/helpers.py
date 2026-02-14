@@ -80,88 +80,28 @@ def _ordered_unique_strings(items: Iterable[Any]) -> list[str]:
     return values
 
 
-def _iter_option_values(raw_values: Any) -> list[Any]:
-    if isinstance(raw_values, set):
-        return sorted(raw_values, key=str)
-    if isinstance(raw_values, (list, tuple)):
-        return list(raw_values)
-    if raw_values is None:
-        return []
-    return [raw_values]
-
-
 def resolve_option_defs(product: Product) -> list[OptionDef]:
-    if product.options_v2:
-        resolved: list[OptionDef] = []
-        for option in product.options_v2:
-            name = _clean_text(option.name)
-            if not name:
-                continue
-            values = _ordered_unique_strings(option.values)
-            resolved.append(OptionDef(name=name, values=values))
-        return resolved
-
-    values_by_name: dict[str, list[str]] = {}
-    ordered_names: list[str] = []
-
-    def _ensure_name(name: str) -> None:
-        if name in values_by_name:
-            return
-        values_by_name[name] = []
-        ordered_names.append(name)
-
-    def _add_value(name: str, value: Any) -> None:
-        cleaned = _clean_text(value)
-        if not cleaned:
-            return
-        bucket = values_by_name[name]
-        if cleaned not in bucket:
-            bucket.append(cleaned)
-
-    for raw_name, raw_values in (product.options or {}).items():
-        name = _clean_text(raw_name)
+    resolved: list[OptionDef] = []
+    for option in product.options:
+        name = _clean_text(option.name)
         if not name:
             continue
-        _ensure_name(name)
-        for raw_value in _iter_option_values(raw_values):
-            _add_value(name, raw_value)
-
-    for variant in product.variants:
-        for raw_name, raw_value in (variant.options or {}).items():
-            name = _clean_text(raw_name)
-            if not name:
-                continue
-            _ensure_name(name)
-            _add_value(name, raw_value)
-
-    return [OptionDef(name=name, values=values_by_name[name]) for name in ordered_names]
+        values = _ordered_unique_strings(option.values)
+        resolved.append(OptionDef(name=name, values=values))
+    return resolved
 
 
 def resolve_variant_option_values(product: Product, variant: Variant) -> list[OptionValue]:
-    if variant.option_values_v2:
-        resolved: list[OptionValue] = []
-        seen: set[str] = set()
-        for option in variant.option_values_v2:
-            name = _clean_text(option.name)
-            value = _clean_text(option.value)
-            if not name or not value or name in seen:
-                continue
-            seen.add(name)
-            resolved.append(OptionValue(name=name, value=value))
-        return resolved
-
     ordered_defs = [option.name for option in resolve_option_defs(product)]
-    variant_pairs: list[tuple[str, str]] = []
-    seen_names: set[str] = set()
-    for raw_name, raw_value in (variant.options or {}).items():
-        name = _clean_text(raw_name)
-        value = _clean_text(raw_value)
-        if not name or not value or name in seen_names:
-            continue
-        seen_names.add(name)
-        variant_pairs.append((name, value))
 
-    by_name = {name: value for name, value in variant_pairs}
+    by_name: dict[str, str] = {}
+    for option in variant.option_values:
+        name = _clean_text(option.name)
+        value = _clean_text(option.value)
+        if not name or not value or name in by_name:
+            continue
+        by_name[name] = value
+
     resolved: list[OptionValue] = []
     emitted: set[str] = set()
     for name in ordered_defs:
@@ -171,7 +111,7 @@ def resolve_variant_option_values(product: Product, variant: Variant) -> list[Op
         emitted.add(name)
         resolved.append(OptionValue(name=name, value=value))
 
-    for name, value in variant_pairs:
+    for name, value in by_name.items():
         if name in emitted:
             continue
         resolved.append(OptionValue(name=name, value=value))
@@ -199,28 +139,15 @@ def _normalize_paths(raw_paths: Any) -> list[list[str]]:
     return normalized
 
 
-def _path_from_category_string(value: Any) -> list[list[str]]:
-    category = _clean_text(value)
-    if not category:
-        return []
-    return [[category]]
-
-
 def resolve_taxonomy_paths(product: Product) -> list[list[str]]:
-    if product.taxonomy_v2 is not None:
-        typed_paths = _normalize_paths(product.taxonomy_v2.paths)
-        if typed_paths:
-            return typed_paths
-        if product.taxonomy_v2.primary:
-            primary = _ordered_unique_strings(product.taxonomy_v2.primary)
-            if primary:
-                return [primary]
-
-    categories_v2_paths = _normalize_paths(product.categories_v2)
-    if categories_v2_paths:
-        return categories_v2_paths
-
-    return _path_from_category_string(product.category)
+    typed_paths = _normalize_paths(product.taxonomy.paths)
+    if typed_paths:
+        return typed_paths
+    if product.taxonomy.primary:
+        primary = _ordered_unique_strings(product.taxonomy.primary)
+        if primary:
+            return [primary]
+    return []
 
 
 def _build_money(amount: Decimal | None, currency: str | None) -> Money | None:
@@ -230,27 +157,15 @@ def _build_money(amount: Decimal | None, currency: str | None) -> Money | None:
 
 
 def resolve_current_money(product: Product, variant: Variant | None = None) -> Money | None:
-    if variant and variant.price_v2:
-        money = variant.price_v2.current
+    if variant and variant.price:
+        money = variant.price.current
         return _build_money(money.amount, normalize_currency(money.currency))
 
-    if product.price_v2:
-        money = product.price_v2.current
+    if product.price:
+        money = product.price.current
         return _build_money(money.amount, normalize_currency(money.currency))
 
-    if variant:
-        variant_money = _build_money(
-            parse_decimal_money(variant.price_amount),
-            normalize_currency(variant.currency),
-        )
-        if variant_money is not None:
-            return variant_money
-
-    product_price = product.price if isinstance(product.price, dict) else {}
-    return _build_money(
-        parse_decimal_money(product_price.get("amount")),
-        normalize_currency(product_price.get("currency")),
-    )
+    return None
 
 
 def _normalized_image_url(url: Any) -> str | None:
@@ -296,15 +211,11 @@ def _first_primary_media_url(media: list[Media]) -> str | None:
 
 def resolve_primary_image_url(product: Product, variant: Variant | None = None) -> str | None:
     if variant:
-        variant_primary = _first_primary_media_url(variant.media_v2)
+        variant_primary = _first_primary_media_url(variant.media)
         if variant_primary:
             return variant_primary
 
-        variant_image = _normalized_image_url(variant.image)
-        if variant_image:
-            return variant_image
-
-    product_primary = _first_primary_media_url(product.media_v2)
+    product_primary = _first_primary_media_url(product.media)
     if product_primary:
         return product_primary
 
@@ -322,15 +233,12 @@ def resolve_all_image_urls(product: Product) -> list[str]:
         seen.add(url)
         urls.append(url)
 
-    for url in _media_image_urls(product.media_v2):
+    for url in _media_image_urls(product.media):
         _append(url)
-    for url in product.images:
-        _append(_normalized_image_url(url))
 
     for variant in product.variants:
-        for url in _media_image_urls(variant.media_v2):
+        for url in _media_image_urls(variant.media):
             _append(url)
-        _append(_normalized_image_url(variant.image))
 
     return urls
 

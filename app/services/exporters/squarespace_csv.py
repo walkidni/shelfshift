@@ -61,7 +61,7 @@ def _resolve_stock(product: Product, variant: Variant) -> str:
 
 
 def _resolve_weight_kg(product: Product, variant: Variant) -> str:
-    grams = variant.weight if variant.weight is not None else product.weight
+    grams = utils.resolve_weight_grams(product, variant)
     if grams is None:
         return ""
     try:

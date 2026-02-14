@@ -12,7 +12,6 @@ class Settings:
     brand_ink: str
     debug: bool
     log_verbosity: str
-    import_api_default_profile: str
     rapidapi_key: str | None
     amazon_country: str
     cors_allow_origins: tuple[str, ...]
@@ -56,11 +55,6 @@ def get_settings() -> Settings:
             "LOG_VERBOSITY",
             default="medium",
             allowed={"low", "medium", "high", "extrahigh"},
-        ),
-        import_api_default_profile=_env_choice(
-            "IMPORT_API_DEFAULT_PROFILE",
-            default="typed",
-            allowed={"typed", "legacy"},
         ),
         rapidapi_key=os.getenv("RAPIDAPI_KEY"),
         amazon_country=os.getenv("AMAZON_COUNTRY", "US"),

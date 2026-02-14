@@ -64,7 +64,7 @@ def _platform_token(platform: str | None) -> str:
 
 
 def _resolve_product_key(product: Product) -> str:
-    for candidate in (product.id, product.slug, product.title):
+    for candidate in (product.source.id, product.source.slug, product.title):
         key = _slug(candidate)
         if key:
             return key
@@ -72,7 +72,7 @@ def _resolve_product_key(product: Product) -> str:
 
 
 def _resolve_parent_sku(product: Product) -> str:
-    return f"{_platform_token(product.platform)}:{_resolve_product_key(product)}"
+    return f"{_platform_token(product.source.platform)}:{_resolve_product_key(product)}"
 
 
 def _resolve_variant_key(variant: Variant, index: int) -> str:
@@ -120,7 +120,7 @@ def _resolve_price(product: Product, variant: Variant | None = None) -> str:
 
 
 def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
-    grams = variant.weight if variant and variant.weight is not None else product.weight
+    grams = utils.resolve_weight_grams(product, variant)
     if grams is None:
         return ""
     try:

@@ -160,7 +160,7 @@ def _resolve_price(product: Product, variant: Variant | None = None) -> str:
 
 
 def _resolve_product_key(product: Product) -> str:
-    for candidate in (product.id, product.slug, product.title):
+    for candidate in (product.source.id, product.source.slug, product.title):
         key = slugify(str(candidate or ""), separator="-")
         if key:
             return key
@@ -176,7 +176,7 @@ def _resolve_parent_sku(product: Product, variants: list[Variant], *, is_variabl
         sku = (variants[0].sku or "").strip()
         if sku:
             return sku
-    return f"{_platform_token(product.platform)}-{_resolve_product_key(product)}".upper()
+    return f"{_platform_token(product.source.platform)}-{_resolve_product_key(product)}".upper()
 
 
 def _resolve_variant_sku(parent_sku: str, variant: Variant, *, index: int) -> str:
@@ -273,8 +273,8 @@ def _resolve_inventory_mode(*, is_variable: bool, has_inventory: bool) -> str:
 
 
 def _resolve_product_url_slug(product: Product) -> str:
-    if product.slug:
-        cleaned = slugify(product.slug, separator="-")
+    if product.source.slug:
+        cleaned = slugify(product.source.slug, separator="-")
         if cleaned:
             return f"/{cleaned}/"
     title_slug = slugify(str(product.title or ""), separator="-")
@@ -303,9 +303,10 @@ def _resolve_keywords_from_tags(tags: list[str] | None) -> str:
 
 def _resolve_product_weight_grams(product: Product, variants: list[Variant]) -> float | None:
     for variant in variants:
-        if variant.weight is not None:
-            return variant.weight
-    return product.weight
+        grams = utils.resolve_weight_grams(product, variant)
+        if grams is not None:
+            return grams
+    return utils.resolve_weight_grams(product)
 
 
 def _resolve_category_details(category: str | None) -> str:
@@ -316,8 +317,6 @@ def _resolve_category_details(category: str | None) -> str:
 
 
 def _resolve_modern_categories(product: Product) -> str:
-    if product.taxonomy_v2 is None and not product.categories_v2:
-        return ""
     return utils.resolve_primary_category(product)
 
 
@@ -338,7 +337,7 @@ def _product_to_bigcommerce_legacy_rows(product: Product, *, publish: bool) -> l
     first_variant = variants[0] if variants else None
 
     row = _empty_legacy_row()
-    row["Product ID"] = str(product.id or "")
+    row["Product ID"] = str(product.source.id or "")
     row["Product Type"] = "P"
     row["Code"] = parent_sku
     row["Name"] = product.title or ""

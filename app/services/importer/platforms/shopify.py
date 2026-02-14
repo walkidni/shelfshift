@@ -131,34 +131,20 @@ class ShopifyClient(ProductClient):
         price_amount = parse_money_to_float(offers.get("price"))
         currency = offers.get("priceCurrency", "USD")
         available = "InStock" in offers.get("availability", "")
-        price = {"amount": price_amount, "currency": currency}
-
         slug = extract_shopify_slug_from_path(urlparse(url).path)
         variants = [
             Variant(
                 id=None,
                 title=title,
-                price_amount=price_amount,
-                currency=currency,
-                available=available,
-                price_v2=make_price(amount=price_amount, currency=currency),
-                inventory_v2=Inventory(track_quantity=False, quantity=None, available=available),
+                price=make_price(amount=price_amount, currency=currency),
+                inventory=Inventory(track_quantity=False, quantity=None, available=available),
             )
         ]
         product = Product(
-            platform=self.platform,
-            id=None,
             title=title,
             description=description,
-            price=price,
-            images=images,
-            options={},
             variants=variants,
             brand=brand,
-            category=product_ld.get("category"),
-            meta_title=title,
-            meta_description=description[:400].strip() if description else None,
-            slug=slug,
             tags=[],
             vendor=brand,
             weight=None,
@@ -166,8 +152,8 @@ class ShopifyClient(ProductClient):
             track_quantity=False,
             is_digital=False,
             raw=product_ld,
-            price_v2=make_price(amount=price_amount, currency=currency),
-            media_v2=[
+            price=make_price(amount=price_amount, currency=currency),
+            media=[
                 Media(
                     url=image_url,
                     type="image",
@@ -176,24 +162,24 @@ class ShopifyClient(ProductClient):
                 )
                 for index, image_url in enumerate(images, start=1)
             ],
-            options_v2=[],
-            seo_v2=Seo(
+            options=[],
+            seo=Seo(
                 title=title,
                 description=description[:400].strip() if description else None,
             ),
-            source_v2=SourceRef(
+            source=SourceRef(
                 platform=self.platform,
                 id=None,
                 slug=slug,
                 url=url,
             ),
-            taxonomy_v2=(
+            taxonomy=(
                 CategorySet(paths=[[str(product_ld.get("category"))]], primary=[str(product_ld.get("category"))])
                 if product_ld.get("category")
-                else None
+                else CategorySet()
             ),
         )
-        product.identifiers, product.identifiers_v2 = make_identifiers({})
+        product.identifiers, _ = make_identifiers({})
         return product
 
     def fetch_product(self, url: str) -> Product:
@@ -219,8 +205,6 @@ class ShopifyClient(ProductClient):
             first_variant = variants_list[0]
             price_amount = parse_money_to_float(first_variant.get("price"))
             currency = (first_variant.get("price_currency") or currency)
-        price = {"amount": price_amount, "currency": currency}
-
         images = []
         if data.get("images"):
             images = [img.get("src") for img in data["images"] if img.get("src")]
@@ -228,8 +212,7 @@ class ShopifyClient(ProductClient):
             images = [data["image"]["src"]]
         images = dedupe(images)
 
-        options: dict[str, list[str]] = {}
-        options_v2: list[OptionDef] = []
+        option_defs: list[OptionDef] = []
         variants: list[Variant] = []
 
         if data.get("options"):
@@ -237,8 +220,7 @@ class ShopifyClient(ProductClient):
                 option_name = option.get("name")
                 option_values = option.get("values", [])
                 if option_name and option_values:
-                    options[option_name] = option_values
-                    options_v2.append(OptionDef(name=option_name, values=option_values))
+                    option_defs.append(OptionDef(name=option_name, values=option_values))
 
         sku_by_variant_id: dict[str, str] = {}
         for variant in variants_list:
@@ -274,11 +256,11 @@ class ShopifyClient(ProductClient):
                 inventory_policy = str(variant.get("inventory_policy") or "").strip().lower()
                 allow_backorder = True if inventory_policy == "continue" else False if inventory_policy else None
                 variant_image_raw = image_by_id.get(str(variant.get("image_id")))
-                variant_media_v2: list[Media] = []
+                variant_media: list[Media] = []
                 if isinstance(variant_image_raw, dict):
                     variant_image_url = normalize_url(variant_image_raw.get("src"))
                     if variant_image_url:
-                        variant_media_v2.append(
+                        variant_media.append(
                             Media(
                                 url=variant_image_url,
                                 type="image",
@@ -289,7 +271,7 @@ class ShopifyClient(ProductClient):
                             )
                         )
 
-                variant_identifiers, variant_identifiers_v2 = make_identifiers(
+                variant_identifiers, variant_typed_identifiers = make_identifiers(
                     {
                         "source_variant_id": variant_id,
                         "sku": raw_sku,
@@ -301,35 +283,28 @@ class ShopifyClient(ProductClient):
                         id=variant_id,
                         sku=(variant.get("sku") or "") + str(variant.get("id") or ""),
                         title=variant.get("title"),
-                        options=variant_options,
-                        price_amount=parse_money_to_float(variant.get("price")),
-                        currency=currency,
-                        available=variant.get("available", True),
-                        inventory_quantity=inventory_quantity,
                         weight=variant.get("weight"),
-                        price_v2=make_price(
+                        price=make_price(
                             amount=variant.get("price"),
                             currency=(variant.get("price_currency") or currency),
                             compare_at=compare_at_amount,
                         ),
-                        media_v2=variant_media_v2,
-                        option_values_v2=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
-                        inventory_v2=Inventory(
+                        media=variant_media,
+                        option_values=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                        inventory=Inventory(
                             track_quantity=track_inventory,
                             quantity=inventory_quantity,
                             available=variant.get("available", True),
                             allow_backorder=allow_backorder,
                         ),
                         identifiers=variant_identifiers,
-                        identifiers_v2=variant_identifiers_v2,
                     )
                 )
 
         default_variant = Variant(
             id=str(data.get("id", "")),
-            price_amount=price_amount,
-            currency=currency,
-            available=True,
+            price=make_price(amount=price_amount, currency=currency),
+            inventory=Inventory(track_quantity=False, quantity=None, available=True),
         )
         append_default_variant_if_empty(variants, default_variant)
 
@@ -360,11 +335,11 @@ class ShopifyClient(ProductClient):
             is_digital = True
             requires_shipping = False
 
-        product_media_v2 = self._product_media_from_images(data.get("images") or [], sku_by_variant_id)
-        if not product_media_v2 and isinstance(data.get("image"), dict):
+        product_media = self._product_media_from_images(data.get("images") or [], sku_by_variant_id)
+        if not product_media and isinstance(data.get("image"), dict):
             image_url = normalize_url(data["image"].get("src"))
             if image_url:
-                product_media_v2 = [
+                product_media = [
                     Media(
                         url=image_url,
                         type="image",
@@ -374,7 +349,7 @@ class ShopifyClient(ProductClient):
                     )
                 ]
 
-        product_identifiers, product_identifiers_v2 = make_identifiers(
+        product_identifiers, product_typed_identifiers = make_identifiers(
             {
                 "source_product_id": data.get("id"),
                 "handle": handle,
@@ -382,19 +357,10 @@ class ShopifyClient(ProductClient):
         )
 
         product = Product(
-            platform=self.platform,
-            id=str(data.get("id", "")),
             title=title,
             description=description,
-            price=price,
-            images=images,
-            options=options,
             variants=variants,
             brand=brand,
-            category=category,
-            meta_title=meta_title,
-            meta_description=meta_description,
-            slug=handle,
             tags=tags,
             vendor=brand,
             weight=weight,
@@ -402,26 +368,24 @@ class ShopifyClient(ProductClient):
             track_quantity=track_quantity,
             is_digital=is_digital,
             raw=payload,
-            price_v2=make_price(
+            price=make_price(
                 amount=price_amount,
                 currency=currency,
                 compare_at=parse_money_to_float(variants_list[0].get("compare_at_price")) if variants_list else None,
             ),
-            media_v2=product_media_v2,
-            categories_v2=[[category]] if category else [],
+            media=product_media,
             identifiers=product_identifiers,
-            options_v2=options_v2,
-            seo_v2=Seo(
+            options=option_defs,
+            seo=Seo(
                 title=meta_title,
                 description=meta_description,
             ),
-            source_v2=SourceRef(
+            source=SourceRef(
                 platform=self.platform,
                 id=str(data.get("id", "")),
                 slug=handle,
                 url=url,
             ),
-            taxonomy_v2=CategorySet(paths=[[category]], primary=[category]) if category else None,
-            identifiers_v2=product_identifiers_v2,
+            taxonomy=CategorySet(paths=[[category]], primary=[category]) if category else CategorySet(),
         )
         return finalize_product_typed_fields(product, source_url=url)

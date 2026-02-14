@@ -77,8 +77,8 @@ def _normalize_handle(value: str) -> str:
 
 
 def _resolve_handle(product: Product) -> str:
-    if product.slug:
-        handle = _normalize_handle(product.slug)
+    if product.source.slug:
+        handle = _normalize_handle(product.source.slug)
         if handle:
             return handle
 
@@ -87,7 +87,7 @@ def _resolve_handle(product: Product) -> str:
         if title_handle:
             return title_handle
 
-    fallback = slugify(f"{product.platform or 'product'}-{product.id or 'item'}")
+    fallback = slugify(f"{product.source.platform or 'product'}-{product.source.id or 'item'}")
     handle = _normalize_handle(fallback)
     return handle or "product-item"
 
@@ -154,8 +154,7 @@ def product_to_shopify_rows(product: Product, *, publish: bool) -> list[dict[str
         row["Variant Taxable"] = _format_bool(not product.is_digital)
         row["Variant Image"] = _resolve_shopify_image_url(utils.resolve_variant_image_url(variant))
 
-        weight = variant.weight if variant.weight is not None else product.weight
-        grams = _format_grams(weight)
+        grams = _format_grams(utils.resolve_weight_grams(product, variant))
         if grams:
             row["Variant Grams"] = grams
             row["Variant Weight Unit"] = "g"

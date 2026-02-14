@@ -73,8 +73,8 @@ def _normalize_handle(value: str) -> str:
 
 
 def _resolve_handle(product: Product) -> str:
-    if product.slug:
-        handle = _normalize_handle(product.slug)
+    if product.source.slug:
+        handle = _normalize_handle(product.source.slug)
         if handle:
             return handle
 
@@ -83,7 +83,7 @@ def _resolve_handle(product: Product) -> str:
         if title_handle:
             return title_handle
 
-    fallback = slugify(f"{product.platform or 'product'}-{product.id or 'item'}")
+    fallback = slugify(f"{product.source.platform or 'product'}-{product.source.id or 'item'}")
     handle = _normalize_handle(fallback)
     return handle or "product-item"
 
@@ -94,7 +94,7 @@ def _resolve_price(product: Product, variant: Variant | None = None) -> str:
 
 
 def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
-    grams = variant.weight if variant and variant.weight is not None else product.weight
+    grams = utils.resolve_weight_grams(product, variant)
     if grams is None:
         return ""
     try:
@@ -244,7 +244,7 @@ def product_to_wix_rows(product: Product, *, publish: bool) -> list[dict[str, st
     product_row["brand"] = product.vendor or product.brand or ""
     product_row["price"] = _resolve_price(product, first_variant)
     product_row["inventory"] = _resolve_product_inventory(product, variants)
-    product_row["sku"] = str((first_variant.sku if first_variant else None) or product.id or "")
+    product_row["sku"] = str((first_variant.sku if first_variant else None) or product.source.id or "")
     product_row["weight"] = _resolve_weight_kg(product, first_variant)
     if images:
         product_row["media"] = images[0]
