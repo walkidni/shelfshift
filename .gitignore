@@ -13,3 +13,4 @@ htmlcov/
 docs/
 tmp/
 .coverage
+.playwright*

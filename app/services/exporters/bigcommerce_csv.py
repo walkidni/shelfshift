@@ -307,7 +307,10 @@ def _resolve_category_details(category: str | None) -> str:
 
 
 def _resolve_modern_categories(product: Product) -> str:
-    return utils.resolve_primary_category(product)
+    # BigCommerce's modern import flow expects category IDs (integers) in the
+    # Categories column. Emitting category names from upstream sources causes
+    # import failures (e.g. "Invalid Category ID format").
+    return ""
 
 
 def _resolve_legacy_images(product: Product) -> str:

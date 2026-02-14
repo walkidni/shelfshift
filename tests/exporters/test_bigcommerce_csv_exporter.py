@@ -56,6 +56,7 @@ def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None
     assert frame.loc[0, "Description"] == "<p>Soft cotton tee</p>"
     assert frame.loc[0, "SKU"] == "SH-101"
     assert frame.loc[0, "Price"] == "19.99"
+    assert frame.loc[0, "Categories"] == ""
     assert frame.loc[0, "Weight"] == "0.22"
     assert frame.loc[0, "Inventory Tracking"] == "variant"
     assert frame.loc[0, "Current Stock"] == "0"
@@ -285,7 +286,7 @@ def test_bigcommerce_modern_prefers_typed_fields_when_present() -> None:
 
     assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[0, "Price"] == "12.34"
-    assert frame.loc[0, "Categories"] == "Men > Shirts"
+    assert frame.loc[0, "Categories"] == ""
     assert frame.loc[1, "Item"] == "Variant"
     assert frame.loc[1, "Options"] == "Type=Rectangle|Name=Color|Value=Blue"
     assert frame.loc[1, "Current Stock"] == "7"
