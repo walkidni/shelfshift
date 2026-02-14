@@ -86,8 +86,18 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json()["source"]["platform"] == "shopify"
-    assert response.json()["title"] == "Demo Mug"
+    payload = response.json()
+    assert payload["source"]["platform"] == "shopify"
+    assert payload["source"]["id"] == "123"
+    assert payload["title"] == "Demo Mug"
+    assert payload["price"] == {
+        "current": {"amount": "12", "currency": "USD"},
+        "compare_at": None,
+        "cost": None,
+        "min_price": None,
+        "max_price": None,
+    }
+    assert payload.get("raw") == {}
 
 
 def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:

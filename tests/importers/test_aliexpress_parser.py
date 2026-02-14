@@ -72,7 +72,14 @@ def test_parse_aliexpress_result_applies_currency_sku_category_and_weight() -> N
     assert product.variants[0].id == "12000055918704599"
     assert product.variants[0].sku == "AE:1005008518647948:12000055918704599"
     assert parsed["variants"][0]["price"]["current"] == {"amount": "50.4", "currency": "EUR"}
+    assert "available" not in parsed["variants"][0]
     assert parsed["variants"][0]["inventory"]["quantity"] == 200
+    assert parsed["variants"][0]["inventory"] == {
+        "track_quantity": True,
+        "quantity": 200,
+        "available": True,
+        "allow_backorder": None,
+    }
     assert parsed["variants"][0]["option_values"] == [{"name": "Color", "value": "Only Face mask"}]
     assert parsed["variants"][0]["media"][0]["url"] == "https://ae01.alicdn.com/kf/face-sku.png"
 
