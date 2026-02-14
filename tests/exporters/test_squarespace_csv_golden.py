@@ -9,7 +9,7 @@ from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionVa
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_fixture_frame, read_frame
 
-_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
+_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "exporter" / "squarespace"
 
 
 def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
