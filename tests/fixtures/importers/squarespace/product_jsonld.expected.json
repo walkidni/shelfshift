@@ -1,60 +1,168 @@
 {
-  "brand": "ST-P SEWS",
-  "category": null,
-  "description": "Handmade shirt",
-  "id": "custom-patchwork-shirt-snzgy",
-  "images": [
-    "https://images.example.com/front.jpg"
-  ],
-  "is_digital": false,
-  "meta_description": "Handmade shirt",
-  "meta_title": "Custom Patchwork Shirt",
-  "options": {
-    "Option": [
-      "Blue / S",
-      "Red / M"
-    ]
+  "source": {
+    "platform": "squarespace",
+    "id": "custom-patchwork-shirt-snzgy",
+    "slug": "custom-patchwork-shirt-snzgy",
+    "url": "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"
   },
-  "platform": "squarespace",
-  "price": {
-    "amount": 120.0,
-    "currency": "USD"
-  },
-  "requires_shipping": true,
-  "slug": "custom-patchwork-shirt-snzgy",
-  "tags": [],
   "title": "Custom Patchwork Shirt",
-  "track_quantity": true,
-  "variants": [
+  "description": "Handmade shirt",
+  "seo": {
+    "title": "Custom Patchwork Shirt",
+    "description": "Handmade shirt"
+  },
+  "brand": "ST-P SEWS",
+  "vendor": "ST-P SEWS",
+  "taxonomy": {
+    "paths": [],
+    "primary": null
+  },
+  "tags": [],
+  "options": [
     {
-      "available": true,
-      "currency": "USD",
-      "id": "SQ-001",
-      "image": null,
-      "inventory_quantity": null,
-      "options": {
-        "Option": "Blue / S"
-      },
-      "price_amount": 120.0,
-      "sku": "SQ-001",
-      "title": "Blue / S",
-      "weight": null
-    },
-    {
-      "available": false,
-      "currency": "USD",
-      "id": "SQ-002",
-      "image": null,
-      "inventory_quantity": null,
-      "options": {
-        "Option": "Red / M"
-      },
-      "price_amount": 130.0,
-      "sku": "SQ-002",
-      "title": "Red / M",
-      "weight": null
+      "name": "Option",
+      "values": [
+        "Blue / S",
+        "Red / M"
+      ]
     }
   ],
-  "vendor": "ST-P SEWS",
-  "weight": null
+  "variants": [
+    {
+      "id": "SQ-001",
+      "sku": "SQ-001",
+      "title": "Blue / S",
+      "option_values": [
+        {
+          "name": "Option",
+          "value": "Blue / S"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "120",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": null,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "SQ-001",
+          "sku": "SQ-001"
+        }
+      }
+    },
+    {
+      "id": "SQ-002",
+      "sku": "SQ-002",
+      "title": "Red / M",
+      "option_values": [
+        {
+          "name": "Option",
+          "value": "Red / M"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "130",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": null,
+        "available": false,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "SQ-002",
+          "sku": "SQ-002"
+        }
+      }
+    }
+  ],
+  "price": {
+    "current": {
+      "amount": "120",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": null,
+  "requires_shipping": true,
+  "track_quantity": true,
+  "is_digital": false,
+  "media": [
+    {
+      "url": "https://images.example.com/front.jpg",
+      "type": "image",
+      "alt": null,
+      "position": 1,
+      "is_primary": true,
+      "variant_skus": []
+    }
+  ],
+  "identifiers": {
+    "values": {
+      "source_product_id": "custom-patchwork-shirt-snzgy"
+    }
+  },
+  "provenance": {}
 }

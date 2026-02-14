@@ -1,70 +1,210 @@
 {
-  "brand": "Acme Apparel",
-  "category": "Shirts",
+  "source": {
+    "platform": "shopify",
+    "id": "101",
+    "slug": "classic-tee",
+    "url": "https://demo-shop.myshopify.com/products/classic-tee"
+  },
+  "title": "Classic Tee",
   "description": "<p>Soft cotton tee</p>",
-  "id": "101",
-  "images": [
-    "https://cdn.example.com/tee-1.jpg",
-    "https://cdn.example.com/tee-2.jpg"
-  ],
-  "is_digital": false,
-  "meta_description": "Soft cotton tee",
-  "meta_title": "Classic Tee",
-  "options": {
-    "Color": [
-      "Black",
-      "White"
+  "seo": {
+    "title": "Classic Tee",
+    "description": "Soft cotton tee"
+  },
+  "brand": "Acme Apparel",
+  "vendor": "Acme Apparel",
+  "taxonomy": {
+    "paths": [
+      [
+        "Shirts"
+      ]
     ],
-    "Size": [
-      "M",
-      "L"
+    "primary": [
+      "Shirts"
     ]
   },
-  "platform": "shopify",
-  "price": {
-    "amount": 19.99,
-    "currency": "USD"
-  },
-  "requires_shipping": true,
-  "slug": "classic-tee",
   "tags": [
     "tee",
     "cotton"
   ],
-  "title": "Classic Tee",
-  "track_quantity": true,
-  "variants": [
+  "options": [
     {
-      "available": true,
-      "currency": "USD",
-      "id": "111",
-      "image": null,
-      "inventory_quantity": 4,
-      "options": {
-        "Color": "Black",
-        "Size": "M"
-      },
-      "price_amount": 19.99,
-      "sku": "TEE-BLK-M-111",
-      "title": "Black / M",
-      "weight": 220
+      "name": "Color",
+      "values": [
+        "Black",
+        "White"
+      ]
     },
     {
-      "available": false,
-      "currency": "USD",
-      "id": "112",
-      "image": null,
-      "inventory_quantity": 0,
-      "options": {
-        "Color": "White",
-        "Size": "L"
-      },
-      "price_amount": 21.99,
-      "sku": "TEE-WHT-L-112",
-      "title": "White / L",
-      "weight": 230
+      "name": "Size",
+      "values": [
+        "M",
+        "L"
+      ]
     }
   ],
-  "vendor": "Acme Apparel",
-  "weight": 220
+  "variants": [
+    {
+      "id": "111",
+      "sku": "TEE-BLK-M-111",
+      "title": "Black / M",
+      "option_values": [
+        {
+          "name": "Color",
+          "value": "Black"
+        },
+        {
+          "name": "Size",
+          "value": "M"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "19.99",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": 4,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": {
+        "value": "220",
+        "unit": "g"
+      },
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "111",
+          "sku": "TEE-BLK-M-"
+        }
+      }
+    },
+    {
+      "id": "112",
+      "sku": "TEE-WHT-L-112",
+      "title": "White / L",
+      "option_values": [
+        {
+          "name": "Color",
+          "value": "White"
+        },
+        {
+          "name": "Size",
+          "value": "L"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "21.99",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": 0,
+        "available": false,
+        "allow_backorder": null
+      },
+      "weight": {
+        "value": "230",
+        "unit": "g"
+      },
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "112",
+          "sku": "TEE-WHT-L-"
+        }
+      }
+    }
+  ],
+  "price": {
+    "current": {
+      "amount": "19.99",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": {
+    "value": "220",
+    "unit": "g"
+  },
+  "requires_shipping": true,
+  "track_quantity": true,
+  "is_digital": false,
+  "media": [
+    {
+      "url": "https://cdn.example.com/tee-1.jpg",
+      "type": "image",
+      "alt": null,
+      "position": null,
+      "is_primary": false,
+      "variant_skus": []
+    },
+    {
+      "url": "https://cdn.example.com/tee-2.jpg",
+      "type": "image",
+      "alt": null,
+      "position": null,
+      "is_primary": false,
+      "variant_skus": []
+    }
+  ],
+  "identifiers": {
+    "values": {
+      "source_product_id": "101",
+      "handle": "classic-tee"
+    }
+  },
+  "provenance": {}
 }

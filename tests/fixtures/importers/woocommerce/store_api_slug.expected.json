@@ -1,43 +1,114 @@
 {
-  "brand": null,
-  "category": null,
-  "description": "<p>Heavy duty set</p>",
-  "id": "101",
-  "images": [
-    "https://demo-store.com/wp-content/uploads/wrench.jpg"
-  ],
-  "is_digital": false,
-  "meta_description": "Heavy duty set",
-  "meta_title": "Adjustable Wrench Set",
-  "options": {
-    "Material": [
-      "Steel"
-    ]
+  "source": {
+    "platform": "woocommerce",
+    "id": "101",
+    "slug": "adjustable-wrench-set",
+    "url": "https://demo-store.com/product/adjustable-wrench-set/"
   },
-  "platform": "woocommerce",
-  "price": {
-    "amount": 29.0,
-    "currency": "USD"
-  },
-  "requires_shipping": true,
-  "slug": "adjustable-wrench-set",
-  "tags": [],
   "title": "Adjustable Wrench Set",
-  "track_quantity": true,
-  "variants": [
+  "description": "<p>Heavy duty set</p>",
+  "seo": {
+    "title": "Adjustable Wrench Set",
+    "description": "Heavy duty set"
+  },
+  "brand": null,
+  "vendor": null,
+  "taxonomy": {
+    "paths": [],
+    "primary": null
+  },
+  "tags": [],
+  "options": [
     {
-      "available": true,
-      "currency": "USD",
-      "id": "101",
-      "image": null,
-      "inventory_quantity": null,
-      "options": {},
-      "price_amount": 29.0,
-      "sku": null,
-      "title": null,
-      "weight": null
+      "name": "Material",
+      "values": [
+        "Steel"
+      ]
     }
   ],
-  "vendor": null,
-  "weight": null
+  "variants": [
+    {
+      "id": "101",
+      "sku": null,
+      "title": null,
+      "option_values": [],
+      "price": {
+        "current": {
+          "amount": "29",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": true,
+        "quantity": null,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "101"
+        }
+      }
+    }
+  ],
+  "price": {
+    "current": {
+      "amount": "29",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": null,
+  "requires_shipping": true,
+  "track_quantity": true,
+  "is_digital": false,
+  "media": [
+    {
+      "url": "https://demo-store.com/wp-content/uploads/wrench.jpg",
+      "type": "image",
+      "alt": null,
+      "position": 1,
+      "is_primary": true,
+      "variant_skus": []
+    }
+  ],
+  "identifiers": {
+    "values": {
+      "source_product_id": "101"
+    }
+  },
+  "provenance": {}
 }

@@ -1,40 +1,117 @@
 {
-  "brand": "Mug Co",
-  "category": "Home",
-  "description": "Handmade mug",
-  "id": null,
-  "images": [
-    "https://cdn.example.com/mug-front.jpg",
-    "https://cdn.example.com/mug-side.jpg"
-  ],
-  "is_digital": false,
-  "meta_description": "Handmade mug",
-  "meta_title": "Fallback Mug",
-  "options": {},
-  "platform": "shopify",
-  "price": {
-    "amount": 34.5,
-    "currency": "USD"
+  "source": {
+    "platform": "shopify",
+    "id": null,
+    "slug": "fallback-mug",
+    "url": "https://demo-shop.myshopify.com/products/fallback-mug"
   },
-  "requires_shipping": true,
-  "slug": "fallback-mug",
-  "tags": [],
   "title": "Fallback Mug",
-  "track_quantity": false,
+  "description": "Handmade mug",
+  "seo": {
+    "title": "Fallback Mug",
+    "description": "Handmade mug"
+  },
+  "brand": "Mug Co",
+  "vendor": "Mug Co",
+  "taxonomy": {
+    "paths": [
+      [
+        "Home"
+      ]
+    ],
+    "primary": [
+      "Home"
+    ]
+  },
+  "tags": [],
+  "options": [],
   "variants": [
     {
-      "available": true,
-      "currency": "USD",
       "id": null,
-      "image": null,
-      "inventory_quantity": null,
-      "options": {},
-      "price_amount": 34.5,
       "sku": null,
       "title": "Fallback Mug",
-      "weight": null
+      "option_values": [],
+      "price": {
+        "current": {
+          "amount": "34.5",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": null,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {}
+      }
     }
   ],
-  "vendor": "Mug Co",
-  "weight": null
+  "price": {
+    "current": {
+      "amount": "34.5",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": null,
+  "requires_shipping": true,
+  "track_quantity": false,
+  "is_digital": false,
+  "media": [
+    {
+      "url": "https://cdn.example.com/mug-front.jpg",
+      "type": "image",
+      "alt": null,
+      "position": 1,
+      "is_primary": true,
+      "variant_skus": []
+    },
+    {
+      "url": "https://cdn.example.com/mug-side.jpg",
+      "type": "image",
+      "alt": null,
+      "position": 2,
+      "is_primary": false,
+      "variant_skus": []
+    }
+  ],
+  "identifiers": {
+    "values": {}
+  },
+  "provenance": {}
 }

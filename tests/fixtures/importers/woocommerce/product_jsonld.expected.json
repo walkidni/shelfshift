@@ -1,37 +1,96 @@
 {
-  "brand": null,
-  "category": null,
-  "description": "Fallback product",
-  "id": null,
-  "images": [],
-  "is_digital": false,
-  "meta_description": "Fallback product",
-  "meta_title": "Brake Disc Rotor",
-  "options": {},
-  "platform": "woocommerce",
-  "price": {
-    "amount": 19.99,
-    "currency": "USD"
+  "source": {
+    "platform": "woocommerce",
+    "id": null,
+    "slug": "brake-disc-rotor",
+    "url": "https://demo-store.com/product/brake-disc-rotor/"
   },
-  "requires_shipping": true,
-  "slug": "brake-disc-rotor",
-  "tags": [],
   "title": "Brake Disc Rotor",
-  "track_quantity": true,
+  "description": "Fallback product",
+  "seo": {
+    "title": "Brake Disc Rotor",
+    "description": "Fallback product"
+  },
+  "brand": null,
+  "vendor": null,
+  "taxonomy": {
+    "paths": [],
+    "primary": null
+  },
+  "tags": [],
+  "options": [],
   "variants": [
     {
-      "available": true,
-      "currency": "USD",
       "id": null,
-      "image": null,
-      "inventory_quantity": null,
-      "options": {},
-      "price_amount": 19.99,
       "sku": null,
       "title": null,
-      "weight": null
+      "option_values": [],
+      "price": {
+        "current": {
+          "amount": "19.99",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": false,
+        "quantity": null,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {}
+      }
     }
   ],
-  "vendor": null,
-  "weight": null
+  "price": {
+    "current": {
+      "amount": "19.99",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": null,
+  "requires_shipping": true,
+  "track_quantity": true,
+  "is_digital": false,
+  "media": [],
+  "identifiers": {
+    "values": {
+      "source_product_id": "brake-disc-rotor"
+    }
+  },
+  "provenance": {}
 }

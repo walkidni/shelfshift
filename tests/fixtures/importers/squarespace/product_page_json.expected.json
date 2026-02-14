@@ -1,70 +1,203 @@
 {
-  "brand": null,
-  "category": "Tops",
+  "source": {
+    "platform": "squarespace",
+    "id": "abc123",
+    "slug": "custom-patchwork-shirt-snzgy",
+    "url": "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"
+  },
+  "title": "Custom Patchwork Shirt",
   "description": "<p>Handmade shirt.</p>",
-  "id": "abc123",
-  "images": [
-    "https://images.example.com/front.jpg",
-    "https://images.example.com/blue-s.jpg"
-  ],
-  "is_digital": false,
-  "meta_description": "Handmade shirt.",
-  "meta_title": "Custom Patchwork Shirt",
-  "options": {
-    "Color": [
-      "Blue",
-      "Red"
+  "seo": {
+    "title": "Custom Patchwork Shirt",
+    "description": "Handmade shirt."
+  },
+  "brand": null,
+  "vendor": null,
+  "taxonomy": {
+    "paths": [
+      [
+        "Tops"
+      ]
     ],
-    "Size": [
-      "S",
-      "M"
+    "primary": [
+      "Tops"
     ]
   },
-  "platform": "squarespace",
-  "price": {
-    "amount": 120.0,
-    "currency": "USD"
-  },
-  "requires_shipping": true,
-  "slug": "custom-patchwork-shirt-snzgy",
   "tags": [
     "patchwork",
     "shirt"
   ],
-  "title": "Custom Patchwork Shirt",
-  "track_quantity": true,
-  "variants": [
+  "options": [
     {
-      "available": true,
-      "currency": "USD",
-      "id": "v1",
-      "image": "https://images.example.com/blue-s.jpg",
-      "inventory_quantity": 4,
-      "options": {
-        "Color": "Blue",
-        "Size": "S"
-      },
-      "price_amount": 120.0,
-      "sku": "SQ-001",
-      "title": null,
-      "weight": null
+      "name": "Color",
+      "values": [
+        "Blue",
+        "Red"
+      ]
     },
     {
-      "available": false,
-      "currency": "USD",
-      "id": "v2",
-      "image": null,
-      "inventory_quantity": 0,
-      "options": {
-        "Color": "Red",
-        "Size": "M"
-      },
-      "price_amount": 130.0,
-      "sku": "SQ-002",
-      "title": null,
-      "weight": null
+      "name": "Size",
+      "values": [
+        "S",
+        "M"
+      ]
     }
   ],
-  "vendor": null,
-  "weight": null
+  "variants": [
+    {
+      "id": "v1",
+      "sku": "SQ-001",
+      "title": null,
+      "option_values": [
+        {
+          "name": "Color",
+          "value": "Blue"
+        },
+        {
+          "name": "Size",
+          "value": "S"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "120",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": true,
+        "quantity": 4,
+        "available": true,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [
+        {
+          "url": "https://images.example.com/blue-s.jpg",
+          "type": "image",
+          "alt": null,
+          "position": 1,
+          "is_primary": true,
+          "variant_skus": [
+            "SQ-001"
+          ]
+        }
+      ],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "v1",
+          "sku": "SQ-001"
+        }
+      }
+    },
+    {
+      "id": "v2",
+      "sku": "SQ-002",
+      "title": null,
+      "option_values": [
+        {
+          "name": "Color",
+          "value": "Red"
+        },
+        {
+          "name": "Size",
+          "value": "M"
+        }
+      ],
+      "price": {
+        "current": {
+          "amount": "130",
+          "currency": "USD"
+        },
+        "compare_at": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "cost": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "min_price": {
+          "amount": null,
+          "currency": "USD"
+        },
+        "max_price": {
+          "amount": null,
+          "currency": "USD"
+        }
+      },
+      "inventory": {
+        "track_quantity": true,
+        "quantity": 0,
+        "available": false,
+        "allow_backorder": null
+      },
+      "weight": null,
+      "media": [],
+      "identifiers": {
+        "values": {
+          "source_variant_id": "v2",
+          "sku": "SQ-002"
+        }
+      }
+    }
+  ],
+  "price": {
+    "current": {
+      "amount": "120",
+      "currency": "USD"
+    },
+    "compare_at": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "cost": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "min_price": {
+      "amount": null,
+      "currency": "USD"
+    },
+    "max_price": {
+      "amount": null,
+      "currency": "USD"
+    }
+  },
+  "weight": null,
+  "requires_shipping": true,
+  "track_quantity": true,
+  "is_digital": false,
+  "media": [
+    {
+      "url": "https://images.example.com/front.jpg",
+      "type": "image",
+      "alt": "Custom Patchwork Shirt",
+      "position": 1,
+      "is_primary": true,
+      "variant_skus": []
+    }
+  ],
+  "identifiers": {
+    "values": {
+      "source_product_id": "abc123"
+    }
+  },
+  "provenance": {}
 }
