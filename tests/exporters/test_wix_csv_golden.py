@@ -6,12 +6,14 @@ import pandas as pd
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_fixture_frame, read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_fixture_frame, read_frame
+
+_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
 
 def test_wix_csv_matches_golden_fixture_two_variants() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "wix_one_product_two_variants_full.csv"
+    fixture_path = _FIXTURES_ROOT / "wix_one_product_two_variants_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
@@ -60,7 +62,7 @@ def test_wix_csv_matches_golden_fixture_two_variants() -> None:
 
 
 def test_wix_csv_matches_golden_fixture_simple_product() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "wix_one_simple_product_full.csv"
+    fixture_path = _FIXTURES_ROOT / "wix_one_simple_product_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
@@ -94,7 +96,7 @@ def test_wix_csv_matches_golden_fixture_simple_product() -> None:
 
 
 def test_wix_csv_matches_golden_fixture_missing_optional_fields() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "wix_missing_optional_fields_full.csv"
+    fixture_path = _FIXTURES_ROOT / "wix_missing_optional_fields_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
@@ -118,7 +120,7 @@ def test_wix_csv_matches_golden_fixture_missing_optional_fields() -> None:
 
 
 def test_wix_csv_matches_golden_fixture_edge_numbers() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "wix_edge_numbers_full.csv"
+    fixture_path = _FIXTURES_ROOT / "wix_edge_numbers_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 
@@ -152,7 +154,7 @@ def test_wix_csv_matches_golden_fixture_edge_numbers() -> None:
 
 
 def test_wix_csv_matches_golden_fixture_media_edge_cases() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "wix_media_edge_cases_full.csv"
+    fixture_path = _FIXTURES_ROOT / "wix_media_edge_cases_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == WIX_COLUMNS
 

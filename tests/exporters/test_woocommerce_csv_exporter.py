@@ -3,8 +3,8 @@ from decimal import Decimal
 from app.services.exporters import product_to_woocommerce_csv
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_frame
 
 
 def test_simple_product_maps_qty_stock() -> None:

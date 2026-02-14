@@ -6,12 +6,14 @@ import pandas as pd
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
 from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_fixture_frame, read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_fixture_frame, read_frame
+
+_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
 
 def test_bigcommerce_csv_matches_golden_fixture_two_variants() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_one_product_two_variants_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_one_product_two_variants_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
@@ -81,7 +83,7 @@ def test_bigcommerce_csv_matches_golden_fixture_two_variants() -> None:
 
 
 def test_bigcommerce_csv_matches_golden_fixture_simple_product() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_one_simple_product_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_one_simple_product_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
@@ -115,7 +117,7 @@ def test_bigcommerce_csv_matches_golden_fixture_simple_product() -> None:
 
 
 def test_bigcommerce_csv_matches_golden_fixture_missing_optional_fields() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_missing_optional_fields_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_missing_optional_fields_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
@@ -139,7 +141,7 @@ def test_bigcommerce_csv_matches_golden_fixture_missing_optional_fields() -> Non
 
 
 def test_bigcommerce_csv_matches_golden_fixture_edge_numbers() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_edge_numbers_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_edge_numbers_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
@@ -172,7 +174,7 @@ def test_bigcommerce_csv_matches_golden_fixture_edge_numbers() -> None:
 
 
 def test_bigcommerce_csv_matches_golden_fixture_media_edge_cases() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_media_edge_cases_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_media_edge_cases_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_COLUMNS
 
@@ -232,7 +234,7 @@ def test_bigcommerce_csv_matches_golden_fixture_media_edge_cases() -> None:
 
 
 def test_bigcommerce_legacy_csv_matches_golden_fixture_simple_product() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "bigcommerce_legacy_one_simple_product_full.csv"
+    fixture_path = _FIXTURES_ROOT / "bigcommerce_legacy_one_simple_product_full.csv"
     expected = read_fixture_frame(fixture_path)
     assert list(expected.columns) == BIGCOMMERCE_LEGACY_COLUMNS
 

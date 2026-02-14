@@ -3,8 +3,8 @@ from decimal import Decimal
 from app.services.exporters import product_to_bigcommerce_csv
 from app.services.exporters.bigcommerce_csv import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
 from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_frame
 
 
 def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None:

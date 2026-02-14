@@ -3,8 +3,8 @@ from decimal import Decimal
 from app.services.exporters import product_to_squarespace_csv
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_frame
 
 
 def test_single_variant_maps_visible_and_hosted_images() -> None:

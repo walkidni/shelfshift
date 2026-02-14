@@ -7,7 +7,7 @@ from app.services.importer.platforms.shopify import ShopifyClient
 from app.services.importer.platforms.squarespace import SquarespaceClient
 from app.services.importer.platforms.woocommerce import WooCommerceClient
 
-_FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures" / "importers"
+_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "importers"
 
 
 class _FakeResponse:

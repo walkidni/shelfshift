@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.models import Money, Price, Product, SourceRef
 
-from ._app_helpers import patch_run_import_product
+from tests.helpers._app_helpers import patch_run_import_product
 
 
 client = TestClient(app)

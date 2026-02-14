@@ -9,8 +9,8 @@ from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
-from tests._model_builders import Product, Variant
-from tests._app_helpers import patch_run_import_product
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._app_helpers import patch_run_import_product
 
 
 client = TestClient(app)

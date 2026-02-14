@@ -3,17 +3,19 @@ from decimal import Decimal
 
 import pandas as pd
 
-from app.services.exporters import product_to_squarespace_csv
-from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
+from app.services.exporters import product_to_woocommerce_csv
+from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
 from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_fixture_frame, read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_fixture_frame, read_frame
+
+_FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
 
-def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "squarespace_one_product_two_variants_full.csv"
+def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
+    fixture_path = _FIXTURES_ROOT / "woocommerce_one_product_two_variations_full.csv"
     expected = read_fixture_frame(fixture_path)
-    assert list(expected.columns) == SQUARESPACE_COLUMNS
+    assert list(expected.columns) == WOOCOMMERCE_COLUMNS
 
     product = Product(
         platform="shopify",
@@ -21,10 +23,7 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
         title="V-Neck T-Shirt",
         description="Made of our softest blend of cotton.",
         price={"amount": 999.99, "currency": "USD"},
-        images=[
-            "https://cdn.example.com/legacy-wrong-image-1.jpg",
-            "https://cdn.example.com/legacy-wrong-image-2.jpg",
-        ],
+        images=["https://cdn.example.com/legacy-wrong-product.jpg"],
         options={"Legacy": ["Wrong"]},
         variants=[
             Variant(
@@ -34,7 +33,7 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
                 price_amount=111.11,
                 inventory_quantity=999,
                 weight=200,
-                image="https://cdn.example.com/v-neck-tee-size-s.jpg",
+                image="https://cdn.example.com/legacy-wrong-v1.jpg",
             ),
             Variant(
                 id="v2",
@@ -43,7 +42,7 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
                 price_amount=222.22,
                 inventory_quantity=999,
                 weight=200,
-                image="https://cdn.example.com/v-neck-tee-size-m.jpg",
+                image="https://cdn.example.com/legacy-wrong-v2.jpg",
             ),
         ],
         vendor="Acme Apparel",
@@ -52,36 +51,31 @@ def test_squarespace_csv_matches_golden_fixture_two_variants() -> None:
         slug="v-neck-tee",
         raw={},
     )
+    product.price = Price(current=Money(amount=Decimal("24.99"), currency="USD"))
     product.options = [OptionDef(name="Size", values=["S", "M"])]
     product.taxonomy = CategorySet(paths=[["Shirts"]], primary=["Shirts"])
-    product.media = [
-        Media(url="https://cdn.example.com/v-neck-tee.jpg", is_primary=True),
-        Media(url="https://cdn.example.com/v-neck-tee-back.jpg"),
-    ]
+    product.media = [Media(url="https://cdn.example.com/v-neck-tee.jpg", is_primary=True)]
     product.variants[0].price = Price(current=Money(amount=Decimal("24.99"), currency="USD"))
     product.variants[1].price = Price(current=Money(amount=Decimal("24.99"), currency="USD"))
     product.variants[0].option_values = [OptionValue(name="Size", value="S")]
     product.variants[1].option_values = [OptionValue(name="Size", value="M")]
     product.variants[0].inventory = Inventory(track_quantity=True, quantity=10, available=True)
     product.variants[1].inventory = Inventory(track_quantity=True, quantity=8, available=True)
+    product.variants[0].media = [Media(url="https://cdn.example.com/v-neck-tee-size-s.jpg", is_primary=True)]
+    product.variants[1].media = [Media(url="https://cdn.example.com/v-neck-tee-size-m.jpg", is_primary=True)]
 
-    csv_text, filename = product_to_squarespace_csv(
-        product,
-        publish=True,
-        product_page="",
-        product_url="v-neck-tee",
-    )
-    assert filename == "squarespace-20260208T000000Z.csv"
+    csv_text, filename = product_to_woocommerce_csv(product, publish=True)
+    assert filename == "woocommerce-20260208T000000Z.csv"
     actual = read_frame(csv_text)
 
-    assert list(actual.columns) == SQUARESPACE_COLUMNS
+    assert list(actual.columns) == WOOCOMMERCE_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)
 
 
-def test_squarespace_csv_matches_golden_fixture_simple_product() -> None:
-    fixture_path = Path(__file__).resolve().parent / "fixtures" / "squarespace_one_simple_product_full.csv"
+def test_woocommerce_csv_matches_golden_fixture_simple_product() -> None:
+    fixture_path = _FIXTURES_ROOT / "woocommerce_one_simple_product_full.csv"
     expected = read_fixture_frame(fixture_path)
-    assert list(expected.columns) == SQUARESPACE_COLUMNS
+    assert list(expected.columns) == WOOCOMMERCE_COLUMNS
 
     product = Product(
         platform="amazon",
@@ -89,10 +83,7 @@ def test_squarespace_csv_matches_golden_fixture_simple_product() -> None:
         title="Demo Mug",
         description="Demo description",
         price={"amount": 999.0, "currency": "USD"},
-        images=[
-            "https://cdn.example.com/legacy-wrong-mug-1.jpg",
-            "https://cdn.example.com/legacy-wrong-mug-2.jpg",
-        ],
+        images=["https://cdn.example.com/legacy-wrong-mug.jpg"],
         variants=[
             Variant(
                 id="v1",
@@ -104,21 +95,14 @@ def test_squarespace_csv_matches_golden_fixture_simple_product() -> None:
         ],
         raw={},
     )
-    product.media = [
-        Media(url="https://cdn.example.com/mug-front.jpg", is_primary=True),
-        Media(url="https://cdn.example.com/mug-side.jpg"),
-    ]
+    product.price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
+    product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
     product.variants[0].price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
     product.variants[0].inventory = Inventory(track_quantity=True, quantity=0, available=False)
 
-    csv_text, filename = product_to_squarespace_csv(
-        product,
-        publish=False,
-        product_page="shop",
-        product_url="demo-mug",
-    )
-    assert filename == "squarespace-20260208T000000Z.csv"
+    csv_text, filename = product_to_woocommerce_csv(product, publish=False)
+    assert filename == "woocommerce-20260208T000000Z.csv"
     actual = read_frame(csv_text)
 
-    assert list(actual.columns) == SQUARESPACE_COLUMNS
+    assert list(actual.columns) == WOOCOMMERCE_COLUMNS
     pd.testing.assert_frame_equal(actual, expected)

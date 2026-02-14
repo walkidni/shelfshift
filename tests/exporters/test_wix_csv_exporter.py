@@ -3,8 +3,8 @@ from decimal import Decimal
 from app.services.exporters import product_to_wix_csv
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests._model_builders import Product, Variant
-from tests._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+from tests.helpers._csv_helpers import read_frame
 
 
 def test_wix_export_maps_product_and_variant_rows() -> None:
