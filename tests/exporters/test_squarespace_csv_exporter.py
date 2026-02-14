@@ -241,5 +241,5 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
     assert frame.loc[0, "Option Value 1"] == "Blue"
     assert frame.loc[0, "Price"] == "12.34"
     assert frame.loc[0, "Stock"] == "7"
-    assert frame.loc[0, "Categories"] == "Men > Shirts"
+    assert frame.loc[0, "Categories"] == ""
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/typed-main.jpg\nhttps://cdn.example.com/typed-gallery.jpg"

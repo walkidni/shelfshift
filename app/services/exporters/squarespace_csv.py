@@ -134,7 +134,10 @@ def product_to_squarespace_rows(
             row["Product URL"] = (product_url or "").strip()
             row["Title"] = product.title or ""
             row["Description"] = product.description or ""
-            row["Categories"] = utils.resolve_primary_category(product)
+            # Squarespace imports often fail with "Categories not assigned" when
+            # the category label doesn't already exist in the destination site.
+            # Keep Categories blank so users can assign categories post-import.
+            row["Categories"] = ""
             row["Tags"] = _resolve_tags(product)
             row["Weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
             row["Visible"] = _format_bool(publish)
