@@ -13,8 +13,8 @@ Project surface:
   - `POST /api/v1/export/wix.csv`
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
-- Simple web UI for one-step CSV export (`/`)
-- Web CSV upload preview + conversion flow (`/import.csv` -> `/export-from-product.csv`)
+- Web UI (URL import/export): `/`
+- Web UI (CSV import/export): `/csv` (upload posts to `/import.csv`, export posts to `/export-from-product.csv`)
 - Shared importer services for Shopify, WooCommerce, Squarespace, Amazon, and AliExpress
 
 ## Supported import sources
@@ -58,6 +58,7 @@ uv run uvicorn app.main:app --reload
 
 4. Open:
 - Web UI: `http://127.0.0.1:8000/`
+- CSV Import/Export: `http://127.0.0.1:8000/csv`
 - Swagger docs: `http://127.0.0.1:8000/docs`
 
 ## API usage

@@ -323,9 +323,11 @@ def _export_csv_attachment_for_product(
     return _csv_attachment_response(csv_text, filename)
 
 
-def _render_index(
+def _render_web_page(
     request: Request,
     *,
+    template_name: str,
+    active_page: str,
     error: str | None,
     product_url: str,
     target_platform: str,
@@ -342,9 +344,10 @@ def _render_index(
 ) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
-        "index.html",
+        template_name,
         {
             "brand": settings,
+            "active_page": active_page,
             "error": error,
             "csv_error": csv_error,
             "form": {
@@ -477,8 +480,10 @@ def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Re
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
-    return _render_index(
+    return _render_web_page(
         request,
+        template_name="index.html",
+        active_page="url",
         error=None,
         product_url="",
         target_platform="shopify",
@@ -486,6 +491,27 @@ def home(request: Request) -> HTMLResponse:
         bigcommerce_csv_format="modern",
         squarespace_product_page="",
         squarespace_product_url="",
+    )
+
+
+@app.get("/csv", response_class=HTMLResponse)
+def csv_home(request: Request) -> HTMLResponse:
+    return _render_web_page(
+        request,
+        template_name="csv.html",
+        active_page="csv",
+        error=None,
+        product_url="",
+        target_platform="shopify",
+        weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+        bigcommerce_csv_format="modern",
+        squarespace_product_page="",
+        squarespace_product_url="",
+        csv_source_platform="shopify",
+        csv_source_weight_unit="kg",
+        csv_error=None,
+        preview_product_json=None,
+        preview_product_json_b64=None,
     )
 
 
@@ -581,8 +607,10 @@ def import_csv_from_web(
         )
         preview_payload = _preview_payload_for_web(product)
         preview_json = json.dumps(preview_payload, ensure_ascii=False, indent=2)
-        return _render_index(
+        return _render_web_page(
             request,
+            template_name="csv.html",
+            active_page="csv",
             error=None,
             product_url="",
             target_platform="shopify",
@@ -596,8 +624,10 @@ def import_csv_from_web(
             preview_product_json_b64=_product_to_json_b64(product),
         )
     except HTTPException as exc:
-        return _render_index(
+        return _render_web_page(
             request,
+            template_name="csv.html",
+            active_page="csv",
             error=None,
             csv_error=exc.detail,
             product_url="",
@@ -657,8 +687,10 @@ def export_csv_from_web(
             squarespace_product_url=squarespace_product_url,
         )
     except HTTPException as exc:
-        return _render_index(
+        return _render_web_page(
             request,
+            template_name="index.html",
+            active_page="url",
             error=exc.detail,
             product_url=product_url,
             target_platform=target_platform,

@@ -624,6 +624,13 @@ def test_home_page_renders() -> None:
     assert "Result JSON" not in response.text
 
 
+def test_csv_page_renders() -> None:
+    response = client.get("/csv")
+    assert response.status_code == 200
+    assert 'action="/import.csv"' in response.text
+    assert 'name="source_platform"' in response.text
+
+
 def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
     product = Product(
         platform="shopify",
