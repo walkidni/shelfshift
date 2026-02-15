@@ -427,8 +427,9 @@ def export_from_product_csv(payload: ExportFromProductCsvRequest) -> Response:
 
 @app.post("/api/v1/export/shopify.csv")
 def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
-    return _export_csv_attachment_for_target(
-        payload.product_url,
+    product = _product_from_payload_dict(payload.product)
+    return _export_csv_attachment_for_product(
+        product,
         target_platform="shopify",
         publish=payload.publish,
         weight_unit=payload.weight_unit,
@@ -437,8 +438,9 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
 
 @app.post("/api/v1/export/bigcommerce.csv")
 def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Response:
-    return _export_csv_attachment_for_target(
-        payload.product_url,
+    product = _product_from_payload_dict(payload.product)
+    return _export_csv_attachment_for_product(
+        product,
         target_platform="bigcommerce",
         publish=payload.publish,
         weight_unit=payload.weight_unit,
@@ -448,8 +450,9 @@ def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Re
 
 @app.post("/api/v1/export/wix.csv")
 def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
-    return _export_csv_attachment_for_target(
-        payload.product_url,
+    product = _product_from_payload_dict(payload.product)
+    return _export_csv_attachment_for_product(
+        product,
         target_platform="wix",
         publish=payload.publish,
         weight_unit=payload.weight_unit,
@@ -458,8 +461,9 @@ def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
 
 @app.post("/api/v1/export/squarespace.csv")
 def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Response:
-    return _export_csv_attachment_for_target(
-        payload.product_url,
+    product = _product_from_payload_dict(payload.product)
+    return _export_csv_attachment_for_product(
+        product,
         target_platform="squarespace",
         publish=payload.publish,
         weight_unit=payload.weight_unit,
@@ -470,8 +474,9 @@ def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Re
 
 @app.post("/api/v1/export/woocommerce.csv")
 def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Response:
-    return _export_csv_attachment_for_target(
-        payload.product_url,
+    product = _product_from_payload_dict(payload.product)
+    return _export_csv_attachment_for_product(
+        product,
         target_platform="woocommerce",
         publish=payload.publish,
         weight_unit=payload.weight_unit,

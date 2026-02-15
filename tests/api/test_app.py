@@ -9,6 +9,7 @@ from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
 from app.services.exporters.squarespace_csv import SQUARESPACE_COLUMNS
 from app.services.exporters.wix_csv import WIX_COLUMNS
 from app.services.exporters.woocommerce_csv import WOOCOMMERCE_COLUMNS
+from app.models import serialize_product_for_api
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._app_helpers import patch_run_import_product
 
@@ -235,7 +236,7 @@ def test_import_endpoint_ignores_invalid_response_profile_query(monkeypatch) -> 
     assert response.json()["source"]["platform"] == "shopify"
 
 
-def test_export_shopify_csv_endpoint(monkeypatch) -> None:
+def test_export_shopify_csv_endpoint() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -268,15 +269,9 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
         is_digital=False,
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/shopify.csv",
-        json={"product_url": "https://demo.myshopify.com/products/mug"},
+        json={"product": serialize_product_for_api(product, include_raw=False)},
     )
 
     assert response.status_code == 200
@@ -295,7 +290,7 @@ def test_export_shopify_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Image Src"] == "https://cdn.example.com/mug-front.jpg"
 
 
-def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
+def test_export_bigcommerce_csv_endpoint() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -328,15 +323,9 @@ def test_export_bigcommerce_csv_endpoint(monkeypatch) -> None:
         is_digital=False,
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/bigcommerce.csv",
-        json={"product_url": "https://demo.myshopify.com/products/mug"},
+        json={"product": serialize_product_for_api(product, include_raw=False)},
     )
 
     assert response.status_code == 200
@@ -390,7 +379,7 @@ def test_export_bigcommerce_csv_web_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "SKU"] == "MUG-001"
 
 
-def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
+def test_export_woocommerce_csv_endpoint() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -423,15 +412,9 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
         is_digital=False,
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/woocommerce.csv",
-        json={"product_url": "https://demo.myshopify.com/products/mug"},
+        json={"product": serialize_product_for_api(product, include_raw=False)},
     )
 
     assert response.status_code == 200
@@ -449,7 +432,7 @@ def test_export_woocommerce_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Images"] == "https://cdn.example.com/mug-front.jpg"
 
 
-def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
+def test_export_squarespace_csv_endpoint() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -485,16 +468,10 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
         is_digital=False,
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/squarespace.csv",
         json={
-            "product_url": "https://demo.myshopify.com/products/mug",
+            "product": serialize_product_for_api(product, include_raw=False),
             "product_page": "shop",
             "squarespace_product_url": "lemons",
         },
@@ -519,7 +496,7 @@ def test_export_squarespace_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
 
 
-def test_export_wix_csv_endpoint(monkeypatch) -> None:
+def test_export_wix_csv_endpoint() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -552,15 +529,9 @@ def test_export_wix_csv_endpoint(monkeypatch) -> None:
         is_digital=False,
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/wix.csv",
-        json={"product_url": "https://demo.myshopify.com/products/mug"},
+        json={"product": serialize_product_for_api(product, include_raw=False)},
     )
 
     assert response.status_code == 200
@@ -579,7 +550,7 @@ def test_export_wix_csv_endpoint(monkeypatch) -> None:
     assert frame.loc[1, "inventory"] == "10"
 
 
-def test_export_wix_csv_endpoint_rejects_unsupported_weight_unit(monkeypatch) -> None:
+def test_export_wix_csv_endpoint_rejects_unsupported_weight_unit() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -592,16 +563,10 @@ def test_export_wix_csv_endpoint_rejects_unsupported_weight_unit(monkeypatch) ->
         slug="demo-mug",
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/wix.csv",
         json={
-            "product_url": "https://demo.myshopify.com/products/mug",
+            "product": serialize_product_for_api(product, include_raw=False),
             "weight_unit": "oz",
         },
     )
@@ -777,7 +742,7 @@ def test_web_export_csv_supports_bigcommerce_legacy_format(monkeypatch) -> None:
     assert frame.loc[0, "Code"] == "MUG-001"
 
 
-def test_export_bigcommerce_csv_endpoint_supports_legacy_format(monkeypatch) -> None:
+def test_export_bigcommerce_csv_endpoint_supports_legacy_format() -> None:
     product = Product(
         platform="shopify",
         id="123",
@@ -789,15 +754,9 @@ def test_export_bigcommerce_csv_endpoint_supports_legacy_format(monkeypatch) -> 
         slug="demo-mug",
         raw={},
     )
-    patch_run_import_product(
-        monkeypatch,
-        expected_url="https://demo.myshopify.com/products/mug",
-        product=product,
-    )
-
     response = client.post(
         "/api/v1/export/bigcommerce.csv",
-        json={"product_url": "https://demo.myshopify.com/products/mug", "csv_format": "legacy"},
+        json={"product": serialize_product_for_api(product, include_raw=False), "csv_format": "legacy"},
     )
 
     assert response.status_code == 200

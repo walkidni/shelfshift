@@ -74,51 +74,57 @@ Import product:
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/import \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item"}'
+  -d '{"product_url":"https://example.myshopify.com/products/item"}' \
+  -o product.json
 ```
 
-Export Shopify CSV:
+Export Shopify CSV (from canonical product JSON):
 
 ```bash
+python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "g"}))' | \
 curl -X POST "http://127.0.0.1:8000/api/v1/export/shopify.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"g"}' \
+  -d @- \
   -o product.csv
 ```
 
-Export Squarespace CSV:
+Export Squarespace CSV (from canonical product JSON):
 
 ```bash
+python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "product_page": "shop", "squarespace_product_url": "lemons", "weight_unit": "kg"}))' | \
 curl -X POST "http://127.0.0.1:8000/api/v1/export/squarespace.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"product_page":"shop","squarespace_product_url":"lemons","weight_unit":"kg"}' \
+  -d @- \
   -o product.csv
 ```
 
-Export Wix CSV:
+Export Wix CSV (from canonical product JSON):
 
 ```bash
+python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "kg"}))' | \
 curl -X POST "http://127.0.0.1:8000/api/v1/export/wix.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"kg"}' \
+  -d @- \
   -o product.csv
 ```
 
-Export WooCommerce CSV:
+Export WooCommerce CSV (from canonical product JSON):
 
 ```bash
+python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "kg"}))' | \
 curl -X POST "http://127.0.0.1:8000/api/v1/export/woocommerce.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"weight_unit":"kg"}' \
+  -d @- \
   -o product.csv
 ```
 
-Export BigCommerce CSV:
+Export BigCommerce CSV (from canonical product JSON):
 
 ```bash
+python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "csv_format": "modern", "weight_unit": "kg"}))' | \
 curl -X POST "http://127.0.0.1:8000/api/v1/export/bigcommerce.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item","publish":false,"csv_format":"modern","weight_unit":"kg"}' \
+  -d @- \
   -o product.csv
 ```
 
