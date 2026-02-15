@@ -1,79 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <section class="panel grid">
-    <form class="import-form" method="post" action="/import.url" data-export-form>
-      <label>Product page URLs</label>
-      <div class="url-input-list" data-url-input-list>
-        {% for url in form.product_urls %}
-        <div class="url-input-row" data-url-row>
-          <input
-            name="product_urls"
-            type="url"
-            placeholder="https://store.com/products/example"
-            value="{{ url }}"
-          />
-          <button type="button" class="url-remove-btn" data-action="remove-url" aria-label="Remove URL">&times;</button>
-        </div>
-        {% endfor %}
+  {# ── Value prop ──────────────────────────────────────────────── #}
+  <section class="panel landing-value">
+    <h2 class="landing-heading">Move products between platforms in&nbsp;three&nbsp;steps</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="step-number">1</span>
+        <h3>Import</h3>
+        <p>Paste a product URL or upload a CSV export from your current platform.</p>
       </div>
-      <button type="button" class="url-add-btn" data-action="add-url">+ Add URL</button>
-
-      <button type="submit">Import Products</button>
-    </form>
-
-    <aside class="info">
-      <h2>Supported Platforms</h2>
-      <p>Paste any <strong>product page URL</strong> from these stores:</p>
-      <div class="platform-tags">
-        <span class="platform-tag">Shopify</span>
-        <span class="platform-tag">Amazon</span>
-        <span class="platform-tag">AliExpress</span>
-        <span class="platform-tag">WooCommerce</span>
-        <span class="platform-tag">Squarespace</span>
+      <div class="step">
+        <span class="step-number">2</span>
+        <h3>Review &amp; Edit</h3>
+        <p>Inspect the normalized product data. Fix titles, prices, images&nbsp;&mdash; anything you need.</p>
       </div>
-      <p class="api-note">The URL must point to a single product page &mdash; collection or category pages are not supported.</p>
-      <p class="api-note">API endpoint: <code>POST /api/v1/import</code></p>
-    </aside>
+      <div class="step">
+        <span class="step-number">3</span>
+        <h3>Export</h3>
+        <p>Download a ready-to-import CSV for Shopify, BigCommerce, Wix, Squarespace, or WooCommerce.</p>
+      </div>
+    </div>
   </section>
 
-  {% if editor_products_payload %}
-  {% include "_product_editor_batch.html" %}
+  {# ── CTA cards ───────────────────────────────────────────────── #}
+  <div class="landing-cards">
+    <a href="/url" class="panel landing-card">
+      <div class="landing-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      </div>
+      <h3>Import from URL</h3>
+      <p>Paste one or more product page URLs and we'll extract
+        everything&nbsp;&mdash; title, images, variants, pricing.</p>
+      <span class="landing-card-cta">Get started &rarr;</span>
+    </a>
 
-  {% set export_submit_label = "Export All as CSV" %}
-  {% set export_info_heading = "Batch Export" %}
-  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export</p>' %}
-  {% include "_export_form.html" %}
-  {% elif editor_product_payload %}
-  {% include "_product_editor.html" %}
+    <a href="/csv" class="panel landing-card">
+      <div class="landing-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <h3>Import from CSV</h3>
+      <p>Upload an existing platform CSV export and convert it
+        to any other platform's format.</p>
+      <span class="landing-card-cta">Upload CSV &rarr;</span>
+    </a>
+  </div>
 
-  {% set export_submit_label = "Export Preview as CSV" %}
-  {% set export_info_heading = "Export" %}
-  {% set export_info_extra = "" %}
-  {% include "_export_form.html" %}
-  {% endif %}
-
-  {% if url_import_errors %}
-  <section class="panel error" role="alert">
-    <h2>
-      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-      Some URLs Failed
-    </h2>
-    <ul class="import-error-list">
-      {% for err in url_import_errors %}
-      <li><code>{{ err.url }}</code> &mdash; {{ err.detail }}</li>
-      {% endfor %}
-    </ul>
+  {# ── Supported platforms ─────────────────────────────────────── #}
+  <section class="panel landing-platforms">
+    <h2 class="landing-heading">Supported platforms</h2>
+    <p class="landing-subtitle">Import from any of these stores via product URL or CSV. Export to all of them.</p>
+    <div class="platform-tags platform-tags--lg">
+      <span class="platform-tag">Shopify</span>
+      <span class="platform-tag">Amazon</span>
+      <span class="platform-tag">AliExpress</span>
+      <span class="platform-tag">WooCommerce</span>
+      <span class="platform-tag">Squarespace</span>
+      <span class="platform-tag">BigCommerce</span>
+      <span class="platform-tag">Wix</span>
+    </div>
   </section>
-  {% endif %}
-
-  {% if error %}
-  <section class="panel error" role="alert">
-    <h2>
-      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-      {{ error_title }}
-    </h2>
-    <p>{{ error }}</p>
-  </section>
-  {% endif %}
 {% endblock %}

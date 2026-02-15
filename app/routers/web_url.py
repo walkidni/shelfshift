@@ -1,4 +1,4 @@
-"""Web routes for URL-based import and direct export: /, /import.url, /export.csv, /export/*.csv."""
+"""Web routes for URL-based import and direct export: /, /url, /import.url, /export.csv, /export/*.csv."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from ..helpers import importing as _importing
 from ..helpers.exporting import export_csv_attachment_for_target
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
-from ..helpers.rendering import render_web_page
+from ..helpers.rendering import render_landing_page, render_web_page
 from ..models import serialize_product_for_api
 from ..services.exporters.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 
@@ -22,10 +22,15 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
+    return render_landing_page(request, templates)
+
+
+@router.get("/url", response_class=HTMLResponse)
+def url_import_page(request: Request) -> HTMLResponse:
     return render_web_page(
         request,
         templates,
-        template_name="index.html",
+        template_name="url.html",
         active_page="url",
         error=None,
         product_urls=[],
@@ -47,7 +52,7 @@ def import_url_from_web(
         return render_web_page(
             request,
             templates,
-            template_name="index.html",
+            template_name="url.html",
             active_page="url",
             error="At least one product URL is required.",
             error_title="Import Error",
@@ -67,7 +72,7 @@ def import_url_from_web(
             return render_web_page(
                 request,
                 templates,
-                template_name="index.html",
+                template_name="url.html",
                 active_page="url",
                 error=None,
                 error_title="Import Error",
@@ -84,7 +89,7 @@ def import_url_from_web(
             return render_web_page(
                 request,
                 templates,
-                template_name="index.html",
+                template_name="url.html",
                 active_page="url",
                 error=exc.detail,
                 error_title="Import Error",
@@ -103,7 +108,7 @@ def import_url_from_web(
         return render_web_page(
             request,
             templates,
-            template_name="index.html",
+            template_name="url.html",
             active_page="url",
             error="All URL imports failed.",
             error_title="Import Error",
@@ -122,7 +127,7 @@ def import_url_from_web(
     return render_web_page(
         request,
         templates,
-        template_name="index.html",
+        template_name="url.html",
         active_page="url",
         error=None,
         error_title="Import Error",
@@ -243,7 +248,7 @@ def export_csv_from_web(
         return render_web_page(
             request,
             templates,
-            template_name="index.html",
+            template_name="url.html",
             active_page="url",
             error=exc.detail,
             error_title="Export Error",

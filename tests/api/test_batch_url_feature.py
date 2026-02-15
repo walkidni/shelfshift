@@ -314,8 +314,8 @@ def test_web_batch_url_import_then_export_roundtrip(monkeypatch) -> None:
 # Web: URL page renders multiple URL inputs
 # -------------------------------------------------------------------
 
-def test_home_page_has_add_url_button() -> None:
-    response = client.get("/")
+def test_url_page_has_add_url_button() -> None:
+    response = client.get("/url")
     assert response.status_code == 200
     assert 'data-action="add-url"' in response.text
     assert 'data-url-input-list' in response.text

@@ -578,6 +578,14 @@ def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "Ecommerce Catalog Transfer" in response.text
+    assert "Import from URL" in response.text
+    assert "Import from CSV" in response.text
+    assert "three" in response.text.lower()
+
+
+def test_url_import_page_renders() -> None:
+    response = client.get("/url")
+    assert response.status_code == 200
     assert 'action="/import.url"' in response.text
     assert 'name="product_urls"' in response.text
     assert "Import Products" in response.text

@@ -808,6 +808,142 @@ code {
 }
 
 /* ================================================================
+   Landing page
+   ================================================================ */
+.landing-heading {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.3rem, 2.4vw, 1.8rem);
+  text-align: center;
+  margin: 0 0 var(--sp-sm);
+}
+
+.landing-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin: 0 0 var(--sp-lg);
+}
+
+/* Steps */
+.landing-value {
+  text-align: center;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-lg);
+  margin-top: var(--sp-xl);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-on-primary);
+  background: linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary), black 12%));
+}
+
+.step h3 {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.step p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 28ch;
+}
+
+/* CTA cards */
+.landing-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-lg);
+}
+
+.landing-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-sm);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  cursor: pointer;
+}
+
+.landing-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 40%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.landing-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 78%);
+  color: var(--brand-primary);
+}
+
+.landing-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.landing-card h3 {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.landing-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.landing-card-cta {
+  margin-top: auto;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--brand-primary);
+}
+
+/* Platforms section */
+.landing-platforms {
+  text-align: center;
+}
+
+.platform-tags--lg {
+  justify-content: center;
+}
+
+.platform-tags--lg .platform-tag {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+/* ================================================================
    Import error list
    ================================================================ */
 .import-error-list {
@@ -876,5 +1012,15 @@ code {
 
   .batch-product-summary {
     flex-wrap: wrap;
+  }
+
+  /* Landing page mobile */
+  .steps {
+    grid-template-columns: 1fr;
+    gap: var(--sp-xl);
+  }
+
+  .landing-cards {
+    grid-template-columns: 1fr;
   }
 }

@@ -38,6 +38,13 @@
           <nav class="topnav" aria-label="Workflow pages">
             <a
               href="/"
+              class="topnav-link{% if active_page == 'home' %} is-active{% endif %}"
+              {% if active_page == 'home' %}aria-current="page"{% endif %}
+            >
+              Home
+            </a>
+            <a
+              href="/url"
               class="topnav-link{% if active_page == 'url' %} is-active{% endif %}"
               {% if active_page == 'url' %}aria-current="page"{% endif %}
             >
@@ -48,7 +55,7 @@
               class="topnav-link{% if active_page == 'csv' %} is-active{% endif %}"
               {% if active_page == 'csv' %}aria-current="page"{% endif %}
             >
-              CSV Import/Export
+              CSV Import
             </a>
           </nav>
         </div>

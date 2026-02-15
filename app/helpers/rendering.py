@@ -15,6 +15,24 @@ from ..services.exporters.weight_units import (
 settings = get_settings()
 
 
+def render_landing_page(
+    request: Request,
+    templates: Jinja2Templates,
+) -> HTMLResponse:
+    """Render the welcome / landing page at /."""
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "brand": settings,
+            "active_page": "home",
+            "weight_unit_allowlist": {},
+            "weight_unit_defaults": {},
+            "source_weight_unit_required_platforms": [],
+        },
+    )
+
+
 def render_web_page(
     request: Request,
     templates: Jinja2Templates,
