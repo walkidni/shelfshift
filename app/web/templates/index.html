@@ -27,14 +27,8 @@
     </aside>
   </section>
 
-  {% if preview_product_json %}
-  <section class="panel">
-    <h2>URL Import Preview</h2>
-    <details class="preview-disclosure">
-      <summary>Show Preview JSON</summary>
-      <pre class="preview-json"><code>{{ preview_product_json }}</code></pre>
-    </details>
-  </section>
+  {% if editor_product_payload %}
+  {% include "_product_editor.html" %}
 
   <section class="panel grid">
     <form class="import-form" method="post" action="/export-from-product.csv">

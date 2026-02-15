@@ -616,7 +616,7 @@ def test_import_url_web_preview_then_export_csv(monkeypatch) -> None:
     )
 
     assert preview_response.status_code == 200
-    assert "URL Import Preview" in preview_response.text
+    assert "Edit Product" in preview_response.text
 
     marker = 'name="product_json_b64" value="'
     start = preview_response.text.find(marker)

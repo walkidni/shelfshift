@@ -92,7 +92,7 @@ def test_import_csv_web_preview_then_export_csv() -> None:
     )
 
     assert preview_response.status_code == 200
-    assert "CSV Import Preview" in preview_response.text
+    assert "Edit Product" in preview_response.text
 
     marker = 'name="product_json_b64" value="'
     start = preview_response.text.find(marker)
@@ -120,7 +120,7 @@ def test_import_csv_web_preview_then_export_csv() -> None:
     assert export_response.headers["content-type"].startswith("text/csv")
 
 
-def test_import_csv_web_preview_truncates_visible_descriptions_but_keeps_full_payload() -> None:
+def test_import_csv_web_preview_renders_editable_payload_and_export_payload() -> None:
     long_description = "X" * 1200
     csv_text = "\n".join(
         [
@@ -136,13 +136,13 @@ def test_import_csv_web_preview_truncates_visible_descriptions_but_keeps_full_pa
 
     assert preview_response.status_code == 200
 
-    preview_match = re.search(
-        r'<pre class="preview-json"><code>(.*?)</code></pre>',
+    editor_match = re.search(
+        r'<script type="application/json" id="editor-product-payload">(.*?)</script>',
         preview_response.text,
         flags=re.DOTALL,
     )
-    assert preview_match is not None
-    preview_payload = json.loads(html.unescape(preview_match.group(1)))
+    assert editor_match is not None
+    editor_payload = json.loads(html.unescape(editor_match.group(1)))
 
     marker = 'name="product_json_b64" value="'
     start = preview_response.text.find(marker)
@@ -155,5 +155,5 @@ def test_import_csv_web_preview_truncates_visible_descriptions_but_keeps_full_pa
 
     assert hidden_payload["description"] == long_description
     assert hidden_payload["seo"]["description"] == long_description
-    assert preview_payload["description"] != long_description
-    assert preview_payload["seo"]["description"] != long_description
+    assert editor_payload["description"] == long_description
+    assert editor_payload["seo"]["description"] == long_description

@@ -54,8 +54,6 @@ settings = get_settings()
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
-_PREVIEW_DESCRIPTION_LIMIT = 320
-_PREVIEW_META_DESCRIPTION_LIMIT = 200
 
 app = FastAPI(
     title=settings.app_name,
@@ -173,46 +171,6 @@ def _decode_product_json_b64(encoded: str) -> dict:
 def _product_to_json_b64(product: Product) -> str:
     payload = serialize_product_for_api(product, include_raw=False)
     return base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8")).decode("utf-8")
-
-
-def _truncate_preview_text(value: str | None, *, limit: int) -> str | None:
-    if value is None:
-        return None
-    if len(value) <= limit:
-        return value
-    return f"{value[:limit].rstrip()}... [truncated]"
-
-
-def _preview_payload_for_web(product: Product) -> dict:
-    payload = serialize_product_for_api(product, include_raw=False)
-    preview_payload = dict(payload)
-
-    description = preview_payload.get("description")
-    if isinstance(description, str):
-        preview_payload["description"] = _truncate_preview_text(
-            description,
-            limit=_PREVIEW_DESCRIPTION_LIMIT,
-        )
-
-    seo = preview_payload.get("seo")
-    if isinstance(seo, dict):
-        preview_seo = dict(seo)
-        seo_description = preview_seo.get("description")
-        if isinstance(seo_description, str):
-            preview_seo["description"] = _truncate_preview_text(
-                seo_description,
-                limit=_PREVIEW_META_DESCRIPTION_LIMIT,
-            )
-        preview_payload["seo"] = preview_seo
-
-    meta_description = preview_payload.get("meta_description")
-    if isinstance(meta_description, str):
-        preview_payload["meta_description"] = _truncate_preview_text(
-            meta_description,
-            limit=_PREVIEW_META_DESCRIPTION_LIMIT,
-        )
-
-    return preview_payload
 
 
 def _product_from_payload_dict(payload: dict) -> Product:
@@ -341,6 +299,7 @@ def _render_web_page(
     csv_error: str | None = None,
     preview_product_json: str | None = None,
     preview_product_json_b64: str | None = None,
+    editor_product_payload: dict | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -374,6 +333,7 @@ def _render_web_page(
             "source_weight_unit_required_platforms": ["bigcommerce", "wix", "squarespace"],
             "preview_product_json": preview_product_json,
             "preview_product_json_b64": preview_product_json_b64,
+            "editor_product_payload": editor_product_payload,
         },
         status_code=status_code,
     )
@@ -508,8 +468,7 @@ def import_url_from_web(
 ) -> HTMLResponse:
     try:
         product = _run_import_product(product_url)
-        preview_payload = _preview_payload_for_web(product)
-        preview_json = json.dumps(preview_payload, ensure_ascii=False, indent=2)
+        editor_payload = serialize_product_for_api(product, include_raw=False)
         return _render_web_page(
             request,
             template_name="index.html",
@@ -522,8 +481,8 @@ def import_url_from_web(
             bigcommerce_csv_format="modern",
             squarespace_product_page="",
             squarespace_product_url="",
-            preview_product_json=preview_json,
             preview_product_json_b64=_product_to_json_b64(product),
+            editor_product_payload=editor_payload,
         )
     except HTTPException as exc:
         return _render_web_page(
@@ -653,8 +612,7 @@ def import_csv_from_web(
             csv_bytes=csv_bytes,
             source_weight_unit=source_weight_unit,
         )
-        preview_payload = _preview_payload_for_web(product)
-        preview_json = json.dumps(preview_payload, ensure_ascii=False, indent=2)
+        editor_payload = serialize_product_for_api(product, include_raw=False)
         return _render_web_page(
             request,
             template_name="csv.html",
@@ -668,8 +626,8 @@ def import_csv_from_web(
             squarespace_product_url="",
             csv_source_platform=source_platform,
             csv_source_weight_unit=source_weight_unit or "kg",
-            preview_product_json=preview_json,
             preview_product_json_b64=_product_to_json_b64(product),
+            editor_product_payload=editor_payload,
         )
     except HTTPException as exc:
         return _render_web_page(

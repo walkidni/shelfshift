@@ -149,8 +149,26 @@ select {
   background: white;
 }
 
+textarea {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--brand-ink), white 70%);
+  border-radius: 10px;
+  padding: 0.72rem 0.8rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  background: white;
+  resize: vertical;
+}
+
 input:focus,
 select:focus {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary), white 35%);
+  border-color: transparent;
+}
+
+textarea:focus {
   outline: 2px solid color-mix(in srgb, var(--brand-primary), white 35%);
   border-color: transparent;
 }
@@ -330,5 +348,93 @@ code {
   .result-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+.product-editor h3 {
+  font-family: "Space Grotesk", sans-serif;
+  margin: 0;
+}
+
+.editor-columns {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.editor-column {
+  min-width: 0;
+}
+
+.editor-disclosure {
+  margin-top: 1rem;
+}
+
+.editor-variants {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.variant-card {
+  border: 1px solid color-mix(in srgb, var(--brand-ink), white 78%);
+  border-radius: 16px;
+  background: color-mix(in srgb, white, var(--brand-secondary) 6%);
+  padding: 1rem;
+}
+
+.variant-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.variant-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.editor-column-wide {
+  grid-column: 1 / -1;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.save-status {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--brand-ink), black 10%);
+}
+
+@media (max-width: 860px) {
+  .editor-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
