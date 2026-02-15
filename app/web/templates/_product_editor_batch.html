@@ -75,7 +75,7 @@
             <label>Product image URLs (one per line)</label>
             <textarea rows="4" data-field="product_images" placeholder="https://cdn.example.com/image.jpg">{{ product_image_urls | join('\n') }}</textarea>
 
-            <details class="preview-disclosure editor-disclosure">
+            <details class="preview-disclosure editor-disclosure"{% if (product.variants or []) | length <= 3 %} open{% endif %}>
               <summary>Variants ({{ (product.variants or []) | length }})</summary>
               <div class="editor-variants">
                 {% for variant in product.variants or [] %}
@@ -86,7 +86,9 @@
                       <p class="api-note">ID: <code>{{ variant.id or '' }}</code></p>
                     </div>
 
-                    <div class="variant-grid">
+                    <!-- Identity -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Identity</p>
                       <div class="editor-column">
                         <label>SKU</label>
                         <input type="text" data-field="sku" value="{{ variant.sku or '' }}" />
@@ -95,6 +97,11 @@
                         <label>Title</label>
                         <input type="text" data-field="title" value="{{ variant.title or '' }}" />
                       </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Pricing</p>
                       <div class="editor-column">
                         <label>Price</label>
                         <input type="text" inputmode="decimal" data-field="price_amount" value="{{ price_current.amount if price_current and price_current.amount else '' }}" />
@@ -103,6 +110,11 @@
                         <label>Currency</label>
                         <input type="text" data-field="price_currency" value="{{ price_current.currency if price_current and price_current.currency else '' }}" />
                       </div>
+                    </div>
+
+                    <!-- Inventory -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Inventory</p>
                       <div class="editor-column">
                         <label>Inventory qty</label>
                         <input type="number" min="0" step="1" data-field="inventory_qty" value="{{ variant.inventory.quantity if variant.inventory and variant.inventory.quantity is not none else '' }}" />
@@ -114,6 +126,11 @@
                           <span>In stock</span>
                         </label>
                       </div>
+                    </div>
+
+                    <!-- Weight -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Weight</p>
                       <div class="editor-column">
                         <label>Weight</label>
                         <input type="text" inputmode="decimal" data-field="weight_value" value="{{ variant.weight.value if variant.weight and variant.weight.value else '' }}" />
@@ -130,7 +147,12 @@
                           </select>
                         </div>
                       </div>
-                      <div class="editor-column editor-column-wide">
+                    </div>
+
+                    <!-- Media -->
+                    <div class="variant-group variant-group-wide">
+                      <p class="variant-group-label">Media</p>
+                      <div class="editor-column">
                         <label>Variant image URL</label>
                         {% set vmedia = variant.media or [] %}
                         {% set vimg = '' %}

@@ -580,7 +580,7 @@ def test_home_page_renders() -> None:
     assert "Ecommerce Catalog Transfer" in response.text
     assert 'action="/import.url"' in response.text
     assert 'name="product_urls"' in response.text
-    assert "Import URLs" in response.text
+    assert "Import Products" in response.text
     assert "data-url-input-list" in response.text
     assert "Result JSON" not in response.text
 

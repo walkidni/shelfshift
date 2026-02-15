@@ -14,12 +14,6 @@ from ..services.exporters.weight_units import (
 
 settings = get_settings()
 
-EXAMPLE_URLS = [
-    "https://example.myshopify.com/products/sample-product",
-    "https://www.amazon.com/dp/B0C1234567",
-    "https://www.aliexpress.com/item/1005008518647948.html",
-]
-
 
 def render_web_page(
     request: Request,
@@ -72,7 +66,6 @@ def render_web_page(
                 for platform, units in WEIGHT_UNIT_ALLOWLIST_BY_TARGET.items()
             },
             "weight_unit_defaults": dict(DEFAULT_WEIGHT_UNIT_BY_TARGET),
-            "examples": EXAMPLE_URLS,
             "source_weight_unit_allowlist": ["g", "kg", "lb", "oz"],
             "source_weight_unit_required_platforms": ["bigcommerce", "wix", "squarespace"],
             "preview_product_json": preview_product_json,

@@ -55,6 +55,19 @@
     return btoa(binary);
   };
 
+  /* ── Loading spinner on form submit ─────────────────────────── */
+  const initFormLoadingSpinners = () => {
+    document.querySelectorAll("form[data-export-form], form.import-form").forEach((form) => {
+      form.addEventListener("submit", () => {
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn && !btn.classList.contains("btn-loading")) {
+          btn.classList.add("btn-loading");
+          btn.disabled = true;
+        }
+      });
+    });
+  };
+
   const syncWeightUnitSelect = (selectEl, platform) => {
     if (!selectEl) {
       return;
@@ -402,11 +415,17 @@
     const deleteBtn = editor.querySelector("[data-action='delete-product']");
     if (deleteBtn) {
       deleteBtn.addEventListener("click", () => {
+        if (!confirm("Delete this product? This cannot be undone.")) {
+          return;
+        }
         editor.style.display = "none";
         exportB64Input.value = "";
         const exportForm = document.querySelector("form[action='/export-from-product.csv']");
         if (exportForm) {
-          exportForm.style.display = "none";
+          const exportSection = exportForm.closest(".panel");
+          if (exportSection) {
+            exportSection.style.display = "none";
+          }
         }
       });
     }
@@ -621,6 +640,11 @@
         return;
       }
 
+      const productTitle = payloads[Number.parseInt(card.dataset.productIndex || "0", 10)]?.title || "this product";
+      if (!confirm(`Delete "${productTitle}"? This cannot be undone.`)) {
+        return;
+      }
+
       const index = Number.parseInt(card.dataset.productIndex || "0", 10);
       if (index >= 0 && index < payloads.length) {
         payloads.splice(index, 1);
@@ -633,7 +657,10 @@
         batchEditor.style.display = "none";
         const exportForm = document.querySelector("form[action='/export-from-product.csv']");
         if (exportForm) {
-          exportForm.style.display = "none";
+          const exportSection = exportForm.closest(".panel");
+          if (exportSection) {
+            exportSection.style.display = "none";
+          }
         }
       }
 
@@ -650,5 +677,6 @@
     initCsvPreviewExportForm();
     initProductEditor();
     initBatchProductEditor();
+    initFormLoadingSpinners();
   });
 })();

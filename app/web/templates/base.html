@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v=4" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v=5" />
     <style>
       :root {
         --brand-primary: {{ brand.brand_primary }};
@@ -21,9 +21,15 @@
     </style>
   </head>
   <body>
-    <main class="shell">
+    <a class="skip-nav" href="#main-content">Skip to content</a>
+    <main id="main-content" class="shell">
       <section class="panel hero">
-        <p class="eyebrow">Ecommerce Catalog Transfer</p>
+        <p class="eyebrow">
+          <svg class="eyebrow-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm10-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13 0v2h2v-2h-2zm-3-2h8v8h-8v-8zm2 2v4h4v-4h-4z"/>
+          </svg>
+          Ecommerce Catalog Transfer
+        </p>
         <div class="hero-head">
           <div class="hero-copy">
             <h1>{{ brand.app_name }}</h1>
@@ -35,7 +41,7 @@
               class="topnav-link{% if active_page == 'url' %} is-active{% endif %}"
               {% if active_page == 'url' %}aria-current="page"{% endif %}
             >
-              URL Export
+              URL Import
             </a>
             <a
               href="/csv"

@@ -1,3 +1,42 @@
+/* ================================================================
+   Design tokens
+   ================================================================ */
+:root {
+  /* Spacing scale */
+  --sp-xs: 0.35rem;
+  --sp-sm: 0.5rem;
+  --sp-md: 0.75rem;
+  --sp-lg: 1rem;
+  --sp-xl: 1.25rem;
+  --sp-2xl: 1.6rem;
+
+  /* Derived surfaces (dark-mode-first, computed from --brand-ink) */
+  --surface-base: var(--brand-ink);
+  --surface-raised: color-mix(in srgb, var(--brand-ink), white 7%);
+  --surface-overlay: color-mix(in srgb, var(--brand-ink), white 11%);
+  --surface-input: color-mix(in srgb, var(--brand-ink), white 5%);
+
+  /* Borders */
+  --border-subtle: color-mix(in srgb, var(--brand-ink), white 16%);
+  --border-default: color-mix(in srgb, var(--brand-ink), white 22%);
+  --border-strong: color-mix(in srgb, var(--brand-ink), white 32%);
+
+  /* Text */
+  --text-primary: color-mix(in srgb, var(--brand-ink), white 92%);
+  --text-secondary: color-mix(in srgb, var(--brand-ink), white 62%);
+  --text-muted: color-mix(in srgb, var(--brand-ink), white 42%);
+  --text-on-primary: #fff;
+
+  /* Functional */
+  --color-error: #ef4444;
+  --color-error-surface: color-mix(in srgb, #ef4444, var(--brand-ink) 82%);
+  --color-error-border: color-mix(in srgb, #ef4444, var(--brand-ink) 55%);
+  --color-success: var(--brand-primary);
+}
+
+/* ================================================================
+   Reset & base
+   ================================================================ */
 * {
   box-sizing: border-box;
 }
@@ -6,28 +45,56 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "IBM Plex Sans", sans-serif;
-  color: var(--brand-ink);
+  color: var(--text-primary);
   background:
-    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--brand-secondary), white 45%), transparent 35%),
-    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--brand-primary), white 70%), transparent 40%),
-    linear-gradient(150deg, #fdf8ef 0%, #f5eee3 55%, #f1e7db 100%);
+    radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--brand-secondary), var(--brand-ink) 88%), transparent 35%),
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--brand-primary), var(--brand-ink) 85%), transparent 40%),
+    var(--surface-base);
 }
 
+/* ================================================================
+   Skip-nav (accessibility)
+   ================================================================ */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 1000;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0 0 10px 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-on-primary);
+  background: var(--brand-primary);
+  text-decoration: none;
+  transition: top 120ms ease;
+}
+
+.skip-nav:focus {
+  top: 0;
+}
+
+/* ================================================================
+   Layout
+   ================================================================ */
 .shell {
   width: min(980px, 92vw);
   margin: 2rem auto 3rem;
   display: grid;
-  gap: 1.25rem;
+  gap: var(--sp-xl);
 }
 
 .panel {
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 75%);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: color-mix(in srgb, white, var(--brand-secondary) 8%);
-  box-shadow: 0 16px 35px rgba(22, 18, 15, 0.08);
-  padding: clamp(1rem, 1rem + 1vw, 1.6rem);
+  background: var(--surface-raised);
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.25);
+  padding: clamp(1rem, 1rem + 1vw, var(--sp-2xl));
 }
 
+/* ================================================================
+   Hero
+   ================================================================ */
 .hero {
   position: relative;
   overflow: hidden;
@@ -41,8 +108,8 @@ body {
   height: 260px;
   border-radius: 999px;
   background: linear-gradient(130deg, var(--brand-primary), var(--brand-secondary));
-  filter: blur(35px);
-  opacity: 0.25;
+  filter: blur(45px);
+  opacity: 0.15;
   pointer-events: none;
 }
 
@@ -52,13 +119,24 @@ body {
   text-transform: uppercase;
   font-size: 0.78rem;
   font-weight: 700;
-  color: color-mix(in srgb, var(--brand-primary), black 30%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--brand-primary);
+}
+
+.eyebrow-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  fill: var(--brand-primary);
+  flex-shrink: 0;
 }
 
 h1,
 h2 {
   font-family: "Space Grotesk", sans-serif;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--sp-sm);
 }
 
 .hero h1 {
@@ -68,11 +146,12 @@ h2 {
 .hero p {
   margin: 0;
   max-width: 52ch;
+  color: var(--text-secondary);
 }
 
 .hero-head {
   display: grid;
-  gap: 1rem;
+  gap: var(--sp-lg);
   grid-template-columns: 1fr auto;
   align-items: start;
 }
@@ -81,6 +160,9 @@ h2 {
   min-width: 0;
 }
 
+/* ================================================================
+   Top navigation
+   ================================================================ */
 .topnav {
   display: inline-flex;
   flex-wrap: wrap;
@@ -94,9 +176,9 @@ h2 {
   height: 42px;
   padding: 0 0.9rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 72%);
-  background: color-mix(in srgb, white, var(--brand-secondary) 10%);
-  color: color-mix(in srgb, var(--brand-ink), black 10%);
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
   text-decoration: none;
   font-weight: 700;
   font-size: 0.9rem;
@@ -105,19 +187,22 @@ h2 {
 
 .topnav-link:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--brand-primary), white 50%);
-  background: color-mix(in srgb, white, var(--brand-secondary) 18%);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 50%);
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 82%);
 }
 
 .topnav-link.is-active {
-  border-color: color-mix(in srgb, var(--brand-primary), white 35%);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 35%);
   background: linear-gradient(120deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary), black 10%));
-  color: #fff;
+  color: var(--text-on-primary);
 }
 
+/* ================================================================
+   Grid / layout helpers
+   ================================================================ */
 .grid {
   display: grid;
-  gap: 1rem;
+  gap: var(--sp-lg);
   grid-template-columns: 1.5fr 1fr;
 }
 
@@ -125,14 +210,18 @@ h2 {
   min-width: 0;
 }
 
+/* ================================================================
+   Forms
+   ================================================================ */
 .import-form {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--sp-md);
 }
 
 label {
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 input,
@@ -141,35 +230,38 @@ select {
   min-width: 0;
   display: block;
   height: 44px;
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 70%);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 0.72rem 0.8rem;
   font-size: 0.95rem;
   line-height: 1.2;
-  background: white;
+  background: var(--surface-input);
+  color: var(--text-primary);
 }
 
 textarea {
   width: 100%;
   min-width: 0;
   display: block;
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 70%);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 0.72rem 0.8rem;
   font-size: 0.95rem;
   line-height: 1.4;
-  background: white;
+  background: var(--surface-input);
+  color: var(--text-primary);
   resize: vertical;
 }
 
-input:focus,
-select:focus {
-  outline: 2px solid color-mix(in srgb, var(--brand-primary), white 35%);
-  border-color: transparent;
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
 }
 
+input:focus,
+select:focus,
 textarea:focus {
-  outline: 2px solid color-mix(in srgb, var(--brand-primary), white 35%);
+  outline: 2px solid color-mix(in srgb, var(--brand-primary), transparent 35%);
   border-color: transparent;
 }
 
@@ -187,7 +279,7 @@ select {
 
 .conditional-fields {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--sp-md);
 }
 
 .conditional-fields.is-hidden {
@@ -201,24 +293,27 @@ select {
   top: 50%;
   width: 0.5rem;
   height: 0.5rem;
-  border-right: 2px solid color-mix(in srgb, var(--brand-ink), white 30%);
-  border-bottom: 2px solid color-mix(in srgb, var(--brand-ink), white 30%);
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
   transform: translateY(-62%) rotate(45deg);
   pointer-events: none;
 }
 
+/* ================================================================
+   Buttons
+   ================================================================ */
 button {
-  margin-top: 0.35rem;
+  margin-top: var(--sp-xs);
   border: 0;
   border-radius: 12px;
   padding: 0.78rem 1rem;
   font-size: 0.95rem;
   font-weight: 700;
   font-family: "Space Grotesk", sans-serif;
-  color: #fff;
+  color: var(--text-on-primary);
   background: linear-gradient(120deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary), black 10%));
   cursor: pointer;
-  transition: transform 140ms ease, box-shadow 140ms ease;
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
 }
 
 button:hover {
@@ -226,57 +321,124 @@ button:hover {
   box-shadow: 0 12px 20px color-mix(in srgb, var(--brand-primary), transparent 70%);
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading spinner for buttons */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================================================================
+   Info sidebar
+   ================================================================ */
+.info {
+  color: var(--text-secondary);
+}
+
 .info ul {
   margin: 0;
   padding-left: 1rem;
   display: grid;
-  gap: 0.5rem;
+  gap: var(--sp-sm);
 }
 
 code {
-  font-family: "IBM Plex Sans", sans-serif;
-  font-size: 0.84rem;
+  font-family: "IBM Plex Mono", "Fira Code", monospace;
+  font-size: 0.82rem;
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  background: var(--surface-overlay);
+  color: var(--brand-secondary);
 }
 
 .api-note {
-  margin: 1rem 0 0;
+  margin: var(--sp-lg) 0 0;
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--text-secondary);
 }
 
+/* ================================================================
+   Error / alert panels
+   ================================================================ */
 .error {
-  border-color: #c23a2b;
-  background: #fff0ec;
+  border-color: var(--color-error-border);
+  background: var(--color-error-surface);
 }
 
 .error h2 {
-  color: #8f2116;
+  color: color-mix(in srgb, var(--color-error), white 30%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+.error-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.error p,
+.error li {
+  color: color-mix(in srgb, var(--color-error), white 50%);
+}
+
+/* ================================================================
+   Result / preview
+   ================================================================ */
 .result-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-md);
 }
 
 .download-link {
   display: inline-flex;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand-primary), white 55%);
+  border: 1px solid color-mix(in srgb, var(--brand-primary), transparent 50%);
   border-radius: 999px;
   padding: 0.38rem 0.72rem;
   font-size: 0.84rem;
   font-weight: 600;
   text-decoration: none;
-  color: color-mix(in srgb, var(--brand-primary), black 8%);
-  background: color-mix(in srgb, var(--brand-secondary), white 84%);
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 88%);
 }
 
 .download-link:hover {
-  border-color: color-mix(in srgb, var(--brand-primary), white 40%);
-  background: color-mix(in srgb, var(--brand-secondary), white 72%);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 35%);
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 78%);
 }
 
 .result pre {
@@ -287,10 +449,10 @@ code {
   word-break: break-word;
   max-width: 100%;
   max-height: 52vh;
-  padding: 1rem;
+  padding: var(--sp-lg);
   border-radius: 12px;
-  background: #181412;
-  color: #f6f2ee;
+  background: var(--surface-base);
+  color: var(--text-primary);
   font-size: 0.82rem;
   line-height: 1.35;
 }
@@ -317,6 +479,9 @@ code {
   word-break: break-word;
   word-wrap: break-word;
   white-space: inherit;
+  padding: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .preview-disclosure {
@@ -326,31 +491,16 @@ code {
 .preview-disclosure > summary {
   cursor: pointer;
   font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .preview-disclosure[open] > summary {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--sp-md);
 }
 
-@media (max-width: 860px) {
-  .hero-head {
-    grid-template-columns: 1fr;
-  }
-
-  .topnav {
-    justify-content: flex-start;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .result-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
+/* ================================================================
+   Product editor (single)
+   ================================================================ */
 .product-editor h3 {
   font-family: "Space Grotesk", sans-serif;
   margin: 0;
@@ -358,7 +508,7 @@ code {
 
 .editor-columns {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--sp-md);
   grid-template-columns: 1fr 1fr;
 }
 
@@ -367,9 +517,12 @@ code {
 }
 
 .editor-disclosure {
-  margin-top: 1rem;
+  margin-top: var(--sp-lg);
 }
 
+/* ================================================================
+   Variants
+   ================================================================ */
 .editor-variants {
   display: grid;
   gap: 0.9rem;
@@ -377,24 +530,43 @@ code {
 }
 
 .variant-card {
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 78%);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  background: color-mix(in srgb, white, var(--brand-secondary) 6%);
-  padding: 1rem;
+  background: var(--surface-overlay);
+  padding: var(--sp-lg);
 }
 
 .variant-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-md);
 }
 
-.variant-grid {
+.variant-group {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--sp-md) 0;
+}
+
+.variant-group + .variant-group {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.variant-group-label {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.variant-group-wide {
+  grid-template-columns: 1fr;
 }
 
 .editor-column-wide {
@@ -404,7 +576,7 @@ code {
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--sp-sm);
   margin-top: 0.25rem;
   font-weight: 600;
 }
@@ -412,13 +584,14 @@ code {
 .checkbox input {
   width: 18px;
   height: 18px;
+  accent-color: var(--brand-primary);
 }
 
 .editor-actions {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  margin-top: 1rem;
+  margin-top: var(--sp-lg);
   flex-wrap: wrap;
 }
 
@@ -426,19 +599,12 @@ code {
   margin: 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--brand-ink), black 10%);
+  color: var(--text-secondary);
 }
 
-@media (max-width: 860px) {
-  .editor-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .variant-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
+/* ================================================================
+   Batch product editor
+   ================================================================ */
 .product-editor-batch h2 {
   font-family: "Space Grotesk", sans-serif;
 }
@@ -446,32 +612,32 @@ code {
 .batch-count {
   font-weight: 400;
   font-size: 0.9em;
-  color: color-mix(in srgb, var(--brand-ink), white 25%);
+  color: var(--text-muted);
 }
 
 .batch-product-list {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: var(--sp-md);
+  margin-top: var(--sp-md);
 }
 
 .batch-product-card {
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 75%);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  background: color-mix(in srgb, white, var(--brand-secondary) 5%);
+  background: var(--surface-overlay);
   overflow: hidden;
 }
 
 .batch-product-card[open] {
-  border-color: color-mix(in srgb, var(--brand-primary), white 55%);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 50%);
 }
 
 .batch-product-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  gap: var(--sp-md);
+  padding: 0.85rem var(--sp-lg);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
@@ -485,7 +651,7 @@ code {
 }
 
 .batch-product-summary:hover {
-  background: color-mix(in srgb, var(--brand-secondary), white 70%);
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 88%);
 }
 
 .batch-product-actions {
@@ -506,14 +672,14 @@ code {
   border-radius: 6px;
   font-size: 1.1rem;
   line-height: 1;
-  background: color-mix(in srgb, var(--brand-ink), white 85%);
-  color: color-mix(in srgb, var(--brand-ink), white 20%);
+  background: var(--surface-overlay);
+  color: var(--text-muted);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
 
 .product-delete-btn:hover {
-  background: #c23a2b;
+  background: var(--color-error);
   color: #fff;
   transform: none;
   box-shadow: none;
@@ -527,8 +693,13 @@ code {
   font-size: 0.88rem;
   font-weight: 600;
   font-family: "Space Grotesk", sans-serif;
-  background: color-mix(in srgb, var(--brand-ink), white 85%);
-  color: color-mix(in srgb, var(--brand-ink), black 10%);
+  background: var(--surface-overlay);
+  color: var(--text-secondary);
+}
+
+.product-delete-btn--standalone:hover {
+  background: var(--color-error);
+  color: #fff;
 }
 
 .batch-product-title {
@@ -542,17 +713,20 @@ code {
   flex-shrink: 0;
   font-size: 0.82rem;
   font-weight: 500;
-  color: color-mix(in srgb, var(--brand-ink), white 30%);
+  color: var(--text-muted);
 }
 
 .batch-product-body {
-  padding: 0.5rem 1rem 1rem;
-  border-top: 1px solid color-mix(in srgb, var(--brand-ink), white 82%);
+  padding: var(--sp-sm) var(--sp-lg) var(--sp-lg);
+  border-top: 1px solid var(--border-subtle);
 }
 
+/* ================================================================
+   URL input list
+   ================================================================ */
 .url-input-list {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--sp-sm);
 }
 
 .url-input-row {
@@ -578,14 +752,14 @@ code {
   border-radius: 8px;
   font-size: 1.15rem;
   line-height: 1;
-  background: color-mix(in srgb, var(--brand-ink), white 85%);
-  color: color-mix(in srgb, var(--brand-ink), white 20%);
+  background: var(--surface-overlay);
+  color: var(--text-muted);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
 }
 
 .url-remove-btn:hover {
-  background: #c23a2b;
+  background: var(--color-error);
   color: #fff;
   transform: none;
   box-shadow: none;
@@ -597,23 +771,110 @@ code {
   border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--brand-secondary), white 60%);
-  color: color-mix(in srgb, var(--brand-ink), black 10%);
-  border: 1px solid color-mix(in srgb, var(--brand-ink), white 72%);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
   cursor: pointer;
   transition: background 120ms ease, border-color 120ms ease;
 }
 
 .url-add-btn:hover {
-  background: color-mix(in srgb, var(--brand-secondary), white 40%);
-  border-color: color-mix(in srgb, var(--brand-primary), white 50%);
+  background: color-mix(in srgb, var(--brand-primary), var(--brand-ink) 82%);
+  border-color: color-mix(in srgb, var(--brand-primary), transparent 50%);
   transform: none;
   box-shadow: none;
 }
 
+/* ================================================================
+   Platform tags
+   ================================================================ */
+.platform-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+  margin: var(--sp-md) 0;
+}
+
+.platform-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--border-default);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+}
+
+/* ================================================================
+   Import error list
+   ================================================================ */
 .import-error-list {
-  margin: 0.5rem 0 0;
+  margin: var(--sp-sm) 0 0;
   padding-left: 1.2rem;
   display: grid;
   gap: 0.4rem;
+}
+
+/* ================================================================
+   Responsive
+   ================================================================ */
+@media (max-width: 860px) {
+  .hero-head {
+    grid-template-columns: 1fr;
+  }
+
+  .topnav {
+    justify-content: flex-start;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .editor-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-group {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full-width buttons on mobile */
+  button,
+  .url-add-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Larger tap targets for remove / delete buttons */
+  .url-remove-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+  }
+
+  .product-delete-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+
+  /* Allow batch product titles to wrap on mobile */
+  .batch-product-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .batch-product-summary {
+    flex-wrap: wrap;
+  }
 }
