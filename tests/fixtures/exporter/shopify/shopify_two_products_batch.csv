@@ -1,0 +1,5 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Status,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Option3 Name,Option3 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Qty,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Requires Shipping,Variant Taxable,Image Src,Image Position,Image Alt Text,Variant Image,Variant Weight Unit
+mug-a,Mug Alpha,A nice mug.,Acme,Mugs,"mug,alpha",TRUE,active,Size,Small,,,,,MUG-A-S,300,shopify,5,deny,manual,14.99,TRUE,TRUE,https://cdn.example.com/mug-a.jpg,1,Mug Alpha,,g
+mug-a,,,,,,,,Size,Large,,,,,MUG-A-L,300,shopify,3,deny,manual,14.99,TRUE,TRUE,,,,https://cdn.example.com/mug-a-large.jpg,g
+tee-b,Tee Bravo,A cool tee.,Acme,Shirts,"tee,bravo",TRUE,active,Color,Red,,,,,TEE-B-R,200,shopify,10,deny,manual,24.99,TRUE,TRUE,https://cdn.example.com/tee-b.jpg,1,Tee Bravo,,g
+tee-b,,,,,,,,Color,Blue,,,,,TEE-B-B,200,shopify,8,deny,manual,24.99,TRUE,TRUE,,,,https://cdn.example.com/tee-b-blue.jpg,g
