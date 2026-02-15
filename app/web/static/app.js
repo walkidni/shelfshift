@@ -76,6 +76,70 @@
     });
   };
 
+  const initUrlInputList = () => {
+    const list = document.querySelector("[data-url-input-list]");
+    const addBtn = document.querySelector("[data-action='add-url']");
+    if (!list || !addBtn) {
+      return;
+    }
+
+    const _createRow = (value) => {
+      const row = document.createElement("div");
+      row.className = "url-input-row";
+      row.setAttribute("data-url-row", "");
+
+      const input = document.createElement("input");
+      input.name = "product_urls";
+      input.type = "url";
+      input.placeholder = "https://store.com/products/example";
+      input.value = value || "";
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "url-remove-btn";
+      removeBtn.setAttribute("data-action", "remove-url");
+      removeBtn.setAttribute("aria-label", "Remove URL");
+      removeBtn.innerHTML = "\u00d7";
+
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      return row;
+    };
+
+    const _syncRemoveButtons = () => {
+      const rows = list.querySelectorAll("[data-url-row]");
+      rows.forEach((row) => {
+        const btn = row.querySelector("[data-action='remove-url']");
+        if (btn) {
+          btn.style.visibility = rows.length > 1 ? "visible" : "hidden";
+        }
+      });
+    };
+
+    addBtn.addEventListener("click", () => {
+      list.appendChild(_createRow(""));
+      _syncRemoveButtons();
+      const inputs = list.querySelectorAll("input[name='product_urls']");
+      if (inputs.length > 0) {
+        inputs[inputs.length - 1].focus();
+      }
+    });
+
+    list.addEventListener("click", (e) => {
+      const removeBtn = e.target.closest("[data-action='remove-url']");
+      if (!removeBtn) {
+        return;
+      }
+      const row = removeBtn.closest("[data-url-row]");
+      if (row && list.querySelectorAll("[data-url-row]").length > 1) {
+        row.remove();
+        _syncRemoveButtons();
+      }
+    });
+
+    _syncRemoveButtons();
+  };
+
   const initUrlExportForm = () => {
     const targetPlatform = document.getElementById("target_platform");
     const weightUnit = document.getElementById("weight_unit");
@@ -517,6 +581,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    initUrlInputList();
     initUrlExportForm();
     initCsvImportForm();
     initCsvPreviewExportForm();

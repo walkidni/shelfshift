@@ -3,17 +3,23 @@
 {% block content %}
   <section class="panel grid">
     <form class="import-form" method="post" action="/import.url">
-      <label for="product_url">Product URL</label>
-      <input
-        id="product_url"
-        name="product_url"
-        type="url"
-        placeholder="https://store.com/products/example"
-        value="{{ form.product_url }}"
-        required
-      />
+      <label>Product URLs</label>
+      <div class="url-input-list" data-url-input-list>
+        {% for url in form.product_urls %}
+        <div class="url-input-row" data-url-row>
+          <input
+            name="product_urls"
+            type="url"
+            placeholder="https://store.com/products/example"
+            value="{{ url }}"
+          />
+          <button type="button" class="url-remove-btn" data-action="remove-url" aria-label="Remove URL">&times;</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="url-add-btn" data-action="add-url">+ Add URL</button>
 
-      <button type="submit">Import URL</button>
+      <button type="submit">Import URLs</button>
     </form>
 
     <aside class="info">
@@ -27,7 +33,56 @@
     </aside>
   </section>
 
-  {% if editor_product_payload %}
+  {% if editor_products_payload %}
+  {% include "_product_editor_batch.html" %}
+
+  <section class="panel grid">
+    <form class="import-form" method="post" action="/export-from-product.csv">
+      <input type="hidden" name="product_json_b64" value="{{ preview_product_json_b64 }}" />
+
+      <label for="preview_target_platform">Target Platform</label>
+      <div class="select-wrap">
+        <select id="preview_target_platform" name="target_platform" required>
+          <option value="shopify">Shopify</option>
+          <option value="bigcommerce">BigCommerce</option>
+          <option value="wix">Wix</option>
+          <option value="squarespace">Squarespace</option>
+          <option value="woocommerce">WooCommerce</option>
+        </select>
+      </div>
+
+      <label for="preview_weight_unit">Weight Unit</label>
+      <div class="select-wrap">
+        <select id="preview_weight_unit" name="weight_unit" required></select>
+      </div>
+
+      <div id="preview-bigcommerce-fields" class="conditional-fields is-hidden" aria-hidden="true">
+        <label for="preview_bigcommerce_csv_format">BigCommerce CSV Format</label>
+        <div class="select-wrap">
+          <select id="preview_bigcommerce_csv_format" name="bigcommerce_csv_format" disabled>
+            <option value="modern">Modern</option>
+            <option value="legacy">Legacy</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="preview-squarespace-fields" class="conditional-fields is-hidden" aria-hidden="true">
+        <label for="preview_squarespace_product_page">Squarespace Product Page</label>
+        <input id="preview_squarespace_product_page" name="squarespace_product_page" type="text" placeholder="shop" disabled />
+        <label for="preview_squarespace_product_url">Squarespace Product URL</label>
+        <input id="preview_squarespace_product_url" name="squarespace_product_url" type="text" placeholder="lemons" disabled />
+      </div>
+
+      <button type="submit">Export All as CSV</button>
+    </form>
+
+    <aside class="info">
+      <h2>Batch Export</h2>
+      <p class="api-note">{{ editor_products_payload | length }} product{{ 's' if editor_products_payload | length != 1 else '' }} ready for export</p>
+      <p class="api-note">API endpoint: <code>POST /api/v1/export/from-product.csv</code></p>
+    </aside>
+  </section>
+  {% elif editor_product_payload %}
   {% include "_product_editor.html" %}
 
   <section class="panel grid">
@@ -74,6 +129,17 @@
       <h2>Export</h2>
       <p class="api-note">API endpoint: <code>POST /api/v1/export/from-product.csv</code></p>
     </aside>
+  </section>
+  {% endif %}
+
+  {% if url_import_errors %}
+  <section class="panel error">
+    <h2>Some URLs Failed</h2>
+    <ul class="import-error-list">
+      {% for err in url_import_errors %}
+      <li><code>{{ err.url }}</code> &mdash; {{ err.detail }}</li>
+      {% endfor %}
+    </ul>
   </section>
   {% endif %}
 

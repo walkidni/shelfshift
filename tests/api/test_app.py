@@ -579,8 +579,9 @@ def test_home_page_renders() -> None:
     assert response.status_code == 200
     assert "Ecommerce Catalog Transfer" in response.text
     assert 'action="/import.url"' in response.text
-    assert 'name="product_url"' in response.text
-    assert "Import URL" in response.text
+    assert 'name="product_urls"' in response.text
+    assert "Import URLs" in response.text
+    assert "data-url-input-list" in response.text
     assert "Result JSON" not in response.text
 
 
@@ -612,7 +613,7 @@ def test_import_url_web_preview_then_export_csv(monkeypatch) -> None:
 
     preview_response = client.post(
         "/import.url",
-        data={"product_url": "https://demo.myshopify.com/products/mug"},
+        data={"product_urls": "https://demo.myshopify.com/products/mug"},
     )
 
     assert preview_response.status_code == 200

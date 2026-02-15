@@ -506,3 +506,71 @@ code {
   padding: 0.5rem 1rem 1rem;
   border-top: 1px solid color-mix(in srgb, var(--brand-ink), white 82%);
 }
+
+.url-input-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.url-input-row {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.url-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.url-remove-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 1.15rem;
+  line-height: 1;
+  background: color-mix(in srgb, var(--brand-ink), white 85%);
+  color: color-mix(in srgb, var(--brand-ink), white 20%);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.url-remove-btn:hover {
+  background: #c23a2b;
+  color: #fff;
+  transform: none;
+  box-shadow: none;
+}
+
+.url-add-btn {
+  margin-top: 0;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--brand-secondary), white 60%);
+  color: color-mix(in srgb, var(--brand-ink), black 10%);
+  border: 1px solid color-mix(in srgb, var(--brand-ink), white 72%);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.url-add-btn:hover {
+  background: color-mix(in srgb, var(--brand-secondary), white 40%);
+  border-color: color-mix(in srgb, var(--brand-primary), white 50%);
+  transform: none;
+  box-shadow: none;
+}
+
+.import-error-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.4rem;
+}

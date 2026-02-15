@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 import base64
 import json
 import logging
@@ -20,6 +21,7 @@ from .schemas import (
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
+from typing import Any
 from .models import Product, serialize_product_for_api
 from .services.exporters import (
     product_to_bigcommerce_csv,
@@ -136,6 +138,22 @@ def _run_import_product(product_url: str) -> Product:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Internal import error: {exc}") from exc
+
+
+def _run_import_products(urls: list[str]) -> tuple[list[Product], list[dict[str, str]]]:
+    """Import multiple URLs with partial-success semantics.
+
+    Returns (products, errors) where *errors* is a list of
+    ``{"url": ..., "detail": ...}`` dicts for URLs that failed.
+    """
+    products: list[Product] = []
+    errors: list[dict[str, str]] = []
+    for url in urls:
+        try:
+            products.append(_run_import_product(url))
+        except HTTPException as exc:
+            errors.append({"url": url, "detail": exc.detail})
+    return products, errors
 
 
 def _run_import_csv_product(
@@ -378,7 +396,7 @@ def _render_web_page(
     active_page: str,
     error: str | None,
     error_title: str = "Error",
-    product_url: str,
+    product_urls: list[str] | None = None,
     target_platform: str,
     weight_unit: str,
     bigcommerce_csv_format: str,
@@ -391,8 +409,10 @@ def _render_web_page(
     preview_product_json_b64: str | None = None,
     editor_product_payload: dict | None = None,
     editor_products_payload: list[dict] | None = None,
+    url_import_errors: list[dict[str, str]] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
+    urls = product_urls if product_urls else [""]
     return templates.TemplateResponse(
         request,
         template_name,
@@ -403,7 +423,7 @@ def _render_web_page(
             "error_title": error_title,
             "csv_error": csv_error,
             "form": {
-                "product_url": product_url,
+                "product_urls": urls,
                 "target_platform": target_platform,
                 "weight_unit": weight_unit,
                 "bigcommerce_csv_format": bigcommerce_csv_format,
@@ -426,6 +446,7 @@ def _render_web_page(
             "preview_product_json_b64": preview_product_json_b64,
             "editor_product_payload": editor_product_payload,
             "editor_products_payload": editor_products_payload or [],
+            "url_import_errors": url_import_errors or [],
         },
         status_code=status_code,
     )
@@ -442,12 +463,23 @@ def detect(url: str = Query(..., description="Product URL to classify")) -> dict
 
 
 @app.post("/api/v1/import")
-def import_from_api(payload: ImportRequest) -> dict:
-    product = _run_import_product(payload.product_url)
-    return serialize_product_for_api(
-        product,
-        include_raw=settings.debug,
-    )
+def import_from_api(payload: ImportRequest) -> Any:
+    urls = [u.strip() for u in payload.urls_list if u.strip()]
+    if not urls:
+        raise HTTPException(status_code=400, detail="product_urls is required")
+
+    if len(urls) == 1:
+        product = _run_import_product(urls[0])
+        return serialize_product_for_api(product, include_raw=settings.debug)
+
+    products, errors = _run_import_products(urls)
+    return {
+        "products": [
+            serialize_product_for_api(p, include_raw=settings.debug)
+            for p in products
+        ],
+        "errors": errors,
+    }
 
 
 @app.post("/api/v1/import/csv")
@@ -558,7 +590,7 @@ def home(request: Request) -> HTMLResponse:
         template_name="index.html",
         active_page="url",
         error=None,
-        product_url="",
+        product_urls=[],
         target_platform="shopify",
         weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
         bigcommerce_csv_format="modern",
@@ -570,41 +602,101 @@ def home(request: Request) -> HTMLResponse:
 @app.post("/import.url")
 def import_url_from_web(
     request: Request,
-    product_url: str = Form(...),
+    product_urls: list[str] = Form(...),
 ) -> HTMLResponse:
-    try:
-        product = _run_import_product(product_url)
-        editor_payload = serialize_product_for_api(product, include_raw=False)
+    urls = [u.strip() for u in product_urls if u.strip()]
+    if not urls:
         return _render_web_page(
             request,
             template_name="index.html",
             active_page="url",
-            error=None,
+            error="At least one product URL is required.",
             error_title="Import Error",
-            product_url=product_url,
+            product_urls=[],
             target_platform="shopify",
             weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
             bigcommerce_csv_format="modern",
             squarespace_product_page="",
             squarespace_product_url="",
-            preview_product_json_b64=_product_to_json_b64(product),
-            editor_product_payload=editor_payload,
+            status_code=400,
         )
-    except HTTPException as exc:
+
+    if len(urls) == 1:
+        try:
+            product = _run_import_product(urls[0])
+            editor_payload = serialize_product_for_api(product, include_raw=False)
+            return _render_web_page(
+                request,
+                template_name="index.html",
+                active_page="url",
+                error=None,
+                error_title="Import Error",
+                product_urls=urls,
+                target_platform="shopify",
+                weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+                bigcommerce_csv_format="modern",
+                squarespace_product_page="",
+                squarespace_product_url="",
+                preview_product_json_b64=_product_to_json_b64(product),
+                editor_product_payload=editor_payload,
+            )
+        except HTTPException as exc:
+            return _render_web_page(
+                request,
+                template_name="index.html",
+                active_page="url",
+                error=exc.detail,
+                error_title="Import Error",
+                product_urls=urls,
+                target_platform="shopify",
+                weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+                bigcommerce_csv_format="modern",
+                squarespace_product_page="",
+                squarespace_product_url="",
+                status_code=exc.status_code,
+            )
+
+    # -- batch import (multiple URLs, partial-success) --
+    products, import_errors = _run_import_products(urls)
+    if not products:
         return _render_web_page(
             request,
             template_name="index.html",
             active_page="url",
-            error=exc.detail,
+            error="All URL imports failed.",
             error_title="Import Error",
-            product_url=product_url,
+            product_urls=urls,
             target_platform="shopify",
             weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
             bigcommerce_csv_format="modern",
             squarespace_product_page="",
             squarespace_product_url="",
-            status_code=exc.status_code,
+            url_import_errors=import_errors,
+            status_code=422,
         )
+
+    editor_payloads = [serialize_product_for_api(p, include_raw=False) for p in products]
+    is_batch = len(products) > 1
+    return _render_web_page(
+        request,
+        template_name="index.html",
+        active_page="url",
+        error=None,
+        error_title="Import Error",
+        product_urls=urls,
+        target_platform="shopify",
+        weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+        bigcommerce_csv_format="modern",
+        squarespace_product_page="",
+        squarespace_product_url="",
+        preview_product_json_b64=(
+            _products_to_json_b64(products) if is_batch
+            else _product_to_json_b64(products[0])
+        ),
+        editor_product_payload=editor_payloads[0] if not is_batch else None,
+        editor_products_payload=editor_payloads if is_batch else None,
+        url_import_errors=import_errors if import_errors else None,
+    )
 
 
 @app.get("/csv", response_class=HTMLResponse)
@@ -614,7 +706,7 @@ def csv_home(request: Request) -> HTMLResponse:
         template_name="csv.html",
         active_page="csv",
         error=None,
-        product_url="",
+        product_urls=[],
         target_platform="shopify",
         weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
         bigcommerce_csv_format="modern",
@@ -726,7 +818,7 @@ def import_csv_from_web(
             template_name="csv.html",
             active_page="csv",
             error=None,
-            product_url="",
+            product_urls=[],
             target_platform="shopify",
             weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
             bigcommerce_csv_format="modern",
@@ -748,7 +840,7 @@ def import_csv_from_web(
             active_page="csv",
             error=None,
             csv_error=exc.detail,
-            product_url="",
+            product_urls=[],
             target_platform="shopify",
             weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
             bigcommerce_csv_format="modern",
@@ -823,7 +915,7 @@ def export_csv_from_web(
             active_page="url",
             error=exc.detail,
             error_title="Export Error",
-            product_url=product_url,
+            product_urls=[product_url],
             target_platform=target_platform,
             weight_unit=weight_unit,
             bigcommerce_csv_format=bigcommerce_csv_format,

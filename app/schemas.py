@@ -1,10 +1,28 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ImportRequest(BaseModel):
-    product_url: str = Field(..., min_length=8, examples=["https://example.com/products/demo"])
+    product_urls: str | list[str] = Field(
+        ...,
+        examples=["https://example.com/products/demo"],
+        description="One URL (string) or multiple URLs (list of strings) to import.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _compat_product_url(cls, data: Any) -> Any:
+        """Accept legacy ``product_url`` (singular) as an alias."""
+        if isinstance(data, dict) and "product_url" in data and "product_urls" not in data:
+            data["product_urls"] = data.pop("product_url")
+        return data
+
+    @property
+    def urls_list(self) -> list[str]:
+        if isinstance(self.product_urls, str):
+            return [self.product_urls]
+        return list(self.product_urls)
 
 
 class ExportShopifyCsvRequest(BaseModel):
