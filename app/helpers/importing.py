@@ -21,7 +21,6 @@ logger = logging.getLogger("uvicorn.error")
 def _api_config() -> ApiConfig:
     return ApiConfig(
         rapidapi_key=settings.rapidapi_key,
-        amazon_country=settings.amazon_country,
     )
 
 

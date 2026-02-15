@@ -80,7 +80,7 @@ def main() -> int:
 
     args = _args()
     settings = get_settings()
-    cfg = ApiConfig(rapidapi_key=settings.rapidapi_key, amazon_country=settings.amazon_country)
+    cfg = ApiConfig(rapidapi_key=settings.rapidapi_key)
     factory = ProductClientFactory(cfg)
 
     urls_by_platform: dict[str, str | None] = {

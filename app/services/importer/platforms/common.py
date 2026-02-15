@@ -51,7 +51,6 @@ class ApiConfig:
     """
 
     rapidapi_key: str | None = None
-    amazon_country: str = "US"  # used by the Amazon provider
 
 
 def dedupe(seq: Iterable[str]) -> list[str]:

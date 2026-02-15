@@ -13,7 +13,6 @@ class Settings:
     debug: bool
     log_verbosity: str
     rapidapi_key: str | None
-    amazon_country: str
     cors_allow_origins: tuple[str, ...]
 
 
@@ -57,6 +56,5 @@ def get_settings() -> Settings:
             allowed={"low", "medium", "high", "extrahigh"},
         ),
         rapidapi_key=os.getenv("RAPIDAPI_KEY"),
-        amazon_country=os.getenv("AMAZON_COUNTRY", "US"),
         cors_allow_origins=origins or ("*",),
     )

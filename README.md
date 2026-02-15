@@ -179,7 +179,6 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 - `DEBUG`: include/exclude `raw` payloads in responses
 - `LOG_VERBOSITY`: import log verbosity (`low`, `medium`, `high`, `extrahigh`); only applies when `DEBUG=true`
 - `RAPIDAPI_KEY`: required for Amazon/AliExpress importers
-- `AMAZON_COUNTRY`: fallback Amazon marketplace country code
 - `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
 
 ## Project layout
