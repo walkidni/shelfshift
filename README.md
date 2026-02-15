@@ -4,8 +4,8 @@ This app ingests supported ecommerce product URLs and returns CSV files that are
 
 Project surface:
 - FastAPI API for programmatic use (`POST /api/v1/import`)
-- CSV import API (`POST /api/v1/import/csv`)
-- Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`)
+- CSV import API (`POST /api/v1/import/csv`) — auto-detects single or multi-product CSVs
+- Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`) — accepts single product or list for batch export
 - URL detection endpoint (`GET /api/v1/detect`)
 - Canonical-product CSV export endpoints (accept `product` JSON, not `product_url`):
   - `POST /api/v1/export/shopify.csv`
@@ -14,7 +14,7 @@ Project surface:
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
 - Web UI (URL import -> preview -> export): `/` (import posts to `/import.url`, export posts to `/export-from-product.csv`)
-- Web UI (CSV import/export): `/csv` (upload posts to `/import.csv`, export posts to `/export-from-product.csv`)
+- Web UI (CSV import/export): `/csv` (upload posts to `/import.csv`, export posts to `/export-from-product.csv`; auto-detects batch CSVs and shows collapsible product cards for editing)
 - Shared importer services for Shopify, WooCommerce, Squarespace, Amazon, and AliExpress
 
 ## Supported import sources
@@ -136,6 +136,8 @@ curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
   -F "file=@./product.csv"
 ```
 
+For multi-product CSVs, the response is a JSON array of canonical products instead of a single object.
+
 Export from canonical product JSON:
 
 ```bash
@@ -143,6 +145,15 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
   -H "Content-Type: application/json" \
   -d '{"product":{...canonical product...},"target_platform":"woocommerce","publish":false}' \
   -o converted.csv
+```
+
+Batch export from multiple canonical products:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
+  -H "Content-Type: application/json" \
+  -d '{"product":[{...product 1...},{...product 2...}],"target_platform":"shopify","publish":false,"weight_unit":"g"}' \
+  -o batch.csv
 ```
 
 ## Export request options
@@ -200,6 +211,8 @@ app/
     templates/index.html
     templates/base.html
     templates/csv.html
+    templates/_product_editor.html
+    templates/_product_editor_batch.html
     static/styles.css
     static/app.js
 tests/
