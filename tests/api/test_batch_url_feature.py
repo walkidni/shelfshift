@@ -42,7 +42,7 @@ def _patch_run_import_product(monkeypatch, url_to_product: dict[str, Product]) -
             return url_to_product[product_url]
         raise HTTPException(status_code=422, detail=f"Unsupported URL: {product_url}")
 
-    monkeypatch.setattr("app.main._run_import_product", fake)
+    monkeypatch.setattr("app.helpers.importing.run_import_product", fake)
 
 
 # -------------------------------------------------------------------
