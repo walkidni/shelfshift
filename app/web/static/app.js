@@ -398,6 +398,18 @@
         }
       }
     });
+
+    const deleteBtn = editor.querySelector("[data-action='delete-product']");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", () => {
+        editor.style.display = "none";
+        exportB64Input.value = "";
+        const exportForm = document.querySelector("form[action='/export-from-product.csv']");
+        if (exportForm) {
+          exportForm.style.display = "none";
+        }
+      });
+    }
   };
 
   const _applyProductEditsFromCard = (card, product) => {
@@ -576,6 +588,57 @@
         if (status) {
           status.textContent = `Save failed: ${err}`;
         }
+      }
+    });
+
+    const batchCountEl = batchEditor.querySelector(".batch-count");
+
+    const _reindexBatchCards = () => {
+      const cards = batchEditor.querySelectorAll("[data-batch-product]");
+      cards.forEach((card, i) => {
+        card.dataset.productIndex = String(i);
+      });
+    };
+
+    const _updateBatchPayload = () => {
+      exportB64Input.value = _encodeJsonB64(payloads);
+      payloadScript.textContent = JSON.stringify(payloads);
+      if (batchCountEl) {
+        batchCountEl.textContent = String(payloads.length);
+      }
+    };
+
+    batchEditor.addEventListener("click", (e) => {
+      const deleteBtn = e.target.closest("[data-action='delete-batch-product']");
+      if (!deleteBtn) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+
+      const card = deleteBtn.closest("[data-batch-product]");
+      if (!card) {
+        return;
+      }
+
+      const index = Number.parseInt(card.dataset.productIndex || "0", 10);
+      if (index >= 0 && index < payloads.length) {
+        payloads.splice(index, 1);
+      }
+      card.remove();
+      _reindexBatchCards();
+      _updateBatchPayload();
+
+      if (payloads.length === 0) {
+        batchEditor.style.display = "none";
+        const exportForm = document.querySelector("form[action='/export-from-product.csv']");
+        if (exportForm) {
+          exportForm.style.display = "none";
+        }
+      }
+
+      if (status) {
+        status.textContent = `Deleted. ${payloads.length} product(s) remaining.`;
       }
     });
   };

@@ -12,9 +12,12 @@
         <details class="batch-product-card" data-batch-product data-product-index="{{ loop.index0 }}" {% if loop.first %}open{% endif %}>
           <summary class="batch-product-summary">
             <span class="batch-product-title">{{ product.title or 'Untitled' }}</span>
-            <span class="batch-product-meta">
-              {{ (product.variants or []) | length }} variant{{ 's' if (product.variants or []) | length != 1 else '' }}
-              {% if product.source and product.source.platform %}&middot; {{ product.source.platform }}{% endif %}
+            <span class="batch-product-actions">
+              <span class="batch-product-meta">
+                {{ (product.variants or []) | length }} variant{{ 's' if (product.variants or []) | length != 1 else '' }}
+                {% if product.source and product.source.platform %}&middot; {{ product.source.platform }}{% endif %}
+              </span>
+              <button type="button" class="product-delete-btn" data-action="delete-batch-product" aria-label="Delete product">&times;</button>
             </span>
           </summary>
 

@@ -488,6 +488,49 @@ code {
   background: color-mix(in srgb, var(--brand-secondary), white 70%);
 }
 
+.batch-product-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.product-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 0;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: color-mix(in srgb, var(--brand-ink), white 85%);
+  color: color-mix(in srgb, var(--brand-ink), white 20%);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.product-delete-btn:hover {
+  background: #c23a2b;
+  color: #fff;
+  transform: none;
+  box-shadow: none;
+}
+
+.product-delete-btn--standalone {
+  width: auto;
+  height: auto;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: "Space Grotesk", sans-serif;
+  background: color-mix(in srgb, var(--brand-ink), white 85%);
+  color: color-mix(in srgb, var(--brand-ink), black 10%);
+}
+
 .batch-product-title {
   min-width: 0;
   overflow: hidden;

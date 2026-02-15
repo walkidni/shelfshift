@@ -320,3 +320,43 @@ def test_home_page_has_add_url_button() -> None:
     assert 'data-action="add-url"' in response.text
     assert 'data-url-input-list' in response.text
     assert '+ Add URL' in response.text
+
+
+# -------------------------------------------------------------------
+# Delete product buttons
+# -------------------------------------------------------------------
+
+def test_single_editor_has_delete_product_button(monkeypatch) -> None:
+    p = _make_product("mug-a", "Mug Alpha", "MUG-A")
+    _patch_run_import_product(monkeypatch, {"https://store.test/products/mug-a": p})
+
+    response = client.post(
+        "/import.url",
+        data={"product_urls": "https://store.test/products/mug-a"},
+    )
+
+    assert response.status_code == 200
+    assert "data-product-editor" in response.text
+    assert 'data-action="delete-product"' in response.text
+
+
+def test_batch_editor_has_delete_buttons_per_card(monkeypatch) -> None:
+    p1 = _make_product("mug-a", "Mug Alpha", "MUG-A")
+    p2 = _make_product("tee-b", "Tee Bravo", "TEE-B")
+    _patch_run_import_product(monkeypatch, {
+        "https://store.test/products/mug-a": p1,
+        "https://store.test/products/tee-b": p2,
+    })
+
+    response = client.post(
+        "/import.url",
+        data={"product_urls": [
+            "https://store.test/products/mug-a",
+            "https://store.test/products/tee-b",
+        ]},
+    )
+
+    assert response.status_code == 200
+    assert "data-product-editor-batch" in response.text
+    # Each product card should have its own delete button
+    assert response.text.count('data-action="delete-batch-product"') == 2

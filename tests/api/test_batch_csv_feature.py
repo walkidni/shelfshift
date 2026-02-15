@@ -230,3 +230,33 @@ def test_import_csv_web_batch_then_export_roundtrip() -> None:
 
     assert export_response.status_code == 200
     assert export_response.headers["content-type"].startswith("text/csv")
+
+
+# -------------------------------------------------------------------
+# Delete product buttons — CSV editors
+# -------------------------------------------------------------------
+
+def test_csv_single_editor_has_delete_button() -> None:
+    csv_bytes = _fixture_bytes("shopify/shopify_one_simple_product_full.csv")
+    response = client.post(
+        "/import.csv",
+        data={"source_platform": "shopify"},
+        files={"file": ("shopify.csv", csv_bytes, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    assert "data-product-editor" in response.text
+    assert 'data-action="delete-product"' in response.text
+
+
+def test_csv_batch_editor_has_delete_buttons_per_card() -> None:
+    csv_bytes = _fixture_bytes("shopify/shopify_two_products_batch.csv")
+    response = client.post(
+        "/import.csv",
+        data={"source_platform": "shopify"},
+        files={"file": ("shopify.csv", csv_bytes, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    assert "data-product-editor-batch" in response.text
+    assert response.text.count('data-action="delete-batch-product"') == 2
