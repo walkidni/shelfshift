@@ -1,5 +1,6 @@
 from app.models import Product
 
+from .batch import import_products_from_csv
 from .bigcommerce import parse_bigcommerce_csv
 from .common import MAX_CSV_UPLOAD_BYTES, decode_csv_bytes, parse_canonical_product_payload
 from .shopify import parse_shopify_csv
@@ -48,6 +49,6 @@ def import_product_from_csv(
 __all__ = [
     "MAX_CSV_UPLOAD_BYTES",
     "import_product_from_csv",
+    "import_products_from_csv",
     "parse_canonical_product_payload",
 ]
-
