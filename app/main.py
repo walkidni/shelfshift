@@ -27,6 +27,11 @@ from .services.exporters import (
     product_to_squarespace_csv,
     product_to_wix_csv,
     product_to_woocommerce_csv,
+    products_to_bigcommerce_csv,
+    products_to_shopify_csv,
+    products_to_squarespace_csv,
+    products_to_wix_csv,
+    products_to_woocommerce_csv,
 )
 from .services.exporters.weight_units import (
     DEFAULT_WEIGHT_UNIT_BY_TARGET,
@@ -34,7 +39,11 @@ from .services.exporters.weight_units import (
     resolve_weight_unit,
 )
 from .services.logging import product_result_to_loggable
-from .services.csv_importers import import_product_from_csv, parse_canonical_product_payload
+from .services.csv_importers import (
+    import_product_from_csv,
+    import_products_from_csv,
+    parse_canonical_product_payload,
+)
 from .services.importer import (
     ApiConfig,
     detect_product_url,
@@ -157,12 +166,44 @@ def _run_import_csv_product(
         raise HTTPException(status_code=500, detail=f"Internal CSV import error: {exc}") from exc
 
 
-def _decode_product_json_b64(encoded: str) -> dict:
+def _run_import_csv_products(
+    *,
+    source_platform: str,
+    csv_bytes: bytes,
+    source_weight_unit: str | None,
+) -> list[Product]:
+    try:
+        products = import_products_from_csv(
+            source_platform=source_platform,
+            csv_bytes=csv_bytes,
+            source_weight_unit=source_weight_unit,
+        )
+        logger.debug(
+            "Imported %d CSV product(s) (batch).",
+            len(products),
+        )
+        return products
+    except ValueError as exc:
+        detail = str(exc)
+        if "exceeds 5 MB" in detail:
+            raise HTTPException(status_code=413, detail=detail) from exc
+        raise HTTPException(status_code=422, detail=detail) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Internal CSV import error: {exc}") from exc
+
+
+def _decode_product_json_b64(encoded: str) -> dict | list[dict]:
     try:
         payload = base64.b64decode(str(encoded or "").encode("utf-8"), validate=True)
         data = json.loads(payload.decode("utf-8"))
     except Exception as exc:
         raise HTTPException(status_code=422, detail="Invalid product preview payload.") from exc
+    if isinstance(data, list):
+        if not all(isinstance(item, dict) for item in data):
+            raise HTTPException(status_code=422, detail="Invalid product preview payload.")
+        return data
     if not isinstance(data, dict):
         raise HTTPException(status_code=422, detail="Invalid product preview payload.")
     return data
@@ -171,6 +212,11 @@ def _decode_product_json_b64(encoded: str) -> dict:
 def _product_to_json_b64(product: Product) -> str:
     payload = serialize_product_for_api(product, include_raw=False)
     return base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8")).decode("utf-8")
+
+
+def _products_to_json_b64(products: list[Product]) -> str:
+    payloads = [serialize_product_for_api(p, include_raw=False) for p in products]
+    return base64.b64encode(json.dumps(payloads, ensure_ascii=False).encode("utf-8")).decode("utf-8")
 
 
 def _product_from_payload_dict(payload: dict) -> Product:
@@ -221,6 +267,50 @@ def _export_csv_for_target(
         )
     if target == "woocommerce":
         return product_to_woocommerce_csv(product, publish=publish, weight_unit=resolved_weight_unit)
+
+    raise HTTPException(
+        status_code=422,
+        detail="target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce",
+    )
+
+
+def _batch_export_csv_for_target(
+    products: list[Product],
+    *,
+    target_platform: str,
+    publish: bool,
+    weight_unit: str,
+    bigcommerce_csv_format: str,
+    squarespace_product_page: str,
+    squarespace_product_url: str,
+) -> tuple[str, str]:
+    target = (target_platform or "").strip().lower()
+    resolved_weight_unit = _resolve_weight_unit_or_422(target, weight_unit)
+
+    try:
+        if target == "shopify":
+            return products_to_shopify_csv(products, publish=publish, weight_unit=resolved_weight_unit)
+        if target == "bigcommerce":
+            return products_to_bigcommerce_csv(
+                products,
+                publish=publish,
+                csv_format=bigcommerce_csv_format,
+                weight_unit=resolved_weight_unit,
+            )
+        if target == "wix":
+            return products_to_wix_csv(products, publish=publish, weight_unit=resolved_weight_unit)
+        if target == "squarespace":
+            return products_to_squarespace_csv(
+                products,
+                publish=publish,
+                product_page=squarespace_product_page,
+                product_url=squarespace_product_url,
+                weight_unit=resolved_weight_unit,
+            )
+        if target == "woocommerce":
+            return products_to_woocommerce_csv(products, publish=publish, weight_unit=resolved_weight_unit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     raise HTTPException(
         status_code=422,
@@ -300,6 +390,7 @@ def _render_web_page(
     preview_product_json: str | None = None,
     preview_product_json_b64: str | None = None,
     editor_product_payload: dict | None = None,
+    editor_products_payload: list[dict] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -334,6 +425,7 @@ def _render_web_page(
             "preview_product_json": preview_product_json,
             "preview_product_json_b64": preview_product_json_b64,
             "editor_product_payload": editor_product_payload,
+            "editor_products_payload": editor_products_payload or [],
         },
         status_code=status_code,
     )
@@ -363,18 +455,32 @@ def import_from_csv_api(
     source_platform: str = Form(...),
     source_weight_unit: str = Form(""),
     file: UploadFile = File(...),
-) -> dict:
+) -> dict | list[dict]:
     csv_bytes = file.file.read()
-    product = _run_import_csv_product(
+    products = _run_import_csv_products(
         source_platform=source_platform,
         csv_bytes=csv_bytes,
         source_weight_unit=source_weight_unit,
     )
-    return serialize_product_for_api(product, include_raw=settings.debug)
+    if len(products) == 1:
+        return serialize_product_for_api(products[0], include_raw=settings.debug)
+    return [serialize_product_for_api(p, include_raw=settings.debug) for p in products]
 
 
 @app.post("/api/v1/export/from-product.csv")
 def export_from_product_csv(payload: ExportFromProductCsvRequest) -> Response:
+    if isinstance(payload.product, list):
+        products = [_product_from_payload_dict(p) for p in payload.product]
+        csv_text, filename = _batch_export_csv_for_target(
+            products,
+            target_platform=payload.target_platform,
+            publish=payload.publish,
+            weight_unit=payload.weight_unit,
+            bigcommerce_csv_format=payload.bigcommerce_csv_format,
+            squarespace_product_page=payload.squarespace_product_page,
+            squarespace_product_url=payload.squarespace_product_url,
+        )
+        return _csv_attachment_response(csv_text, filename)
     product = _product_from_payload_dict(payload.product)
     return _export_csv_attachment_for_product(
         product,
@@ -607,12 +713,14 @@ def import_csv_from_web(
 ) -> HTMLResponse:
     try:
         csv_bytes = file.file.read()
-        product = _run_import_csv_product(
+        products = _run_import_csv_products(
             source_platform=source_platform,
             csv_bytes=csv_bytes,
             source_weight_unit=source_weight_unit,
         )
-        editor_payload = serialize_product_for_api(product, include_raw=False)
+        is_batch = len(products) > 1
+        editor_payloads = [serialize_product_for_api(p, include_raw=False) for p in products]
+
         return _render_web_page(
             request,
             template_name="csv.html",
@@ -626,8 +734,12 @@ def import_csv_from_web(
             squarespace_product_url="",
             csv_source_platform=source_platform,
             csv_source_weight_unit=source_weight_unit or "kg",
-            preview_product_json_b64=_product_to_json_b64(product),
-            editor_product_payload=editor_payload,
+            preview_product_json_b64=(
+                _products_to_json_b64(products) if is_batch
+                else _product_to_json_b64(products[0])
+            ),
+            editor_product_payload=editor_payloads[0] if not is_batch else None,
+            editor_products_payload=editor_payloads if is_batch else None,
         )
     except HTTPException as exc:
         return _render_web_page(
@@ -659,6 +771,18 @@ def export_from_product_csv_web(
     squarespace_product_url: str = Form(default=""),
 ) -> Response:
     payload = _decode_product_json_b64(product_json_b64)
+    if isinstance(payload, list):
+        products = [_product_from_payload_dict(p) for p in payload]
+        csv_text, filename = _batch_export_csv_for_target(
+            products,
+            target_platform=target_platform,
+            publish=publish,
+            weight_unit=weight_unit,
+            bigcommerce_csv_format=bigcommerce_csv_format,
+            squarespace_product_page=squarespace_product_page,
+            squarespace_product_url=squarespace_product_url,
+        )
+        return _csv_attachment_response(csv_text, filename)
     product = _product_from_payload_dict(payload)
     return _export_csv_attachment_for_product(
         product,

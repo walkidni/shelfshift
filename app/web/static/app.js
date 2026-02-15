@@ -336,10 +336,191 @@
     });
   };
 
+  const _applyProductEditsFromCard = (card, product) => {
+    const fieldVal = (name) => {
+      const el = card.querySelector(`[data-field='${name}']`);
+      if (!el) {
+        return "";
+      }
+      if (el.type === "checkbox") {
+        return el.checked;
+      }
+      return el.value;
+    };
+
+    product.title = _trimOrNull(fieldVal("title"));
+    product.description = _trimOrNull(fieldVal("description"));
+    product.vendor = _trimOrNull(fieldVal("vendor"));
+    product.brand = _trimOrNull(fieldVal("brand"));
+    product.tags = _splitCommaTokens(fieldVal("tags"));
+
+    product.source = product.source && typeof product.source === "object" ? product.source : {};
+    product.source.slug = _trimOrNull(fieldVal("source_slug"));
+    product.source.url = _trimOrNull(fieldVal("source_url"));
+
+    product.seo = product.seo && typeof product.seo === "object" ? product.seo : {};
+    product.seo.title = _trimOrNull(fieldVal("seo_title"));
+    product.seo.description = _trimOrNull(fieldVal("seo_description"));
+
+    product.taxonomy = product.taxonomy && typeof product.taxonomy === "object" ? product.taxonomy : {};
+    const primaryText = String(fieldVal("taxonomy_primary") || "").trim();
+    if (primaryText) {
+      product.taxonomy.primary = primaryText
+        .split(">")
+        .map((t) => t.trim())
+        .filter((t) => t);
+    } else {
+      product.taxonomy.primary = null;
+    }
+
+    const imageUrls = _splitLines(fieldVal("product_images"));
+    const existingMedia = Array.isArray(product.media) ? product.media : [];
+    const nonImageMedia = existingMedia.filter((item) => (item && item.type) !== "image");
+    const imageMedia = imageUrls.map((url, index) => ({
+      url,
+      type: "image",
+      alt: null,
+      position: index + 1,
+      is_primary: index === 0,
+      variant_skus: [],
+    }));
+    product.media = imageMedia.concat(nonImageMedia);
+
+    const variantRows = card.querySelectorAll("[data-variant-row]");
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    const updated = [];
+
+    variantRows.forEach((row) => {
+      const vIndex = Number.parseInt(row.dataset.variantIndex || "0", 10);
+      const base = variants[vIndex] && typeof variants[vIndex] === "object" ? variants[vIndex] : {};
+      const next = JSON.parse(JSON.stringify(base));
+
+      const vFieldVal = (name) => {
+        const el = row.querySelector(`[data-field='${name}']`);
+        if (!el) {
+          return "";
+        }
+        if (el.type === "checkbox") {
+          return el.checked;
+        }
+        return el.value;
+      };
+
+      next.sku = _trimOrNull(vFieldVal("sku"));
+      next.title = _trimOrNull(vFieldVal("title"));
+
+      const amount = _trimOrNull(vFieldVal("price_amount"));
+      const currency = _trimOrNull(vFieldVal("price_currency"));
+      if (amount || currency) {
+        next.price = next.price && typeof next.price === "object" ? next.price : {};
+        next.price.current = { amount: amount || null, currency: currency || null };
+      } else {
+        next.price = null;
+      }
+
+      const qtyText = _trimOrNull(vFieldVal("inventory_qty"));
+      const qty = qtyText !== null ? Number.parseInt(qtyText, 10) : null;
+      const available = vFieldVal("inventory_available");
+      next.inventory = next.inventory && typeof next.inventory === "object" ? next.inventory : {};
+      next.inventory.quantity = Number.isFinite(qty) ? Math.max(0, qty) : null;
+      next.inventory.available = typeof available === "boolean" ? available : null;
+
+      const weightValue = _trimOrNull(vFieldVal("weight_value"));
+      const weightUnit = _trimOrNull(vFieldVal("weight_unit")) || "g";
+      if (weightValue) {
+        next.weight = { value: weightValue, unit: weightUnit };
+      } else {
+        next.weight = null;
+      }
+
+      const variantImageUrl = _trimOrNull(vFieldVal("variant_image_url"));
+      if (variantImageUrl) {
+        next.media = [
+          {
+            url: variantImageUrl,
+            type: "image",
+            alt: null,
+            position: 1,
+            is_primary: true,
+            variant_skus: next.sku ? [next.sku] : [],
+          },
+        ];
+      } else {
+        next.media = Array.isArray(next.media) ? next.media : [];
+      }
+
+      updated.push(next);
+    });
+
+    product.variants = updated;
+  };
+
+  const initBatchProductEditor = () => {
+    const batchEditor = document.querySelector("[data-product-editor-batch]");
+    if (!batchEditor) {
+      return;
+    }
+
+    const payloadScript = document.getElementById("editor-products-payload");
+    if (!payloadScript) {
+      return;
+    }
+
+    let payloads;
+    try {
+      payloads = JSON.parse(payloadScript.textContent || "[]");
+    } catch {
+      return;
+    }
+    if (!Array.isArray(payloads)) {
+      return;
+    }
+
+    const saveBtn = batchEditor.querySelector("[data-action='save-batch-products']");
+    const status = batchEditor.querySelector("[data-role='batch-save-status']");
+    const exportB64Input = document.querySelector(
+      "form[action='/export-from-product.csv'] input[name='product_json_b64']",
+    );
+    if (!saveBtn || !exportB64Input) {
+      return;
+    }
+
+    saveBtn.addEventListener("click", () => {
+      try {
+        const cards = batchEditor.querySelectorAll("[data-batch-product]");
+        cards.forEach((card) => {
+          const index = Number.parseInt(card.dataset.productIndex || "0", 10);
+          if (index < payloads.length) {
+            _applyProductEditsFromCard(card, payloads[index]);
+          }
+        });
+
+        exportB64Input.value = _encodeJsonB64(payloads);
+        payloadScript.textContent = JSON.stringify(payloads);
+
+        const summaries = batchEditor.querySelectorAll("[data-batch-product] .batch-product-title");
+        summaries.forEach((el, i) => {
+          if (i < payloads.length && payloads[i].title) {
+            el.textContent = payloads[i].title;
+          }
+        });
+
+        if (status) {
+          status.textContent = `Saved ${payloads.length} product(s). Export payload updated at ${new Date().toLocaleTimeString()}.`;
+        }
+      } catch (err) {
+        if (status) {
+          status.textContent = `Save failed: ${err}`;
+        }
+      }
+    });
+  };
+
   document.addEventListener("DOMContentLoaded", () => {
     initUrlExportForm();
     initCsvImportForm();
     initCsvPreviewExportForm();
     initProductEditor();
+    initBatchProductEditor();
   });
 })();

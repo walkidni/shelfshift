@@ -41,7 +41,7 @@ class ExportWixCsvRequest(BaseModel):
 
 
 class ExportFromProductCsvRequest(BaseModel):
-    product: dict[str, Any]
+    product: dict[str, Any] | list[dict[str, Any]]
     target_platform: Literal["shopify", "bigcommerce", "wix", "squarespace", "woocommerce"]
     publish: bool = Field(default=False)
     weight_unit: str = Field(default="")
