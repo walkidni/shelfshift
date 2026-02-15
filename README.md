@@ -35,26 +35,28 @@ Project surface:
 
 ## Run locally
 
-1. Create and activate a virtual environment.
-2. Install dependencies:
+Prereqs:
+- Install `uv`: https://astral.sh/uv
+
+1. Install dependencies from `pyproject.toml` + `uv.lock`:
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
-3. Create local env config:
+2. Create local env config:
 
 ```bash
 cp .env.example .env
 ```
 
-4. Start the app:
+3. Start the app:
 
 ```bash
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
-5. Open:
+4. Open:
 - Web UI: `http://127.0.0.1:8000/`
 - Swagger docs: `http://127.0.0.1:8000/docs`
 
@@ -146,8 +148,8 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 
 ## Response behavior (`raw` field)
 
-- Default (`DEBUG=false`): `raw` is omitted from response JSON.
-- Debug mode (`DEBUG=true`): `raw` is included at product and variant level.
+- API responses include `raw` only when `DEBUG=true`.
+- Web UI CSV import preview intentionally excludes `raw` (even when `DEBUG=true`).
 
 ## Environment variables
 
@@ -157,6 +159,7 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 - `BRAND_SECONDARY`: secondary accent color
 - `BRAND_INK`: main text color
 - `DEBUG`: include/exclude `raw` payloads in responses
+- `LOG_VERBOSITY`: import log verbosity (`low`, `medium`, `high`, `extrahigh`); only applies when `DEBUG=true`
 - `RAPIDAPI_KEY`: required for Amazon/AliExpress importers
 - `AMAZON_COUNTRY`: fallback Amazon marketplace country code
 - `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
@@ -203,5 +206,5 @@ tests/
 ## Tests
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
