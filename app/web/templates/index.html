@@ -1,103 +1,92 @@
 {% extends "base.html" %}
 
 {% block content %}
-      <section class="panel grid">
-        <form class="import-form" method="post" action="/export.csv">
-          {% set show_squarespace_fields = form.target_platform == "squarespace" %}
+  <section class="panel grid">
+    <form class="import-form" method="post" action="/import.url">
+      <label for="product_url">Product URL</label>
+      <input
+        id="product_url"
+        name="product_url"
+        type="url"
+        placeholder="https://store.com/products/example"
+        value="{{ form.product_url }}"
+        required
+      />
 
-          <label for="product_url">Product URL</label>
-          <input
-            id="product_url"
-            name="product_url"
-            type="url"
-            placeholder="https://store.com/products/example"
-            value="{{ form.product_url }}"
-            required
-          />
+      <button type="submit">Import URL</button>
+    </form>
 
-          <label for="target_platform">Target Platform</label>
-          <div class="select-wrap">
-            <select id="target_platform" name="target_platform" required>
-              <option value="shopify" {% if form.target_platform == "shopify" %}selected{% endif %}>Shopify</option>
-              <option value="bigcommerce" {% if form.target_platform == "bigcommerce" %}selected{% endif %}>BigCommerce</option>
-              <option value="wix" {% if form.target_platform == "wix" %}selected{% endif %}>Wix</option>
-              <option value="squarespace" {% if form.target_platform == "squarespace" %}selected{% endif %}>Squarespace</option>
-              <option value="woocommerce" {% if form.target_platform == "woocommerce" %}selected{% endif %}>WooCommerce</option>
-            </select>
-          </div>
+    <aside class="info">
+      <h2>Try URLs</h2>
+      <ul>
+        {% for example in examples %}
+        <li><code>{{ example }}</code></li>
+        {% endfor %}
+      </ul>
+      <p class="api-note">API endpoint: <code>POST /api/v1/import</code></p>
+    </aside>
+  </section>
 
-          {% set selected_weight_unit = form.weight_unit if form.weight_unit else weight_unit_defaults[form.target_platform] %}
-          <label for="weight_unit">Weight Unit</label>
-          <div class="select-wrap">
-            <select id="weight_unit" name="weight_unit" required>
-              {% for unit in weight_unit_allowlist[form.target_platform] %}
-              <option value="{{ unit }}" {% if selected_weight_unit == unit %}selected{% endif %}>{{ unit|upper }}</option>
-              {% endfor %}
-            </select>
-          </div>
+  {% if preview_product_json %}
+  <section class="panel">
+    <h2>URL Import Preview</h2>
+    <details class="preview-disclosure">
+      <summary>Show Preview JSON</summary>
+      <pre class="preview-json"><code>{{ preview_product_json }}</code></pre>
+    </details>
+  </section>
 
-          <div
-            id="bigcommerce-fields"
-            class="conditional-fields{% if form.target_platform != "bigcommerce" %} is-hidden{% endif %}"
-            aria-hidden="{% if form.target_platform == "bigcommerce" %}false{% else %}true{% endif %}"
-          >
-            <label for="bigcommerce_csv_format">BigCommerce CSV Format</label>
-            <div class="select-wrap">
-              <select
-                id="bigcommerce_csv_format"
-                name="bigcommerce_csv_format"
-                {% if form.target_platform != "bigcommerce" %}disabled{% endif %}
-              >
-                <option value="modern" {% if form.bigcommerce_csv_format == "modern" %}selected{% endif %}>Modern</option>
-                <option value="legacy" {% if form.bigcommerce_csv_format == "legacy" %}selected{% endif %}>Legacy</option>
-              </select>
-            </div>
-          </div>
+  <section class="panel grid">
+    <form class="import-form" method="post" action="/export-from-product.csv">
+      <input type="hidden" name="product_json_b64" value="{{ preview_product_json_b64 }}" />
 
-          <div
-            id="squarespace-fields"
-            class="conditional-fields{% if not show_squarespace_fields %} is-hidden{% endif %}"
-            aria-hidden="{% if show_squarespace_fields %}false{% else %}true{% endif %}"
-          >
-            <label for="squarespace_product_page">Squarespace Product Page</label>
-            <input
-              id="squarespace_product_page"
-              name="squarespace_product_page"
-              type="text"
-              placeholder="shop"
-              value="{{ form.squarespace_product_page }}"
-              {% if not show_squarespace_fields %}disabled{% endif %}
-            />
+      <label for="preview_target_platform">Target Platform</label>
+      <div class="select-wrap">
+        <select id="preview_target_platform" name="target_platform" required>
+          <option value="shopify">Shopify</option>
+          <option value="bigcommerce">BigCommerce</option>
+          <option value="wix">Wix</option>
+          <option value="squarespace">Squarespace</option>
+          <option value="woocommerce">WooCommerce</option>
+        </select>
+      </div>
 
-            <label for="squarespace_product_url">Squarespace Product URL</label>
-            <input
-              id="squarespace_product_url"
-              name="squarespace_product_url"
-              type="text"
-              placeholder="lemons"
-              value="{{ form.squarespace_product_url }}"
-              {% if not show_squarespace_fields %}disabled{% endif %}
-            />
-          </div>
+      <label for="preview_weight_unit">Weight Unit</label>
+      <div class="select-wrap">
+        <select id="preview_weight_unit" name="weight_unit" required></select>
+      </div>
 
-          <button type="submit">Export CSV</button>
-        </form>
+      <div id="preview-bigcommerce-fields" class="conditional-fields is-hidden" aria-hidden="true">
+        <label for="preview_bigcommerce_csv_format">BigCommerce CSV Format</label>
+        <div class="select-wrap">
+          <select id="preview_bigcommerce_csv_format" name="bigcommerce_csv_format" disabled>
+            <option value="modern">Modern</option>
+            <option value="legacy">Legacy</option>
+          </select>
+        </div>
+      </div>
 
-        <aside class="info">
-          <h2>Try URLs</h2>
-          <ul>
-            {% for example in examples %}
-            <li><code>{{ example }}</code></li>
-            {% endfor %}
-          </ul>
-          <p class="api-note">API endpoints: <code>POST /api/v1/export/{platform}.csv</code></p>
-        </aside>
-      </section>
+      <div id="preview-squarespace-fields" class="conditional-fields is-hidden" aria-hidden="true">
+        <label for="preview_squarespace_product_page">Squarespace Product Page</label>
+        <input id="preview_squarespace_product_page" name="squarespace_product_page" type="text" placeholder="shop" disabled />
+        <label for="preview_squarespace_product_url">Squarespace Product URL</label>
+        <input id="preview_squarespace_product_url" name="squarespace_product_url" type="text" placeholder="lemons" disabled />
+      </div>
 
-      {% if error %}
-      <section class="panel error">
-        <h2>Export Error</h2>
-        <p>{{ error }}</p>
-      </section>
-      {% endif %}
+      <button type="submit">Export Preview as CSV</button>
+    </form>
+
+    <aside class="info">
+      <h2>Export</h2>
+      <p class="api-note">API endpoint: <code>POST /api/v1/export/from-product.csv</code></p>
+    </aside>
+  </section>
+  {% endif %}
+
+  {% if error %}
+  <section class="panel error">
+    <h2>{{ error_title }}</h2>
+    <p>{{ error }}</p>
+  </section>
+  {% endif %}
 {% endblock %}

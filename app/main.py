@@ -329,6 +329,7 @@ def _render_web_page(
     template_name: str,
     active_page: str,
     error: str | None,
+    error_title: str = "Error",
     product_url: str,
     target_platform: str,
     weight_unit: str,
@@ -349,6 +350,7 @@ def _render_web_page(
             "brand": settings,
             "active_page": active_page,
             "error": error,
+            "error_title": error_title,
             "csv_error": csv_error,
             "form": {
                 "product_url": product_url,
@@ -497,6 +499,47 @@ def home(request: Request) -> HTMLResponse:
         squarespace_product_page="",
         squarespace_product_url="",
     )
+
+
+@app.post("/import.url")
+def import_url_from_web(
+    request: Request,
+    product_url: str = Form(...),
+) -> HTMLResponse:
+    try:
+        product = _run_import_product(product_url)
+        preview_payload = _preview_payload_for_web(product)
+        preview_json = json.dumps(preview_payload, ensure_ascii=False, indent=2)
+        return _render_web_page(
+            request,
+            template_name="index.html",
+            active_page="url",
+            error=None,
+            error_title="Import Error",
+            product_url=product_url,
+            target_platform="shopify",
+            weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+            bigcommerce_csv_format="modern",
+            squarespace_product_page="",
+            squarespace_product_url="",
+            preview_product_json=preview_json,
+            preview_product_json_b64=_product_to_json_b64(product),
+        )
+    except HTTPException as exc:
+        return _render_web_page(
+            request,
+            template_name="index.html",
+            active_page="url",
+            error=exc.detail,
+            error_title="Import Error",
+            product_url=product_url,
+            target_platform="shopify",
+            weight_unit=DEFAULT_WEIGHT_UNIT_BY_TARGET["shopify"],
+            bigcommerce_csv_format="modern",
+            squarespace_product_page="",
+            squarespace_product_url="",
+            status_code=exc.status_code,
+        )
 
 
 @app.get("/csv", response_class=HTMLResponse)
@@ -697,6 +740,7 @@ def export_csv_from_web(
             template_name="index.html",
             active_page="url",
             error=exc.detail,
+            error_title="Export Error",
             product_url=product_url,
             target_platform=target_platform,
             weight_unit=weight_unit,

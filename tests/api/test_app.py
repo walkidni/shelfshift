@@ -578,14 +578,9 @@ def test_home_page_renders() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "Ecommerce Catalog Transfer" in response.text
-    assert 'action="/export.csv"' in response.text
-    assert 'name="target_platform"' in response.text
-    assert "<option value=\"bigcommerce\"" in response.text
-    assert "<option value=\"wix\"" in response.text
-    assert 'id="squarespace-fields"' in response.text
-    assert 'name="weight_unit"' in response.text
-    assert "conditional-fields is-hidden" in response.text
-    assert "Export CSV" in response.text
+    assert 'action="/import.url"' in response.text
+    assert 'name="product_url"' in response.text
+    assert "Import URL" in response.text
     assert "Result JSON" not in response.text
 
 
@@ -594,6 +589,58 @@ def test_csv_page_renders() -> None:
     assert response.status_code == 200
     assert 'action="/import.csv"' in response.text
     assert 'name="source_platform"' in response.text
+
+
+def test_import_url_web_preview_then_export_csv(monkeypatch) -> None:
+    product = Product(
+        platform="shopify",
+        id="123",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        options={},
+        variants=[Variant(id="var-1", sku="MUG-001", price_amount=12.0, inventory_quantity=5)],
+        slug="demo-mug",
+        raw={},
+    )
+    patch_run_import_product(
+        monkeypatch,
+        expected_url="https://demo.myshopify.com/products/mug",
+        product=product,
+    )
+
+    preview_response = client.post(
+        "/import.url",
+        data={"product_url": "https://demo.myshopify.com/products/mug"},
+    )
+
+    assert preview_response.status_code == 200
+    assert "URL Import Preview" in preview_response.text
+
+    marker = 'name="product_json_b64" value="'
+    start = preview_response.text.find(marker)
+    assert start != -1
+    start += len(marker)
+    end = preview_response.text.find('"', start)
+    assert end != -1
+    encoded = preview_response.text[start:end]
+
+    export_response = client.post(
+        "/export-from-product.csv",
+        data={
+            "product_json_b64": encoded,
+            "target_platform": "woocommerce",
+            "publish": "false",
+            "weight_unit": "kg",
+            "bigcommerce_csv_format": "modern",
+            "squarespace_product_page": "",
+            "squarespace_product_url": "",
+        },
+    )
+
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"].startswith("text/csv")
 
 
 def test_web_export_csv_uses_selected_target_platform(monkeypatch) -> None:
