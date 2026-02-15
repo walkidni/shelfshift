@@ -7,13 +7,13 @@ Project surface:
 - CSV import API (`POST /api/v1/import/csv`)
 - Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`)
 - URL detection endpoint (`GET /api/v1/detect`)
-- FastAPI CSV export endpoints:
+- Canonical-product CSV export endpoints (accept `product` JSON, not `product_url`):
   - `POST /api/v1/export/shopify.csv`
   - `POST /api/v1/export/bigcommerce.csv`
   - `POST /api/v1/export/wix.csv`
   - `POST /api/v1/export/squarespace.csv`
   - `POST /api/v1/export/woocommerce.csv`
-- Web UI (URL import/export): `/`
+- Web UI (URL import -> preview -> export): `/` (import posts to `/import.url`, export posts to `/export-from-product.csv`)
 - Web UI (CSV import/export): `/csv` (upload posts to `/import.csv`, export posts to `/export-from-product.csv`)
 - Shared importer services for Shopify, WooCommerce, Squarespace, Amazon, and AliExpress
 
@@ -156,7 +156,7 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 ## Response behavior (`raw` field)
 
 - API responses include `raw` only when `DEBUG=true`.
-- Web UI CSV import preview intentionally excludes `raw` (even when `DEBUG=true`).
+- Web UI previews intentionally exclude `raw` (URL and CSV), even when `DEBUG=true`.
 
 ## Environment variables
 
@@ -198,7 +198,10 @@ app/
       woocommerce_csv.py
   web/
     templates/index.html
+    templates/base.html
+    templates/csv.html
     static/styles.css
+    static/app.js
 tests/
   api/
   exporters/
