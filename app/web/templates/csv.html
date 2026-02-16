@@ -3,15 +3,22 @@
 {% block content %}
   <section class="panel grid">
     <form class="import-form" method="post" action="/import.csv" enctype="multipart/form-data">
-      <label for="source_platform">Source CSV Platform</label>
-      <div class="select-wrap">
-        <select id="source_platform" name="source_platform" required>
-          <option value="shopify" {% if csv_form.source_platform == "shopify" %}selected{% endif %}>Shopify</option>
-          <option value="bigcommerce" {% if csv_form.source_platform == "bigcommerce" %}selected{% endif %}>BigCommerce</option>
-          <option value="wix" {% if csv_form.source_platform == "wix" %}selected{% endif %}>Wix</option>
-          <option value="squarespace" {% if csv_form.source_platform == "squarespace" %}selected{% endif %}>Squarespace</option>
-          <option value="woocommerce" {% if csv_form.source_platform == "woocommerce" %}selected{% endif %}>WooCommerce</option>
-        </select>
+      <label for="source_csv_file">CSV File</label>
+      <input id="source_csv_file" name="file" type="file" accept=".csv,text/csv" required />
+
+      <div id="csv-detect-status" class="detect-status is-hidden" aria-live="polite"></div>
+
+      <div id="source-platform-fields" class="conditional-fields{% if not editor_product_payload and not editor_products_payload %} is-hidden{% endif %}">
+        <label for="source_platform">Source CSV Platform</label>
+        <div class="select-wrap">
+          <select id="source_platform" name="source_platform" required>
+            <option value="shopify" {% if csv_form.source_platform == "shopify" %}selected{% endif %}>Shopify</option>
+            <option value="bigcommerce" {% if csv_form.source_platform == "bigcommerce" %}selected{% endif %}>BigCommerce</option>
+            <option value="wix" {% if csv_form.source_platform == "wix" %}selected{% endif %}>Wix</option>
+            <option value="squarespace" {% if csv_form.source_platform == "squarespace" %}selected{% endif %}>Squarespace</option>
+            <option value="woocommerce" {% if csv_form.source_platform == "woocommerce" %}selected{% endif %}>WooCommerce</option>
+          </select>
+        </div>
       </div>
 
       <div
@@ -32,9 +39,6 @@
           </select>
         </div>
       </div>
-
-      <label for="source_csv_file">CSV File</label>
-      <input id="source_csv_file" name="file" type="file" accept=".csv,text/csv" required />
 
       <button type="submit">Import CSV</button>
     </form>

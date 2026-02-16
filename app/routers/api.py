@@ -25,6 +25,7 @@ from ..schemas import (
     ExportWooCommerceCsvRequest,
     ImportRequest,
 )
+from ..services.csv_importers.detection import detect_csv_platform
 from ..services.importer import detect_product_url
 
 settings = get_settings()
@@ -59,6 +60,18 @@ def import_from_api(payload: ImportRequest) -> Any:
         ],
         "errors": errors,
     }
+
+
+@router.post("/api/v1/detect/csv")
+def detect_csv_platform_api(
+    file: UploadFile = File(...),
+) -> dict:
+    csv_bytes = file.file.read()
+    try:
+        platform = detect_csv_platform(csv_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"platform": platform}
 
 
 @router.post("/api/v1/import/csv")

@@ -113,40 +113,45 @@ body {
   pointer-events: none;
 }
 
-.eyebrow {
-  margin: 0;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--brand-primary);
-}
-
-.eyebrow-icon {
-  display: inline-flex;
-  width: 22px;
-  height: 22px;
-  fill: var(--brand-primary);
-  flex-shrink: 0;
-}
-
 h1,
 h2 {
   font-family: "Space Grotesk", sans-serif;
   margin: 0 0 var(--sp-sm);
 }
 
-.hero h1 {
-  font-size: clamp(1.6rem, 3vw, 2.5rem);
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
 }
 
-.hero p {
-  margin: 0;
-  max-width: 52ch;
+.brand-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.35));
+}
+
+.brand-name {
+  font-family: "Sora", sans-serif;
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline {
+  font-family: "Sora", sans-serif;
+  font-weight: 300;
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  letter-spacing: 0.01em;
   color: var(--text-secondary);
+  margin-top: var(--sp-xs);
 }
 
 .hero-head {
@@ -284,6 +289,30 @@ select {
 
 .conditional-fields.is-hidden {
   display: none;
+}
+
+/* CSV auto-detection status */
+.detect-status {
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.detect-status.is-hidden {
+  display: none;
+}
+
+.detect-status.detect-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--brand-primary);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.detect-status.detect-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .select-wrap::after {
@@ -870,27 +899,29 @@ code {
 }
 
 /* CTA cards */
-.landing-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-lg);
-}
-
-.landing-card {
+.landing-card--primary {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-sm);
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-lg);
   text-decoration: none;
   color: var(--text-primary);
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   cursor: pointer;
+  border: 1.5px solid color-mix(in srgb, var(--brand-primary), transparent 50%);
 }
 
-.landing-card:hover {
+.landing-card--primary:hover {
   transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--brand-primary), transparent 40%);
+  border-color: var(--brand-primary);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.landing-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  min-width: 0;
 }
 
 .landing-card-icon {
@@ -923,10 +954,72 @@ code {
 }
 
 .landing-card-cta {
-  margin-top: auto;
+  margin-top: var(--sp-xs);
   font-weight: 700;
   font-size: 0.88rem;
   color: var(--brand-primary);
+}
+
+/* Secondary URL link */
+.landing-alt {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.landing-alt-link {
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.landing-alt-link:hover {
+  color: var(--brand-secondary);
+  text-decoration: underline;
+}
+
+/* Precision trust signals */
+.landing-trust {
+  padding-top: var(--sp-lg);
+}
+
+.trust-signals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-lg);
+}
+
+.trust-signal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-xs);
+}
+
+.trust-signal-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.trust-signal h4 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.trust-signal p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 28ch;
 }
 
 /* Platforms section */
@@ -1020,7 +1113,13 @@ code {
     gap: var(--sp-xl);
   }
 
-  .landing-cards {
+  .landing-card--primary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trust-signals {
     grid-template-columns: 1fr;
+    gap: var(--sp-md);
   }
 }

@@ -192,6 +192,9 @@
     const sourcePlatform = document.getElementById("source_platform");
     const sourceWeightFields = document.getElementById("source-weight-fields");
     const sourceWeightUnit = document.getElementById("source_weight_unit");
+    const platformFields = document.getElementById("source-platform-fields");
+    const detectStatus = document.getElementById("csv-detect-status");
+    const fileInput = document.getElementById("source_csv_file");
     if (!sourcePlatform || !sourceWeightFields || !sourceWeightUnit) {
       return;
     }
@@ -202,6 +205,64 @@
       sourceWeightFields.setAttribute("aria-hidden", required ? "false" : "true");
       sourceWeightUnit.disabled = !required;
     };
+
+    const showPlatformFields = () => {
+      if (platformFields) {
+        platformFields.classList.remove("is-hidden");
+      }
+    };
+
+    const showDetectStatus = (message, isError) => {
+      if (!detectStatus) {
+        return;
+      }
+      detectStatus.textContent = message;
+      detectStatus.classList.remove("is-hidden", "detect-success", "detect-error");
+      detectStatus.classList.add(isError ? "detect-error" : "detect-success");
+    };
+
+    const hideDetectStatus = () => {
+      if (detectStatus) {
+        detectStatus.classList.add("is-hidden");
+        detectStatus.classList.remove("detect-success", "detect-error");
+      }
+    };
+
+    const detectPlatform = async (file) => {
+      hideDetectStatus();
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await fetch("/api/v1/detect/csv", {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.detail || "Detection failed");
+        }
+        const data = await response.json();
+        const platform = data.platform;
+        const label = sourcePlatform.querySelector(`option[value="${platform}"]`);
+        const platformName = label ? label.textContent : platform;
+        sourcePlatform.value = platform;
+        showPlatformFields();
+        syncSourceWeightFields();
+        showDetectStatus(`Detected: ${platformName}`, false);
+      } catch {
+        showPlatformFields();
+        syncSourceWeightFields();
+        showDetectStatus("Could not auto-detect platform. Please select manually.", true);
+      }
+    };
+
+    if (fileInput) {
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          detectPlatform(fileInput.files[0]);
+        }
+      });
+    }
 
     sourcePlatform.addEventListener("change", syncSourceWeightFields);
     syncSourceWeightFields();

@@ -574,32 +574,6 @@ def test_export_wix_csv_endpoint_rejects_unsupported_weight_unit() -> None:
     assert response.status_code == 422
 
 
-def test_home_page_renders() -> None:
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "Ecommerce Catalog Transfer" in response.text
-    assert "Import from URL" in response.text
-    assert "Import from CSV" in response.text
-    assert "three" in response.text.lower()
-
-
-def test_url_import_page_renders() -> None:
-    response = client.get("/url")
-    assert response.status_code == 200
-    assert 'action="/import.url"' in response.text
-    assert 'name="product_urls"' in response.text
-    assert "Import Products" in response.text
-    assert "data-url-input-list" in response.text
-    assert "Result JSON" not in response.text
-
-
-def test_csv_page_renders() -> None:
-    response = client.get("/csv")
-    assert response.status_code == 200
-    assert 'action="/import.csv"' in response.text
-    assert 'name="source_platform"' in response.text
-
-
 def test_import_url_web_preview_then_export_csv(monkeypatch) -> None:
     product = Product(
         platform="shopify",

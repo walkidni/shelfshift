@@ -3,6 +3,7 @@ from app.models import Product
 from .batch import import_products_from_csv
 from .bigcommerce import parse_bigcommerce_csv
 from .common import MAX_CSV_UPLOAD_BYTES, decode_csv_bytes, parse_canonical_product_payload
+from .detection import DETECTABLE_PLATFORMS, detect_csv_platform
 from .shopify import parse_shopify_csv
 from .squarespace import parse_squarespace_csv
 from .wix import parse_wix_csv
@@ -47,7 +48,9 @@ def import_product_from_csv(
 
 
 __all__ = [
+    "DETECTABLE_PLATFORMS",
     "MAX_CSV_UPLOAD_BYTES",
+    "detect_csv_platform",
     "import_product_from_csv",
     "import_products_from_csv",
     "parse_canonical_product_payload",

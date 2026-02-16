@@ -188,34 +188,64 @@ app/
   main.py
   config.py
   schemas.py
+  models/
+    entities.py
+    helpers.py
+    serialization.py
+  routers/
+    api.py
+    web_csv.py
+    web_url.py
+  helpers/
+    exporting.py
+    importing.py
+    payload.py
+    rendering.py
   services/
     importer/
-      __init__.py
       product_url_detection.py
       platforms/
-        __init__.py
         common.py
         shopify.py
         squarespace.py
         woocommerce.py
         amazon.py
         aliexpress.py
+    csv_importers/
+      batch.py
+      common.py
+      detection.py
+      shopify.py
+      bigcommerce.py
+      wix.py
+      squarespace.py
+      woocommerce.py
     exporters/
+      batch.py
+      utils.py
+      weight_units.py
       shopify_csv.py
       bigcommerce_csv.py
       wix_csv.py
       squarespace_csv.py
       woocommerce_csv.py
+    logging/
+      product_payloads.py
   web/
-    templates/index.html
-    templates/base.html
-    templates/csv.html
-    templates/_product_editor.html
-    templates/_product_editor_batch.html
-    static/styles.css
-    static/app.js
+    templates/
+      base.html
+      index.html
+      url.html
+      csv.html
+      _product_editor.html
+      _product_editor_batch.html
+      _export_form.html
+    static/
+      styles.css
+      app.js
 tests/
   api/
+  csv_importers/
   exporters/
   importers/
   models/
