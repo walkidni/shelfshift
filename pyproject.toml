@@ -8,11 +8,16 @@ dependencies = [
     "httpx>=0.28.0,<1.0.0",
     "jinja2>=3.1.0,<4.0.0",
     "pandas>=2.2.0,<3.0.0",
+    "python-dotenv>=1.1.0,<2.0.0",
     "python-multipart>=0.0.20,<1.0.0",
     "python-slugify>=8.0.0,<9.0.0",
     "requests>=2.32.0,<3.0.0",
     "uvicorn[standard]>=0.35.0,<1.0.0",
 ]
+
+[project.scripts]
+typeshift = "typeshift.cli.main:main"
+typeshift-server = "typeshift.server.main:run"
 
 [dependency-groups]
 dev = [

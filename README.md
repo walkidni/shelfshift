@@ -3,6 +3,8 @@
 This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, BigCommerce, Wix, Squarespace, and WooCommerce.
 
 Project surface:
+- Importable core engine package (`typeshift.core`)
+- CLI frontend (`typeshift`)
 - FastAPI API for programmatic use (`POST /api/v1/import`)
 - CSV import API (`POST /api/v1/import/csv`) — auto-detects single or multi-product CSVs
 - Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`) — accepts single product or list for batch export
@@ -53,13 +55,29 @@ cp .env.example .env
 3. Start the app:
 
 ```bash
-uv run uvicorn app.main:app --reload
+uv run uvicorn typeshift.server.main:app --reload
 ```
 
 4. Open:
 - Web UI: `http://127.0.0.1:8000/`
 - CSV Import/Export: `http://127.0.0.1:8000/csv`
 - Swagger docs: `http://127.0.0.1:8000/docs`
+
+## Library + CLI usage
+
+Python API:
+
+```bash
+uv run python -c "from typeshift.core import detect_product_url; print(detect_product_url('https://example.myshopify.com/products/item'))"
+```
+
+CLI examples:
+
+```bash
+uv run typeshift detect-url "https://example.myshopify.com/products/item"
+uv run typeshift detect-csv ./product.csv
+uv run typeshift import-csv --source-platform shopify --file ./product.csv
+```
 
 ## API usage
 
@@ -184,6 +202,19 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 ## Project layout
 
 ```text
+typeshift/
+  core/
+    canonical/
+    detect/
+    importers/
+    exporters/
+    validate/
+  cli/
+    main.py
+  server/
+    main.py
+    config.py
+    routers/
 app/
   main.py
   config.py
