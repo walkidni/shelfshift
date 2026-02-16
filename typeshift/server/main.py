@@ -10,10 +10,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# Load .env before importing modules that may resolve/capture settings.
+ROOT_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT_DIR / ".env")
+
 from .config import get_settings
 from .routers import api, web_csv, web_url
-
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parents[2] / "app"
 STATIC_DIR = BASE_DIR / "web" / "static"

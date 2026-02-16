@@ -3,7 +3,6 @@
 The canonical FastAPI adapter now lives under ``typeshift.server.main``.
 """
 
-from .helpers.importing import run_import_product as _run_import_product  # noqa: F401
 from typeshift.server.main import (  # noqa: F401
     BASE_DIR,
     STATIC_DIR,
@@ -12,3 +11,4 @@ from typeshift.server.main import (  # noqa: F401
     logger,
     settings,
 )
+from .helpers.importing import run_import_product as _run_import_product  # noqa: F401

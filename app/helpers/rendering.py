@@ -12,8 +12,6 @@ from ..services.exporters.weight_units import (
     WEIGHT_UNIT_ALLOWLIST_BY_TARGET,
 )
 
-settings = get_settings()
-
 
 def render_landing_page(
     request: Request,
@@ -24,7 +22,7 @@ def render_landing_page(
         request,
         "index.html",
         {
-            "brand": settings,
+            "brand": get_settings(),
             "active_page": "home",
             "weight_unit_allowlist": {},
             "weight_unit_defaults": {},
@@ -62,7 +60,7 @@ def render_web_page(
         request,
         template_name,
         {
-            "brand": settings,
+            "brand": get_settings(),
             "active_page": active_page,
             "error": error,
             "error_title": error_title,
