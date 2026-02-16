@@ -1,3 +1,11 @@
+import warnings
+
+warnings.warn(
+    "Importing canonical models from 'app.models' is deprecated; use 'typeshift.core.canonical' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 from .entities import (
     CategorySet,
     Currency,

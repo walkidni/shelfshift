@@ -74,9 +74,11 @@ uv run python -c "from typeshift.core import detect_product_url; print(detect_pr
 CLI examples:
 
 ```bash
-uv run typeshift detect-url "https://example.myshopify.com/products/item"
-uv run typeshift detect-csv ./product.csv
-uv run typeshift import-csv --source-platform shopify --file ./product.csv
+uv run typeshift detect "https://example.myshopify.com/products/item"
+uv run typeshift detect ./product.csv
+uv run typeshift import-csv ./product.csv --source-platform shopify
+uv run typeshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
+uv run typeshift validate ./source.csv --platform shopify --report ./validate.json
 ```
 
 ## API usage

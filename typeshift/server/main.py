@@ -17,7 +17,7 @@ load_dotenv(ROOT_DIR / ".env")
 from .config import get_settings
 from .routers import api, web_csv, web_url
 
-BASE_DIR = Path(__file__).resolve().parents[2] / "app"
+BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "web" / "static"
 
 settings = get_settings()

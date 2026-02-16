@@ -1,0 +1,164 @@
+{% if editor_product_payload %}
+  <section class="panel product-editor" data-product-editor>
+    <h2>Edit Product</h2>
+    <p class="api-note">
+      Change fields below, then click <code>Save changes</code> to update the hidden export payload.
+    </p>
+
+    <script type="application/json" id="editor-product-payload">{{ editor_product_payload | tojson }}</script>
+
+    <div class="import-form editor-form">
+      <label for="edit_title">Title</label>
+      <input id="edit_title" type="text" value="{{ editor_product_payload.title or '' }}" />
+
+      <label for="edit_description">Description (HTML ok)</label>
+      <textarea id="edit_description" rows="8">{{ editor_product_payload.description or '' }}</textarea>
+
+      <div class="editor-columns">
+        <div class="editor-column">
+          <label for="edit_vendor">Vendor</label>
+          <input id="edit_vendor" type="text" value="{{ editor_product_payload.vendor or '' }}" />
+        </div>
+        <div class="editor-column">
+          <label for="edit_brand">Brand</label>
+          <input id="edit_brand" type="text" value="{{ editor_product_payload.brand or '' }}" />
+        </div>
+      </div>
+
+      <label for="edit_tags">Tags (comma-separated)</label>
+      <input id="edit_tags" type="text" value="{{ (editor_product_payload.tags or []) | join(', ') }}" />
+
+      {% set primary_path = [] %}
+      {% if editor_product_payload.taxonomy and editor_product_payload.taxonomy.primary %}
+        {% set primary_path = editor_product_payload.taxonomy.primary %}
+      {% endif %}
+      <label for="edit_taxonomy_primary">Primary category path (use <code>&gt;</code> separators)</label>
+      <input id="edit_taxonomy_primary" type="text" placeholder="Mugs > Coffee" value="{{ primary_path | join(' > ') }}" />
+
+      <div class="editor-columns">
+        <div class="editor-column">
+          <label for="edit_source_slug">Source slug</label>
+          <input id="edit_source_slug" type="text" value="{{ editor_product_payload.source.slug or '' }}" />
+        </div>
+        <div class="editor-column">
+          <label for="edit_source_url">Source URL</label>
+          <input id="edit_source_url" type="url" value="{{ editor_product_payload.source.url or '' }}" />
+        </div>
+      </div>
+
+      <div class="editor-columns">
+        <div class="editor-column">
+          <label for="edit_seo_title">SEO title</label>
+          <input id="edit_seo_title" type="text" value="{{ editor_product_payload.seo.title or '' }}" />
+        </div>
+        <div class="editor-column">
+          <label for="edit_seo_description">SEO description</label>
+          <textarea id="edit_seo_description" rows="4">{{ editor_product_payload.seo.description or '' }}</textarea>
+        </div>
+      </div>
+
+      {% set product_image_urls = editor_product_payload.media | selectattr('type', 'equalto', 'image') | map(attribute='url') | list %}
+      <label for="edit_product_images">Product image URLs (one per line)</label>
+      <textarea id="edit_product_images" rows="6" placeholder="https://cdn.example.com/image.jpg">{{ product_image_urls | join('\n') }}</textarea>
+    </div>
+
+    <details class="preview-disclosure editor-disclosure"{% if (editor_product_payload.variants or []) | length <= 3 %} open{% endif %}>
+      <summary>Variants ({{ (editor_product_payload.variants or []) | length }})</summary>
+      <div class="editor-variants">
+        {% for variant in editor_product_payload.variants or [] %}
+          {% set price_current = variant.price.current if variant.price and variant.price.current else none %}
+          <div class="variant-card" data-variant-row data-index="{{ loop.index0 }}">
+            <div class="variant-head">
+              <h3>Variant {{ loop.index }}</h3>
+              <p class="api-note">ID: <code>{{ variant.id or '' }}</code></p>
+            </div>
+
+            <!-- Identity -->
+            <div class="variant-group">
+              <p class="variant-group-label">Identity</p>
+              <div class="editor-column">
+                <label>SKU</label>
+                <input type="text" data-field="sku" value="{{ variant.sku or '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Title</label>
+                <input type="text" data-field="title" value="{{ variant.title or '' }}" />
+              </div>
+            </div>
+
+            <!-- Pricing -->
+            <div class="variant-group">
+              <p class="variant-group-label">Pricing</p>
+              <div class="editor-column">
+                <label>Price</label>
+                <input type="text" inputmode="decimal" data-field="price_amount" value="{{ price_current.amount if price_current and price_current.amount else '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Currency</label>
+                <input type="text" data-field="price_currency" value="{{ price_current.currency if price_current and price_current.currency else '' }}" />
+              </div>
+            </div>
+
+            <!-- Inventory -->
+            <div class="variant-group">
+              <p class="variant-group-label">Inventory</p>
+              <div class="editor-column">
+                <label>Inventory qty</label>
+                <input type="number" min="0" step="1" data-field="inventory_qty" value="{{ variant.inventory.quantity if variant.inventory and variant.inventory.quantity is not none else '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Available</label>
+                <label class="checkbox">
+                  <input type="checkbox" data-field="inventory_available" {% if variant.inventory and variant.inventory.available %}checked{% endif %} />
+                  <span>In stock</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Weight -->
+            <div class="variant-group">
+              <p class="variant-group-label">Weight</p>
+              <div class="editor-column">
+                <label>Weight</label>
+                <input type="text" inputmode="decimal" data-field="weight_value" value="{{ variant.weight.value if variant.weight and variant.weight.value else '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Weight unit</label>
+                {% set wunit = variant.weight.unit if variant.weight and variant.weight.unit else 'g' %}
+                <div class="select-wrap">
+                  <select data-field="weight_unit">
+                    <option value="g" {% if wunit == 'g' %}selected{% endif %}>G</option>
+                    <option value="kg" {% if wunit == 'kg' %}selected{% endif %}>KG</option>
+                    <option value="lb" {% if wunit == 'lb' %}selected{% endif %}>LB</option>
+                    <option value="oz" {% if wunit == 'oz' %}selected{% endif %}>OZ</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Media -->
+            <div class="variant-group variant-group-wide">
+              <p class="variant-group-label">Media</p>
+              <div class="editor-column">
+                <label>Variant image URL</label>
+                {% set vmedia = variant.media or [] %}
+                {% set vimg = '' %}
+                {% if vmedia and vmedia[0] and vmedia[0].url %}
+                  {% set vimg = vmedia[0].url %}
+                {% endif %}
+                <input type="url" data-field="variant_image_url" value="{{ vimg }}" />
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </details>
+
+    <div class="editor-actions">
+      <button type="button" data-action="save-product">Save changes</button>
+      <button type="button" class="product-delete-btn product-delete-btn--standalone" data-action="delete-product">Delete product</button>
+      <p class="save-status" data-role="save-status" aria-live="polite"></p>
+    </div>
+  </section>
+{% endif %}
+

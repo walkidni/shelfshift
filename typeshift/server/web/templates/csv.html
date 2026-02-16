@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel grid">
+    <form class="import-form" method="post" action="/import.csv" enctype="multipart/form-data">
+      <label for="source_csv_file">CSV File</label>
+      <input id="source_csv_file" name="file" type="file" accept=".csv,text/csv" required />
+
+      <div id="csv-detect-status" class="detect-status is-hidden" aria-live="polite"></div>
+
+      <div id="source-platform-fields" class="conditional-fields{% if not editor_product_payload and not editor_products_payload %} is-hidden{% endif %}">
+        <label for="source_platform">Source CSV Platform</label>
+        <div class="select-wrap">
+          <select id="source_platform" name="source_platform" required>
+            <option value="shopify" {% if csv_form.source_platform == "shopify" %}selected{% endif %}>Shopify</option>
+            <option value="bigcommerce" {% if csv_form.source_platform == "bigcommerce" %}selected{% endif %}>BigCommerce</option>
+            <option value="wix" {% if csv_form.source_platform == "wix" %}selected{% endif %}>Wix</option>
+            <option value="squarespace" {% if csv_form.source_platform == "squarespace" %}selected{% endif %}>Squarespace</option>
+            <option value="woocommerce" {% if csv_form.source_platform == "woocommerce" %}selected{% endif %}>WooCommerce</option>
+          </select>
+        </div>
+      </div>
+
+      <div
+        id="source-weight-fields"
+        class="conditional-fields{% if csv_form.source_platform not in source_weight_unit_required_platforms %} is-hidden{% endif %}"
+        aria-hidden="{% if csv_form.source_platform in source_weight_unit_required_platforms %}false{% else %}true{% endif %}"
+      >
+        <label for="source_weight_unit">Source Weight Unit</label>
+        <div class="select-wrap">
+          <select
+            id="source_weight_unit"
+            name="source_weight_unit"
+            {% if csv_form.source_platform not in source_weight_unit_required_platforms %}disabled{% endif %}
+          >
+            {% for unit in source_weight_unit_allowlist %}
+            <option value="{{ unit }}" {% if csv_form.source_weight_unit == unit %}selected{% endif %}>{{ unit|upper }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <button type="submit">Import CSV</button>
+    </form>
+
+    <aside class="info">
+      <h2>CSV Import</h2>
+      <p class="api-note">API endpoint: <code>POST /api/v1/import/csv</code></p>
+      <p class="api-note">Upload limit: <code>5 MB</code></p>
+    </aside>
+  </section>
+
+  {% if editor_products_payload %}
+  {% include "_product_editor_batch.html" %}
+
+  {% set export_submit_label = "Export All as CSV" %}
+  {% set export_info_heading = "Batch Conversion" %}
+  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export</p>' %}
+  {% include "_export_form.html" %}
+  {% elif editor_product_payload %}
+  {% include "_product_editor.html" %}
+
+  {% set export_submit_label = "Export Preview as CSV" %}
+  {% set export_info_heading = "Conversion" %}
+  {% set export_info_extra = "" %}
+  {% include "_export_form.html" %}
+  {% endif %}
+
+  {% if csv_error %}
+  <section class="panel error" role="alert">
+    <h2>
+      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+      CSV Import Error
+    </h2>
+    <p>{{ csv_error }}</p>
+  </section>
+  {% endif %}
+{% endblock %}

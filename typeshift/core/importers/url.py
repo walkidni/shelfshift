@@ -6,7 +6,8 @@ and CLI usage.
 
 from __future__ import annotations
 
-from app.config import get_settings
+import os
+
 from app.models import Product
 from app.services.importer import ApiConfig, detect_product_url, fetch_product_details, requires_rapidapi
 
@@ -32,8 +33,7 @@ def import_product_from_url(
     rapidapi_key: str | None = None,
 ) -> Product:
     normalized_url = normalize_product_url(product_url)
-    settings = get_settings()
-    resolved_rapidapi_key = rapidapi_key if rapidapi_key is not None else settings.rapidapi_key
+    resolved_rapidapi_key = rapidapi_key if rapidapi_key is not None else os.getenv("RAPIDAPI_KEY")
 
     if requires_rapidapi(normalized_url) and not resolved_rapidapi_key:
         raise ValueError("RAPIDAPI_KEY is required for Amazon and AliExpress imports.")

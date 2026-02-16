@@ -1,9 +1,6 @@
 import os
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
-
-from dotenv import load_dotenv
 
 
 @dataclass(frozen=True)
@@ -38,9 +35,6 @@ def _env_choice(name: str, default: str, *, allowed: set[str]) -> str:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    root_dir = Path(__file__).resolve().parents[1]
-    load_dotenv(root_dir / ".env")
-
     origins = tuple(
         origin.strip()
         for origin in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")

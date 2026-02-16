@@ -1,0 +1,179 @@
+{% if editor_products_payload %}
+  <section class="panel product-editor-batch" data-product-editor-batch>
+    <h2>Edit Products <span class="batch-count">({{ editor_products_payload | length }})</span></h2>
+    <p class="api-note">
+      Expand a product to edit its fields, then click <code>Save all changes</code> to update the export payload.
+    </p>
+
+    <script type="application/json" id="editor-products-payload">{{ editor_products_payload | tojson }}</script>
+
+    <div class="batch-product-list">
+      {% for product in editor_products_payload %}
+        <details class="batch-product-card" data-batch-product data-product-index="{{ loop.index0 }}" {% if loop.first %}open{% endif %}>
+          <summary class="batch-product-summary">
+            <span class="batch-product-title">{{ product.title or 'Untitled' }}</span>
+            <span class="batch-product-actions">
+              <span class="batch-product-meta">
+                {{ (product.variants or []) | length }} variant{{ 's' if (product.variants or []) | length != 1 else '' }}
+                {% if product.source and product.source.platform %}&middot; {{ product.source.platform }}{% endif %}
+              </span>
+              <button type="button" class="product-delete-btn" data-action="delete-batch-product" aria-label="Delete product">&times;</button>
+            </span>
+          </summary>
+
+          <div class="batch-product-body import-form editor-form">
+            <label>Title</label>
+            <input type="text" data-field="title" value="{{ product.title or '' }}" />
+
+            <label>Description (HTML ok)</label>
+            <textarea rows="6" data-field="description">{{ product.description or '' }}</textarea>
+
+            <div class="editor-columns">
+              <div class="editor-column">
+                <label>Vendor</label>
+                <input type="text" data-field="vendor" value="{{ product.vendor or '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Brand</label>
+                <input type="text" data-field="brand" value="{{ product.brand or '' }}" />
+              </div>
+            </div>
+
+            <label>Tags (comma-separated)</label>
+            <input type="text" data-field="tags" value="{{ (product.tags or []) | join(', ') }}" />
+
+            {% set primary_path = [] %}
+            {% if product.taxonomy and product.taxonomy.primary %}
+              {% set primary_path = product.taxonomy.primary %}
+            {% endif %}
+            <label>Primary category path (use <code>&gt;</code> separators)</label>
+            <input type="text" data-field="taxonomy_primary" placeholder="Mugs > Coffee" value="{{ primary_path | join(' > ') }}" />
+
+            <div class="editor-columns">
+              <div class="editor-column">
+                <label>Source slug</label>
+                <input type="text" data-field="source_slug" value="{{ product.source.slug or '' if product.source else '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>Source URL</label>
+                <input type="url" data-field="source_url" value="{{ product.source.url or '' if product.source else '' }}" />
+              </div>
+            </div>
+
+            <div class="editor-columns">
+              <div class="editor-column">
+                <label>SEO title</label>
+                <input type="text" data-field="seo_title" value="{{ product.seo.title or '' if product.seo else '' }}" />
+              </div>
+              <div class="editor-column">
+                <label>SEO description</label>
+                <textarea rows="3" data-field="seo_description">{{ product.seo.description or '' if product.seo else '' }}</textarea>
+              </div>
+            </div>
+
+            {% set product_image_urls = product.media | selectattr('type', 'equalto', 'image') | map(attribute='url') | list if product.media else [] %}
+            <label>Product image URLs (one per line)</label>
+            <textarea rows="4" data-field="product_images" placeholder="https://cdn.example.com/image.jpg">{{ product_image_urls | join('\n') }}</textarea>
+
+            <details class="preview-disclosure editor-disclosure"{% if (product.variants or []) | length <= 3 %} open{% endif %}>
+              <summary>Variants ({{ (product.variants or []) | length }})</summary>
+              <div class="editor-variants">
+                {% for variant in product.variants or [] %}
+                  {% set price_current = variant.price.current if variant.price and variant.price.current else none %}
+                  <div class="variant-card" data-variant-row data-variant-index="{{ loop.index0 }}">
+                    <div class="variant-head">
+                      <h3>Variant {{ loop.index }}</h3>
+                      <p class="api-note">ID: <code>{{ variant.id or '' }}</code></p>
+                    </div>
+
+                    <!-- Identity -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Identity</p>
+                      <div class="editor-column">
+                        <label>SKU</label>
+                        <input type="text" data-field="sku" value="{{ variant.sku or '' }}" />
+                      </div>
+                      <div class="editor-column">
+                        <label>Title</label>
+                        <input type="text" data-field="title" value="{{ variant.title or '' }}" />
+                      </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Pricing</p>
+                      <div class="editor-column">
+                        <label>Price</label>
+                        <input type="text" inputmode="decimal" data-field="price_amount" value="{{ price_current.amount if price_current and price_current.amount else '' }}" />
+                      </div>
+                      <div class="editor-column">
+                        <label>Currency</label>
+                        <input type="text" data-field="price_currency" value="{{ price_current.currency if price_current and price_current.currency else '' }}" />
+                      </div>
+                    </div>
+
+                    <!-- Inventory -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Inventory</p>
+                      <div class="editor-column">
+                        <label>Inventory qty</label>
+                        <input type="number" min="0" step="1" data-field="inventory_qty" value="{{ variant.inventory.quantity if variant.inventory and variant.inventory.quantity is not none else '' }}" />
+                      </div>
+                      <div class="editor-column">
+                        <label>Available</label>
+                        <label class="checkbox">
+                          <input type="checkbox" data-field="inventory_available" {% if variant.inventory and variant.inventory.available %}checked{% endif %} />
+                          <span>In stock</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Weight -->
+                    <div class="variant-group">
+                      <p class="variant-group-label">Weight</p>
+                      <div class="editor-column">
+                        <label>Weight</label>
+                        <input type="text" inputmode="decimal" data-field="weight_value" value="{{ variant.weight.value if variant.weight and variant.weight.value else '' }}" />
+                      </div>
+                      <div class="editor-column">
+                        <label>Weight unit</label>
+                        {% set wunit = variant.weight.unit if variant.weight and variant.weight.unit else 'g' %}
+                        <div class="select-wrap">
+                          <select data-field="weight_unit">
+                            <option value="g" {% if wunit == 'g' %}selected{% endif %}>G</option>
+                            <option value="kg" {% if wunit == 'kg' %}selected{% endif %}>KG</option>
+                            <option value="lb" {% if wunit == 'lb' %}selected{% endif %}>LB</option>
+                            <option value="oz" {% if wunit == 'oz' %}selected{% endif %}>OZ</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Media -->
+                    <div class="variant-group variant-group-wide">
+                      <p class="variant-group-label">Media</p>
+                      <div class="editor-column">
+                        <label>Variant image URL</label>
+                        {% set vmedia = variant.media or [] %}
+                        {% set vimg = '' %}
+                        {% if vmedia and vmedia[0] and vmedia[0].url %}
+                          {% set vimg = vmedia[0].url %}
+                        {% endif %}
+                        <input type="url" data-field="variant_image_url" value="{{ vimg }}" />
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </details>
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+
+    <div class="editor-actions">
+      <button type="button" data-action="save-batch-products">Save all changes</button>
+      <p class="save-status" data-role="batch-save-status" aria-live="polite"></p>
+    </div>
+  </section>
+{% endif %}
