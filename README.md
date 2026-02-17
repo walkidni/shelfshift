@@ -65,6 +65,25 @@ Install dependencies:
 uv sync
 ```
 
+## Running Commands
+
+Use one of the following workflows for CLI and server commands:
+
+1. One-off invocation with `uv run`:
+
+```bash
+uv run shelfshift detect ./source.csv
+```
+
+2. Activate `.venv` and run commands directly (recommended for repeated local development):
+
+```bash
+source .venv/bin/activate
+shelfshift detect ./source.csv
+```
+
+When `.venv` is activated, you do not need `uv run` prefixes.
+
 Optional local env file:
 
 ```bash
@@ -105,39 +124,39 @@ print(len(result.products), len(result.errors))
 Detect URL or CSV input:
 
 ```bash
-uv run shelfshift detect "https://example.myshopify.com/products/demo-item"
-uv run shelfshift detect ./source.csv
+shelfshift detect "https://example.myshopify.com/products/demo-item"
+shelfshift detect ./source.csv
 ```
 
 Import URL(s) to canonical JSON:
 
 ```bash
-uv run shelfshift import-url "https://example.myshopify.com/products/demo-item"
-uv run shelfshift import-url "https://store-a.com/products/a" "https://store-b.com/products/b"
+shelfshift import-url "https://example.myshopify.com/products/demo-item"
+shelfshift import-url "https://store-a.com/products/a" "https://store-b.com/products/b"
 ```
 
 Import source CSV to canonical JSON:
 
 ```bash
-uv run shelfshift import-csv ./source.csv --source-platform shopify
+shelfshift import-csv ./source.csv --source-platform shopify
 ```
 
 Convert source CSV directly to target CSV:
 
 ```bash
-uv run shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
+shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
 ```
 
 Validate canonicalized products from CSV:
 
 ```bash
-uv run shelfshift validate ./source.csv --platform shopify --report ./validate.json
+shelfshift validate ./source.csv --platform shopify --report ./validate.json
 ```
 
 Export canonical JSON payload to target CSV:
 
 ```bash
-uv run shelfshift export-csv ./canonical.json --to woocommerce --out ./woocommerce.csv
+shelfshift export-csv ./canonical.json --to woocommerce --out ./woocommerce.csv
 ```
 
 ## Self-Hosted API (FastAPI)
@@ -145,13 +164,13 @@ uv run shelfshift export-csv ./canonical.json --to woocommerce --out ./woocommer
 Start server:
 
 ```bash
-uv run shelfshift-server
+shelfshift-server
 ```
 
 or:
 
 ```bash
-uv run uvicorn shelfshift.server.main:app --reload
+uvicorn shelfshift.server.main:app --reload
 ```
 
 Open:
@@ -267,7 +286,7 @@ tests/
 Run tests:
 
 ```bash
-uv run pytest -q
+pytest -q
 ```
 
 ## License
