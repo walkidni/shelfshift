@@ -1,4 +1,4 @@
-from typeshift.core.canonical.helpers import (
+from shelfshift.core.canonical.helpers import (
     format_decimal,
     normalize_currency,
     parse_decimal_money,

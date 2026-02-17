@@ -1,7 +1,7 @@
 
 from typing import Any
 
-from typeshift.core.canonical import (
+from shelfshift.core.canonical import (
     CategorySet,
     Inventory,
     Media,

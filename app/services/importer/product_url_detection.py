@@ -2,6 +2,6 @@
 
 import sys
 
-from typeshift.core.detect import url as _core_module
+from shelfshift.core.detect import url as _core_module
 
 sys.modules[__name__] = _core_module

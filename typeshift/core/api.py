@@ -1,4 +1,4 @@
-"""Stable public API facade for the Typeshift core engine."""
+"""Stable public API facade for the Shelfshift core engine."""
 
 
 from dataclasses import dataclass, field

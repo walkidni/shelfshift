@@ -1,6 +1,6 @@
 import requests
 
-from typeshift.core.importers.url.platforms.woocommerce import WooCommerceClient
+from shelfshift.core.importers.url.platforms.woocommerce import WooCommerceClient
 
 
 class _FakeResponse:

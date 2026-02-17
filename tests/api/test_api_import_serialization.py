@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from typeshift.core.canonical import (
+from shelfshift.core.canonical import (
     CategorySet,
     Identifiers,
     Inventory,

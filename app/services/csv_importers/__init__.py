@@ -1,6 +1,6 @@
 """Compatibility facade for legacy ``app.services.csv_importers`` imports."""
 
-from typeshift.core.importers.csv import (
+from shelfshift.core.importers.csv import (
     DETECTABLE_PLATFORMS,
     MAX_CSV_UPLOAD_BYTES,
     detect_csv_platform,

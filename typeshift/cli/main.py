@@ -1,4 +1,4 @@
-"""Command-line frontend for the Typeshift core engine."""
+"""Command-line frontend for the Shelfshift core engine."""
 
 
 import argparse
@@ -8,7 +8,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from typeshift.core import (
+from shelfshift.core import (
     convert_csv,
     detect_csv,
     detect_url,
@@ -106,7 +106,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="typeshift", description="Typeshift core engine CLI")
+    parser = argparse.ArgumentParser(prog="shelfshift", description="Shelfshift core engine CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     detect = subparsers.add_parser("detect", help="Detect input kind/platform from URL or CSV path")

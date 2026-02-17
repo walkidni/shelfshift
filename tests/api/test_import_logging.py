@@ -1,5 +1,5 @@
 from tests.helpers._model_builders import Product, Variant
-from typeshift.server.logging import product_result_to_loggable
+from shelfshift.server.logging import product_result_to_loggable
 
 
 def _build_sample_product() -> Product:

@@ -1,6 +1,6 @@
 """Compatibility facade for legacy ``app.helpers`` imports."""
 
-from typeshift.server.helpers import (
+from shelfshift.server.helpers import (
     batch_export_csv_for_target,
     csv_attachment_response,
     decode_product_json_b64,

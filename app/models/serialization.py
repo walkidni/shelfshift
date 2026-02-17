@@ -1,4 +1,4 @@
-from typeshift.core.canonical.serialization import serialize_product_for_api, serialize_variant_for_api
+from shelfshift.core.canonical.serialization import serialize_product_for_api, serialize_variant_for_api
 
 
 __all__ = [

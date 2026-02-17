@@ -1,7 +1,7 @@
 """Shared runtime settings for server/web adapters.
 
 This module owns environment-backed application settings. It is intentionally
-separate from ``typeshift.core.config`` because core config stays minimal and
+separate from ``shelfshift.core.config`` because core config stays minimal and
 framework-agnostic.
 """
 

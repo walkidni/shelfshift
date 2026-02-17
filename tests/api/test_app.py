@@ -3,13 +3,13 @@ import io
 
 import pandas as pd
 
-from typeshift.server.main import app
-from typeshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
-from typeshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
-from typeshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
-from typeshift.core.exporters.platforms.wix import WIX_COLUMNS
-from typeshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
-from typeshift.core.canonical import serialize_product_for_api
+from shelfshift.server.main import app
+from shelfshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
+from shelfshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
+from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
+from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
+from shelfshift.core.canonical import serialize_product_for_api
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._app_helpers import patch_run_import_product
 

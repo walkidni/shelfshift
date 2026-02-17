@@ -1,6 +1,6 @@
 """Compatibility facade for legacy ``app.services.exporters`` imports."""
 
-from typeshift.core.exporters import (
+from shelfshift.core.exporters import (
     BIGCOMMERCE_COLUMNS,
     SHOPIFY_COLUMNS,
     SQUARESPACE_COLUMNS,

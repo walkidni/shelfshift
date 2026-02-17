@@ -1,1 +1,1 @@
-"""CLI frontend for the Typeshift core engine."""
+"""CLI frontend for the Shelfshift core engine."""

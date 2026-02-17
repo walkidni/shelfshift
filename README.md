@@ -3,8 +3,8 @@
 This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, BigCommerce, Wix, Squarespace, and WooCommerce.
 
 Project surface:
-- Importable core engine package (`typeshift.core`)
-- CLI frontend (`typeshift`)
+- Importable core engine package (`shelfshift.core`)
+- CLI frontend (`shelfshift`)
 - FastAPI API for programmatic use (`POST /api/v1/import`)
 - CSV import API (`POST /api/v1/import/csv`) — auto-detects single or multi-product CSVs
 - Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`) — accepts single product or list for batch export
@@ -55,7 +55,7 @@ cp .env.example .env
 3. Start the app:
 
 ```bash
-uv run uvicorn typeshift.server.main:app --reload
+uv run uvicorn shelfshift.server.main:app --reload
 ```
 
 4. Open:
@@ -68,17 +68,17 @@ uv run uvicorn typeshift.server.main:app --reload
 Python API:
 
 ```bash
-uv run python -c "from typeshift.core import detect_product_url; print(detect_product_url('https://example.myshopify.com/products/item'))"
+uv run python -c "from shelfshift.core import detect_product_url; print(detect_product_url('https://example.myshopify.com/products/item'))"
 ```
 
 CLI examples:
 
 ```bash
-uv run typeshift detect "https://example.myshopify.com/products/item"
-uv run typeshift detect ./product.csv
-uv run typeshift import-csv ./product.csv --source-platform shopify
-uv run typeshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
-uv run typeshift validate ./source.csv --platform shopify --report ./validate.json
+uv run shelfshift detect "https://example.myshopify.com/products/item"
+uv run shelfshift detect ./product.csv
+uv run shelfshift import-csv ./product.csv --source-platform shopify
+uv run shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
+uv run shelfshift validate ./source.csv --platform shopify --report ./validate.json
 ```
 
 ## API usage
@@ -204,7 +204,7 @@ curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
 ## Project layout
 
 ```text
-typeshift/
+shelfshift/
   core/
     canonical/
     detect/

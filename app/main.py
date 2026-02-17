@@ -1,9 +1,9 @@
 """Compatibility entrypoint for legacy ``app.main`` imports.
 
-The canonical FastAPI adapter now lives under ``typeshift.server.main``.
+The canonical FastAPI adapter now lives under ``shelfshift.server.main``.
 """
 
-from typeshift.server.main import (  # noqa: F401
+from shelfshift.server.main import (  # noqa: F401
     BASE_DIR,
     STATIC_DIR,
     app,

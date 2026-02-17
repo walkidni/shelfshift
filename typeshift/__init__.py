@@ -1,4 +1,4 @@
-"""Public package entrypoint for the Typeshift engine.
+"""Public package entrypoint for the Shelfshift engine.
 
 This package provides a stable import surface for core e-commerce catalog
 import/export logic, plus optional frontend adapters (CLI and FastAPI server).
@@ -8,14 +8,14 @@ from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
-    "Product": ("typeshift.core", "Product"),
-    "app": ("typeshift.server.main", "app"),
-    "create_app": ("typeshift.server.main", "create_app"),
-    "detect_csv_platform": ("typeshift.core", "detect_csv_platform"),
-    "detect_product_url": ("typeshift.core", "detect_product_url"),
-    "export_csv_for_target": ("typeshift.core", "export_csv_for_target"),
-    "import_product_from_csv": ("typeshift.core", "import_product_from_csv"),
-    "import_product_from_url": ("typeshift.core", "import_product_from_url"),
+    "Product": ("shelfshift.core", "Product"),
+    "app": ("shelfshift.server.main", "app"),
+    "create_app": ("shelfshift.server.main", "create_app"),
+    "detect_csv_platform": ("shelfshift.core", "detect_csv_platform"),
+    "detect_product_url": ("shelfshift.core", "detect_product_url"),
+    "export_csv_for_target": ("shelfshift.core", "export_csv_for_target"),
+    "import_product_from_csv": ("shelfshift.core", "import_product_from_csv"),
+    "import_product_from_url": ("shelfshift.core", "import_product_from_url"),
 }
 
 try:

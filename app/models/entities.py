@@ -1,4 +1,4 @@
-from typeshift.core.canonical.entities import (
+from shelfshift.core.canonical.entities import (
     CategorySet,
     Currency,
     Identifiers,

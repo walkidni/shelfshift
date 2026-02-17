@@ -16,8 +16,8 @@ dependencies = [
 ]
 
 [project.scripts]
-typeshift = "typeshift.cli.main:main"
-typeshift-server = "typeshift.server.main:run"
+shelfshift = "shelfshift.cli.main:main"
+shelfshift-server = "shelfshift.server.main:run"
 
 [dependency-groups]
 dev = [

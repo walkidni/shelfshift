@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-from typeshift.core.exporters import product_to_shopify_csv
-from typeshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
-from typeshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from shelfshift.core.exporters import product_to_shopify_csv
+from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
+from shelfshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_frame
 

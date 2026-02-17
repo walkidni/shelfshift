@@ -1,6 +1,6 @@
 from typing import Any
 
-from typeshift.core.canonical import Product
+from shelfshift.core.canonical import Product
 
 
 def patch_run_import_product(
@@ -13,4 +13,4 @@ def patch_run_import_product(
         assert product_url == expected_url
         return product
 
-    monkeypatch.setattr("typeshift.server.helpers.importing.run_import_product", fake_run_import_product)
+    monkeypatch.setattr("shelfshift.server.helpers.importing.run_import_product", fake_run_import_product)

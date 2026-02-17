@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-from typeshift.core.exporters import product_to_wix_csv
-from typeshift.core.exporters.platforms.wix import WIX_COLUMNS
-from typeshift.core.canonical import Inventory, Media, Money, OptionDef, OptionValue, Price
+from shelfshift.core.exporters import product_to_wix_csv
+from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
+from shelfshift.core.canonical import Inventory, Media, Money, OptionDef, OptionValue, Price
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_frame
 

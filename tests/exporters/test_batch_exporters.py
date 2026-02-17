@@ -3,18 +3,18 @@ import io
 import pandas as pd
 import pytest
 
-from typeshift.core.exporters.shared.batch import products_to_shopify_csv
-from typeshift.core.exporters.shared.batch import (
+from shelfshift.core.exporters.shared.batch import products_to_shopify_csv
+from shelfshift.core.exporters.shared.batch import (
     products_to_bigcommerce_csv,
     products_to_squarespace_csv,
     products_to_wix_csv,
     products_to_woocommerce_csv,
 )
-from typeshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
-from typeshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
-from typeshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
-from typeshift.core.exporters.platforms.wix import WIX_COLUMNS
-from typeshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
+from shelfshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
+from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
+from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
 from tests.helpers._model_builders import Product, Variant
 
 

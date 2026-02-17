@@ -1,6 +1,6 @@
 """Compatibility facade for legacy ``app.services.importer`` imports."""
 
-from typeshift.core.importers.url import (
+from shelfshift.core.importers.url import (
     AliExpressClient,
     AmazonRapidApiClient,
     ApiConfig,

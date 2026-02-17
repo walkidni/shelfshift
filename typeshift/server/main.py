@@ -1,4 +1,4 @@
-"""FastAPI server adapter for the Typeshift core engine."""
+"""FastAPI server adapter for the Shelfshift core engine."""
 
 
 import logging
@@ -53,7 +53,7 @@ app = create_app()
 def run() -> None:
     import uvicorn
 
-    uvicorn.run("typeshift.server.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    uvicorn.run("shelfshift.server.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
 
 
 __all__ = ["BASE_DIR", "STATIC_DIR", "app", "create_app", "logger", "run", "settings"]

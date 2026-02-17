@@ -1,7 +1,7 @@
 import warnings
 
 warnings.warn(
-    "Importing canonical models from 'app.models' is deprecated; use 'typeshift.core.canonical' instead.",
+    "Importing canonical models from 'app.models' is deprecated; use 'shelfshift.core.canonical' instead.",
     DeprecationWarning,
     stacklevel=2,
 )

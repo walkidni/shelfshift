@@ -1,6 +1,6 @@
 """Compatibility facade for legacy ``app.schemas`` imports."""
 
-from typeshift.server.schemas import (
+from shelfshift.server.schemas import (
     ExportBigCommerceCsvRequest,
     ExportFromProductCsvRequest,
     ExportShopifyCsvRequest,

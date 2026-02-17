@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-from typeshift.core.canonical import Product, SourceRef, Variant, Weight
-from typeshift.core.exporters.shared import utils
+from shelfshift.core.canonical import Product, SourceRef, Variant, Weight
+from shelfshift.core.exporters.shared import utils
 
 
 def test_resolve_weight_grams_uses_variant_weight_first() -> None:

@@ -2,6 +2,6 @@
 
 import sys
 
-from typeshift.server.helpers import payload as _server_module
+from shelfshift.server.helpers import payload as _server_module
 
 sys.modules[__name__] = _server_module

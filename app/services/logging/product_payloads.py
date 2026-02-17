@@ -2,6 +2,6 @@
 
 import sys
 
-from typeshift.server.logging import product_payloads as _server_module
+from shelfshift.server.logging import product_payloads as _server_module
 
 sys.modules[__name__] = _server_module

@@ -1,6 +1,6 @@
 import pytest
 
-from typeshift.core.importers.csv.batch import import_products_from_csv
+from shelfshift.core.importers.csv.batch import import_products_from_csv
 
 
 # ---------------------------------------------------------------------------
