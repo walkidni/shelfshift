@@ -7,12 +7,11 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from app.services.csv_importers import parse_canonical_product_payload
-
 from .canonical.entities import Product
 from .config import CoreConfig, config_from_env
 from .detect import detect_csv_platform as _detect_csv_platform
 from .detect import detect_product_url as _detect_product_url
+from .importers.csv.common import parse_canonical_product_payload
 from .importers.csv import import_product_from_csv, import_products_from_csv
 from .importers.url import import_product_from_url, import_products_from_urls
 from .registry import get_exporter
