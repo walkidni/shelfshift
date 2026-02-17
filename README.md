@@ -292,4 +292,4 @@ pytest -q
 
 ## License
 
-No license file is currently included in this repository.
+This project is licensed under the MIT License. See `LICENSE`.

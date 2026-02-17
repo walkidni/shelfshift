@@ -2,6 +2,10 @@
 name = "shelfshift"
 version = "0.1.0"
 requires-python = ">=3.13"
+license = { text = "MIT" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+]
 dependencies = [
     "babel>=2.17.0,<3.0.0",
     "fastapi>=0.116.0,<1.0.0",
