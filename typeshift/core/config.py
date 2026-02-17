@@ -3,7 +3,6 @@
 Core config is side-effect free: it does not load dotenv files.
 """
 
-from __future__ import annotations
 
 import os
 from dataclasses import dataclass

@@ -1,6 +1,5 @@
 """Baseline canonical validation rules."""
 
-from __future__ import annotations
 
 from app.models import Product
 

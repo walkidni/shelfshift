@@ -1,6 +1,5 @@
 """Product payload encoding/decoding helpers for web routes."""
 
-from __future__ import annotations
 
 import base64
 import json

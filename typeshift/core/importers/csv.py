@@ -1,6 +1,5 @@
 """CSV-based importers."""
 
-from __future__ import annotations
 
 from app.models import Product
 from app.services.csv_importers import import_product_from_csv as _import_product_from_csv

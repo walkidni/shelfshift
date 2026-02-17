@@ -1,6 +1,5 @@
 """Web routes for URL-based import and direct export."""
 
-from __future__ import annotations
 
 from pathlib import Path
 

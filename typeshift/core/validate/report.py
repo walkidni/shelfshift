@@ -1,6 +1,5 @@
 """Validation report types for canonical product checks."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 

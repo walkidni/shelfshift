@@ -1,6 +1,5 @@
 """Web routes for CSV import and canonical-payload export."""
 
-from __future__ import annotations
 
 from pathlib import Path
 

@@ -1,6 +1,5 @@
 """FastAPI server adapter for the Typeshift core engine."""
 
-from __future__ import annotations
 
 import logging
 from pathlib import Path

@@ -1,6 +1,5 @@
 """Auto-detect the source e-commerce platform from CSV headers."""
 
-from __future__ import annotations
 
 from .common import csv_rows, decode_csv_bytes
 

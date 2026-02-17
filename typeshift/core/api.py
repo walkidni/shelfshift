@@ -1,6 +1,5 @@
 """Stable public API facade for the Typeshift core engine."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path

@@ -4,7 +4,6 @@ These functions avoid FastAPI-specific exceptions so they are safe for library
 and CLI usage.
 """
 
-from __future__ import annotations
 
 import os
 
