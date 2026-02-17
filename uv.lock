@@ -182,53 +182,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ecom-catalog-transfer"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "babel" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "jinja2" },
-    { name = "pandas" },
-    { name = "python-dotenv" },
-    { name = "python-multipart" },
-    { name = "python-slugify" },
-    { name = "requests" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "playwright" },
-    { name = "pyflakes" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "babel", specifier = ">=2.17.0,<3.0.0" },
-    { name = "fastapi", specifier = ">=0.116.0,<1.0.0" },
-    { name = "httpx", specifier = ">=0.28.0,<1.0.0" },
-    { name = "jinja2", specifier = ">=3.1.0,<4.0.0" },
-    { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
-    { name = "python-dotenv", specifier = ">=1.1.0,<2.0.0" },
-    { name = "python-multipart", specifier = ">=0.0.20,<1.0.0" },
-    { name = "python-slugify", specifier = ">=8.0.0,<9.0.0" },
-    { name = "requests", specifier = ">=2.32.0,<3.0.0" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0,<1.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "playwright", specifier = ">=1.58.0" },
-    { name = "pyflakes", specifier = ">=3.4.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-]
-
-[[package]]
 name = "fastapi"
 version = "0.129.0"
 source = { registry = "https://pypi.org/simple" }
@@ -774,6 +727,53 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
+]
+
+[[package]]
+name = "shelfshift"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "babel" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "pandas" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "python-slugify" },
+    { name = "requests" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "playwright" },
+    { name = "pyflakes" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "babel", specifier = ">=2.17.0,<3.0.0" },
+    { name = "fastapi", specifier = ">=0.116.0,<1.0.0" },
+    { name = "httpx", specifier = ">=0.28.0,<1.0.0" },
+    { name = "jinja2", specifier = ">=3.1.0,<4.0.0" },
+    { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
+    { name = "python-dotenv", specifier = ">=1.1.0,<2.0.0" },
+    { name = "python-multipart", specifier = ">=0.0.20,<1.0.0" },
+    { name = "python-slugify", specifier = ">=8.0.0,<9.0.0" },
+    { name = "requests", specifier = ">=2.32.0,<3.0.0" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0,<1.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "playwright", specifier = ">=1.58.0" },
+    { name = "pyflakes", specifier = ">=3.4.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
 
 [[package]]
