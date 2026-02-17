@@ -151,7 +151,7 @@ def export_csv(
         ) from exc
 
     if isinstance(products, list):
-        from app.services.exporters.batch import (
+        from .exporters.batch import (
             products_to_bigcommerce_csv,
             products_to_shopify_csv,
             products_to_squarespace_csv,
