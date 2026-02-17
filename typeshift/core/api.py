@@ -5,8 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from fastapi import HTTPException
-
 from .canonical.entities import Product
 from .config import CoreConfig, config_from_env
 from .detect import detect_csv_platform as _detect_csv_platform
@@ -66,26 +64,9 @@ def import_url(
     config = config_from_env(strict=strict, debug=debug)
     resolved_rapidapi_key = rapidapi_key if rapidapi_key is not None else config.rapidapi_key
 
-    try:
-        from app.helpers import importing as _legacy_importing
-    except Exception:
-        _legacy_importing = None
-
     if isinstance(urls, str):
-        if _legacy_importing is not None:
-            try:
-                product = _legacy_importing.run_import_product(urls)
-            except HTTPException as exc:
-                raise ValueError(str(exc.detail)) from exc
-        else:
-            product = import_product_from_url(urls, rapidapi_key=resolved_rapidapi_key)
+        product = import_product_from_url(urls, rapidapi_key=resolved_rapidapi_key)
         return ImportResult(products=[product], errors=[])
-
-    if _legacy_importing is not None:
-        products, errors = _legacy_importing.run_import_products(list(urls))
-        if strict and errors:
-            raise ValueError(f"Strict mode failed with {len(errors)} URL import error(s).")
-        return ImportResult(products=products, errors=errors)
 
     products, errors = import_products_from_urls(
         list(urls),
@@ -105,23 +86,11 @@ def import_csv(
 ) -> ImportResult:
     csv_bytes = _coerce_bytes(csv_input)
     source_platform = (platform or _detect_csv_platform(csv_bytes)).strip().lower()
-    try:
-        from app.helpers import importing as _legacy_importing
-    except Exception:
-        _legacy_importing = None
-
-    if _legacy_importing is not None:
-        products = _legacy_importing.run_import_csv_products(
-            source_platform=source_platform,
-            csv_bytes=csv_bytes,
-            source_weight_unit=source_weight_unit,
-        )
-    else:
-        products = import_products_from_csv(
-            source_platform=source_platform,
-            csv_bytes=csv_bytes,
-            source_weight_unit=source_weight_unit,
-        )
+    products = import_products_from_csv(
+        source_platform=source_platform,
+        csv_bytes=csv_bytes,
+        source_weight_unit=source_weight_unit,
+    )
     if strict and not products:
         raise ValueError("Strict mode failed: no products imported from CSV.")
     return ImportResult(products=products, errors=[])

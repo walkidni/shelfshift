@@ -1,7 +1,7 @@
 """Baseline canonical validation rules."""
 
 
-from app.models import Product
+from ..canonical import Product
 
 from .report import ValidationIssue, ValidationReport
 

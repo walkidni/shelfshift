@@ -1,6 +1,6 @@
 """Pydantic request/response schema aliases."""
 
-from app.schemas import (
+from ...server.schemas import (
     ExportBigCommerceCsvRequest,
     ExportFromProductCsvRequest,
     ExportShopifyCsvRequest,

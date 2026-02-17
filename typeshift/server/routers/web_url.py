@@ -7,7 +7,9 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from ...core.api import export_csv, import_url
+from app.helpers import importing as _legacy_importing
+
+from ...core.api import export_csv
 from ...core.canonical.serialization import serialize_product_for_api
 from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
@@ -64,14 +66,18 @@ def import_url_from_web(
 		)
 
 	try:
-		result = import_url(urls[0] if len(urls) == 1 else urls)
-	except ValueError as exc:
+		if len(urls) == 1:
+			products = [_legacy_importing.run_import_product(urls[0])]
+			errors: list[dict[str, str]] = []
+		else:
+			products, errors = _legacy_importing.run_import_products(urls)
+	except HTTPException as exc:
 		return render_web_page(
 			request,
 			templates,
 			template_name="url.html",
 			active_page="url",
-			error=str(exc),
+			error=str(exc.detail),
 			error_title="Import Error",
 			product_urls=urls,
 			target_platform="shopify",
@@ -79,11 +85,11 @@ def import_url_from_web(
 			bigcommerce_csv_format="modern",
 			squarespace_product_page="",
 			squarespace_product_url="",
-			status_code=422,
+			status_code=exc.status_code,
 		)
 
-	if len(result.products) == 1:
-		product = result.products[0]
+	if len(products) == 1:
+		product = products[0]
 		editor_payload = serialize_product_for_api(product, include_raw=False)
 		return render_web_page(
 			request,
@@ -100,10 +106,10 @@ def import_url_from_web(
 			squarespace_product_url="",
 			preview_product_json_b64=product_to_json_b64(product),
 			editor_product_payload=editor_payload,
-			url_import_errors=result.errors,
+			url_import_errors=errors,
 		)
 
-	if not result.products:
+	if not products:
 		return render_web_page(
 			request,
 			templates,
@@ -117,11 +123,11 @@ def import_url_from_web(
 			bigcommerce_csv_format="modern",
 			squarespace_product_page="",
 			squarespace_product_url="",
-			url_import_errors=result.errors,
+			url_import_errors=errors,
 			status_code=422,
 		)
 
-	editor_payloads = [serialize_product_for_api(product, include_raw=False) for product in result.products]
+	editor_payloads = [serialize_product_for_api(product, include_raw=False) for product in products]
 	return render_web_page(
 		request,
 		templates,
@@ -135,10 +141,10 @@ def import_url_from_web(
 		bigcommerce_csv_format="modern",
 		squarespace_product_page="",
 		squarespace_product_url="",
-		preview_product_json_b64=products_to_json_b64(result.products),
+		preview_product_json_b64=products_to_json_b64(products),
 		editor_product_payload=None,
 		editor_products_payload=editor_payloads,
-		url_import_errors=result.errors,
+		url_import_errors=errors,
 	)
 
 
@@ -152,8 +158,13 @@ def _export_csv_response(
 	squarespace_product_page: str = "",
 	squarespace_product_url: str = "",
 ) -> Response:
-	import_result = import_url(product_urls[0] if len(product_urls) == 1 else product_urls)
-	products = import_result.products if len(import_result.products) > 1 else import_result.products[0]
+	if len(product_urls) == 1:
+		products = _legacy_importing.run_import_product(product_urls[0])
+	else:
+		products_list, errors = _legacy_importing.run_import_products(product_urls)
+		if errors and not products_list:
+			raise HTTPException(status_code=422, detail=errors[0]["detail"])
+		products = products_list if len(products_list) > 1 else products_list[0]
 	exported = export_csv(
 		products,
 		target=target_platform,

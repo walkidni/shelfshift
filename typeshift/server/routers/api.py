@@ -6,8 +6,10 @@ from typing import Any
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
-from ...core.api import detect_csv, detect_url, export_csv, import_csv, import_url, parse_product_payload
-from ...core.canonical.schemas import (
+from app.helpers import importing as _legacy_importing
+
+from ...core.api import detect_csv, detect_url, export_csv, import_csv, parse_product_payload
+from ..schemas import (
 	ExportBigCommerceCsvRequest,
 	ExportFromProductCsvRequest,
 	ExportShopifyCsvRequest,
@@ -45,17 +47,15 @@ def import_from_api(payload: ImportRequest) -> Any:
 	if not urls:
 		raise HTTPException(status_code=400, detail="product_urls is required")
 
-	try:
-		result = import_url(urls[0] if len(urls) == 1 else urls)
-	except ValueError as exc:
-		raise HTTPException(status_code=422, detail=str(exc)) from exc
-
 	if len(urls) == 1:
-		return serialize_product_for_api(result.products[0], include_raw=settings.debug)
+		product = _legacy_importing.run_import_product(urls[0])
+		return serialize_product_for_api(product, include_raw=settings.debug)
+
+	products, errors = _legacy_importing.run_import_products(urls)
 
 	return {
-		"products": [serialize_product_for_api(product, include_raw=settings.debug) for product in result.products],
-		"errors": result.errors,
+		"products": [serialize_product_for_api(product, include_raw=settings.debug) for product in products],
+		"errors": errors,
 	}
 
 
@@ -196,4 +196,3 @@ def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Re
 		publish=payload.publish,
 		weight_unit=payload.weight_unit,
 	)
-
