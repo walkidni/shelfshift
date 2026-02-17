@@ -7,11 +7,10 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.helpers import importing as _legacy_importing
-
 from ...core.api import export_csv
 from ...core.canonical.serialization import serialize_product_for_api
 from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
+from ..helpers import importing as _importing_helpers
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
 from ..helpers.rendering import render_landing_page, render_web_page
 
@@ -67,10 +66,10 @@ def import_url_from_web(
 
 	try:
 		if len(urls) == 1:
-			products = [_legacy_importing.run_import_product(urls[0])]
+			products = [_importing_helpers.run_import_product(urls[0])]
 			errors: list[dict[str, str]] = []
 		else:
-			products, errors = _legacy_importing.run_import_products(urls)
+			products, errors = _importing_helpers.run_import_products(urls)
 	except HTTPException as exc:
 		return render_web_page(
 			request,
@@ -159,9 +158,9 @@ def _export_csv_response(
 	squarespace_product_url: str = "",
 ) -> Response:
 	if len(product_urls) == 1:
-		products = _legacy_importing.run_import_product(product_urls[0])
+		products = _importing_helpers.run_import_product(product_urls[0])
 	else:
-		products_list, errors = _legacy_importing.run_import_products(product_urls)
+		products_list, errors = _importing_helpers.run_import_products(product_urls)
 		if errors and not products_list:
 			raise HTTPException(status_code=422, detail=errors[0]["detail"])
 		products = products_list if len(products_list) > 1 else products_list[0]

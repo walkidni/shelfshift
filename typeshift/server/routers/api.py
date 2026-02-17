@@ -6,8 +6,6 @@ from typing import Any
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
-from app.helpers import importing as _legacy_importing
-
 from ...core.api import detect_csv, detect_url, export_csv, import_csv, parse_product_payload
 from ..schemas import (
 	ExportBigCommerceCsvRequest,
@@ -20,6 +18,7 @@ from ..schemas import (
 )
 from ...core.canonical.serialization import serialize_product_for_api
 from ..config import get_settings
+from ..helpers import importing as _importing_helpers
 
 settings = get_settings()
 router = APIRouter()
@@ -48,10 +47,10 @@ def import_from_api(payload: ImportRequest) -> Any:
 		raise HTTPException(status_code=400, detail="product_urls is required")
 
 	if len(urls) == 1:
-		product = _legacy_importing.run_import_product(urls[0])
+		product = _importing_helpers.run_import_product(urls[0])
 		return serialize_product_for_api(product, include_raw=settings.debug)
 
-	products, errors = _legacy_importing.run_import_products(urls)
+	products, errors = _importing_helpers.run_import_products(urls)
 
 	return {
 		"products": [serialize_product_for_api(product, include_raw=settings.debug) for product in products],
