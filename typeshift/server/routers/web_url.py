@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from ...core.api import export_csv, import_url
 from ...core.canonical.serialization import serialize_product_for_api
-from ...core.exporters.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
+from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
 from ..helpers.rendering import render_landing_page, render_web_page
 
@@ -287,4 +287,3 @@ def export_csv_from_web(
 			squarespace_product_url=squarespace_product_url,
 			status_code=status_code,
 		)
-

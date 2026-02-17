@@ -5,7 +5,7 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from ...core.exporters.weight_units import (
+from ...core.exporters.shared.weight_units import (
     DEFAULT_WEIGHT_UNIT_BY_TARGET,
     WEIGHT_UNIT_ALLOWLIST_BY_TARGET,
 )

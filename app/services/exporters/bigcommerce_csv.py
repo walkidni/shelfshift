@@ -2,6 +2,6 @@
 
 import sys
 
-from typeshift.core.exporters import bigcommerce_csv as _core_module
+from typeshift.core.exporters.platforms import bigcommerce as _core_module
 
 sys.modules[__name__] = _core_module

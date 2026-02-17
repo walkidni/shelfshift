@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from ...core.api import export_csv, import_csv, parse_product_payload
 from ...core.canonical.serialization import serialize_product_for_api
-from ...core.exporters.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
+from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 from ..helpers.payload import (
 	decode_product_json_b64,
 	product_from_payload_dict,
@@ -132,4 +132,3 @@ def export_from_product_csv_web(
 		media_type="text/csv; charset=utf-8",
 		headers={"Content-Disposition": f'attachment; filename="{exported.filename}"'},
 	)
-
