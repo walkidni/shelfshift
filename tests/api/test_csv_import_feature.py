@@ -8,9 +8,9 @@ from pathlib import Path
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.models import Product, Variant, serialize_product_for_api
-from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
+from typeshift.server.main import app
+from typeshift.core.canonical import Product, Variant, serialize_product_for_api
+from typeshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
 
 
 client = TestClient(app)

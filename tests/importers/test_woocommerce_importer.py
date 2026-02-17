@@ -1,6 +1,6 @@
 import requests
 
-from app.services.importer.platforms.woocommerce import WooCommerceClient
+from typeshift.core.importers.url.platforms.woocommerce import WooCommerceClient
 
 
 class _FakeResponse:

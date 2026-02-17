@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from app.models import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
+from typeshift.core.canonical import Media, Money, Price, Weight, format_decimal, normalize_currency, parse_decimal_money
 
 
 def test_models_module_exports_shared_types_and_formatting_helpers() -> None:

@@ -1,6 +1,6 @@
 import requests
 
-from app.services.importer.platforms.squarespace import SquarespaceClient
+from typeshift.core.importers.url.platforms.squarespace import SquarespaceClient
 
 
 class _FakeResponse:

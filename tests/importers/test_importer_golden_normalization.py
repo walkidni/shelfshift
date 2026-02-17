@@ -3,9 +3,9 @@ from pathlib import Path
 
 import requests
 
-from app.services.importer.platforms.shopify import ShopifyClient
-from app.services.importer.platforms.squarespace import SquarespaceClient
-from app.services.importer.platforms.woocommerce import WooCommerceClient
+from typeshift.core.importers.url.platforms.shopify import ShopifyClient
+from typeshift.core.importers.url.platforms.squarespace import SquarespaceClient
+from typeshift.core.importers.url.platforms.woocommerce import WooCommerceClient
 
 _FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "importers"
 

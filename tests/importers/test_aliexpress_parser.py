@@ -1,4 +1,4 @@
-from app.services.importer import _parse_aliexpress_result
+from typeshift.core.importers.url import _parse_aliexpress_result
 
 
 def test_parse_aliexpress_result_applies_currency_sku_category_and_weight() -> None:

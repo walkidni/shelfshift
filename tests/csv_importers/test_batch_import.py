@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.csv_importers.batch import import_products_from_csv
+from typeshift.core.importers.csv.batch import import_products_from_csv
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from app.models import (
+from typeshift.core.canonical import (
     CategorySet,
     Identifiers,
     Inventory,

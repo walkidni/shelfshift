@@ -1,7 +1,7 @@
 
 from typing import Any
 
-from app.models import (
+from typeshift.core.canonical import (
     CategorySet,
     Inventory,
     Media,

@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from app.services.exporters import product_to_shopify_csv
-from app.services.exporters.shopify_csv import SHOPIFY_COLUMNS
-from app.models import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
+from typeshift.core.exporters import product_to_shopify_csv
+from typeshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
+from typeshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_fixture_frame, read_frame
 

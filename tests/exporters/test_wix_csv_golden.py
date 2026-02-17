@@ -3,9 +3,9 @@ from decimal import Decimal
 
 import pandas as pd
 
-from app.services.exporters import product_to_wix_csv
-from app.services.exporters.wix_csv import WIX_COLUMNS
-from app.models import Inventory, Media, Money, OptionDef, OptionValue, Price
+from typeshift.core.exporters import product_to_wix_csv
+from typeshift.core.exporters.platforms.wix import WIX_COLUMNS
+from typeshift.core.canonical import Inventory, Media, Money, OptionDef, OptionValue, Price
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_fixture_frame, read_frame
 

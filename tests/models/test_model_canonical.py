@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.models import Money, Price, Product, SourceRef, Variant, Weight, resolve_current_money
+from typeshift.core.canonical import Money, Price, Product, SourceRef, Variant, Weight, resolve_current_money
 
 
 def test_product_and_variant_support_canonical_fields_only() -> None:
