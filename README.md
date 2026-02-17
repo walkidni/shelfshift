@@ -1,207 +1,245 @@
-# Ecommerce Catalog Transfer
+# Shelfshift
 
-This app ingests supported ecommerce product URLs and returns CSV files that are importable into Shopify, BigCommerce, Wix, Squarespace, and WooCommerce.
+Shelfshift is a developer toolkit for ecommerce catalog translation.
 
-Project surface:
-- Importable core engine package (`shelfshift.core`)
-- CLI frontend (`shelfshift`)
-- FastAPI API for programmatic use (`POST /api/v1/import`)
-- CSV import API (`POST /api/v1/import/csv`) — auto-detects single or multi-product CSVs
-- Canonical-to-CSV conversion API (`POST /api/v1/export/from-product.csv`) — accepts single product or list for batch export
-- URL detection endpoint (`GET /api/v1/detect`)
-- Canonical-product CSV export endpoints (accept `product` JSON, not `product_url`):
-  - `POST /api/v1/export/shopify.csv`
-  - `POST /api/v1/export/bigcommerce.csv`
-  - `POST /api/v1/export/wix.csv`
-  - `POST /api/v1/export/squarespace.csv`
-  - `POST /api/v1/export/woocommerce.csv`
-- Web UI (URL import -> preview -> export): `/` (import posts to `/import.url`, export posts to `/export-from-product.csv`)
-- Web UI (CSV import/export): `/csv` (upload posts to `/import.csv`, export posts to `/export-from-product.csv`; auto-detects batch CSVs and shows collapsible product cards for editing)
-- Shared importer services for Shopify, WooCommerce, Squarespace, Amazon, and AliExpress
-
-## Supported import sources
-
-- Shopify product URLs
-- WooCommerce product URLs (storefront product URLs and Store API product URLs)
-- Squarespace product URLs
-- Amazon product URLs (requires `RAPIDAPI_KEY`)
-- AliExpress item URLs (requires `RAPIDAPI_KEY`)
-
-## URL detection coverage (`GET /api/v1/detect`)
+Given a product source (URL or CSV), Shelfshift normalizes it into a canonical product model and exports platform-specific CSVs for:
 
 - Shopify
-- Amazon
-- AliExpress
-- WooCommerce
+- BigCommerce
+- Wix
 - Squarespace
+- WooCommerce
 
-## Run locally
+This project is built for ecommerce developers and integration engineers who need reliable, automatable catalog pipelines.
 
-Prereqs:
-- Install `uv`: https://astral.sh/uv
+## Positioning
 
-1. Install dependencies from `pyproject.toml` + `uv.lock`:
+- `shelfshift.core`: the primary product (importable Python library)
+- `shelfshift` CLI: automation and local workflows
+- `shelfshift.server`: self-hosted FastAPI API surface
+- Web UI: demo interface for core/server capabilities, not the primary target
+
+## Core Capabilities
+
+- URL detection (`shopify`, `woocommerce`, `squarespace`, `amazon`, `aliexpress`)
+- URL import to canonical product(s)
+- CSV platform detection + CSV import to canonical product(s)
+- Canonical product validation
+- Canonical -> target-platform CSV export
+- Single and batch export flows
+
+## Package Surfaces
+
+- Library: `shelfshift.core`
+- CLI: `shelfshift` (entrypoint from `pyproject.toml`)
+- Server runner: `shelfshift-server`
+
+## Supported Inputs
+
+### URL import sources
+
+- Shopify product URLs
+- WooCommerce product/store API URLs
+- Squarespace product URLs
+- Amazon product URLs (requires `RAPIDAPI_KEY`)
+- AliExpress product URLs (requires `RAPIDAPI_KEY`)
+
+### CSV import sources
+
+- Shopify
+- BigCommerce
+- Wix
+- Squarespace
+- WooCommerce
+
+## Installation
+
+Prerequisites:
+
+- Python 3.13+
+- `uv` (recommended): <https://astral.sh/uv>
+
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-2. Create local env config:
+Optional local env file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Start the app:
+## Quick Start (Library)
+
+```python
+from shelfshift.core import import_url, export_csv
+
+# 1) Import canonical product from URL
+result = import_url("https://example.myshopify.com/products/demo-item")
+product = result.products[0]
+
+# 2) Export to target platform CSV
+exported = export_csv(product, target="shopify", options={"publish": False, "weight_unit": "g"})
+with open("product.csv", "wb") as f:
+    f.write(exported.csv_bytes)
+```
+
+Batch URL import:
+
+```python
+from shelfshift.core import import_url
+
+result = import_url([
+    "https://store-a.com/products/a",
+    "https://store-b.com/products/b",
+])
+
+# result.products and result.errors support partial-success workflows
+print(len(result.products), len(result.errors))
+```
+
+## Quick Start (CLI)
+
+Detect URL or CSV input:
+
+```bash
+uv run shelfshift detect "https://example.myshopify.com/products/demo-item"
+uv run shelfshift detect ./source.csv
+```
+
+Import URL(s) to canonical JSON:
+
+```bash
+uv run shelfshift import-url "https://example.myshopify.com/products/demo-item"
+uv run shelfshift import-url "https://store-a.com/products/a" "https://store-b.com/products/b"
+```
+
+Import source CSV to canonical JSON:
+
+```bash
+uv run shelfshift import-csv ./source.csv --source-platform shopify
+```
+
+Convert source CSV directly to target CSV:
+
+```bash
+uv run shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
+```
+
+Validate canonicalized products from CSV:
+
+```bash
+uv run shelfshift validate ./source.csv --platform shopify --report ./validate.json
+```
+
+Export canonical JSON payload to target CSV:
+
+```bash
+uv run shelfshift export-csv ./canonical.json --to woocommerce --out ./woocommerce.csv
+```
+
+## Self-Hosted API (FastAPI)
+
+Start server:
+
+```bash
+uv run shelfshift-server
+```
+
+or:
 
 ```bash
 uv run uvicorn shelfshift.server.main:app --reload
 ```
 
-4. Open:
-- Web UI: `http://127.0.0.1:8000/`
-- CSV Import/Export: `http://127.0.0.1:8000/csv`
-- Swagger docs: `http://127.0.0.1:8000/docs`
+Open:
 
-## Library + CLI usage
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- URL demo UI: `http://127.0.0.1:8000/`
+- CSV demo UI: `http://127.0.0.1:8000/csv`
 
-Python API:
+### API Routes
+
+- `GET /health`
+- `GET /api/v1/detect`
+- `POST /api/v1/import`
+- `POST /api/v1/detect/csv`
+- `POST /api/v1/import/csv`
+- `POST /api/v1/export/from-product.csv`
+- `POST /api/v1/export/shopify.csv`
+- `POST /api/v1/export/bigcommerce.csv`
+- `POST /api/v1/export/wix.csv`
+- `POST /api/v1/export/squarespace.csv`
+- `POST /api/v1/export/woocommerce.csv`
+
+## API Examples
+
+Detect URL:
 
 ```bash
-uv run python -c "from shelfshift.core import detect_product_url; print(detect_product_url('https://example.myshopify.com/products/item'))"
+curl "http://127.0.0.1:8000/api/v1/detect?url=https://example.myshopify.com/products/demo-item"
 ```
 
-CLI examples:
+Import URL(s):
 
 ```bash
-uv run shelfshift detect "https://example.myshopify.com/products/item"
-uv run shelfshift detect ./product.csv
-uv run shelfshift import-csv ./product.csv --source-platform shopify
-uv run shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
-uv run shelfshift validate ./source.csv --platform shopify --report ./validate.json
-```
-
-## API usage
-
-Detect URL platform:
-
-```bash
-curl "http://127.0.0.1:8000/api/v1/detect?url=https://example.myshopify.com/products/item"
-```
-
-Import product:
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/import \
+curl -X POST "http://127.0.0.1:8000/api/v1/import" \
   -H "Content-Type: application/json" \
-  -d '{"product_url":"https://example.myshopify.com/products/item"}' \
-  -o product.json
+  -d '{"product_urls": ["https://example.myshopify.com/products/demo-item"]}'
 ```
 
-Export Shopify CSV (from canonical product JSON):
-
-```bash
-python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "g"}))' | \
-curl -X POST "http://127.0.0.1:8000/api/v1/export/shopify.csv" \
-  -H "Content-Type: application/json" \
-  -d @- \
-  -o product.csv
-```
-
-Export Squarespace CSV (from canonical product JSON):
-
-```bash
-python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "product_page": "shop", "squarespace_product_url": "lemons", "weight_unit": "kg"}))' | \
-curl -X POST "http://127.0.0.1:8000/api/v1/export/squarespace.csv" \
-  -H "Content-Type: application/json" \
-  -d @- \
-  -o product.csv
-```
-
-Export Wix CSV (from canonical product JSON):
-
-```bash
-python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "kg"}))' | \
-curl -X POST "http://127.0.0.1:8000/api/v1/export/wix.csv" \
-  -H "Content-Type: application/json" \
-  -d @- \
-  -o product.csv
-```
-
-Export WooCommerce CSV (from canonical product JSON):
-
-```bash
-python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "weight_unit": "kg"}))' | \
-curl -X POST "http://127.0.0.1:8000/api/v1/export/woocommerce.csv" \
-  -H "Content-Type: application/json" \
-  -d @- \
-  -o product.csv
-```
-
-Export BigCommerce CSV (from canonical product JSON):
-
-```bash
-python3 -c 'import json; p=json.load(open("product.json")); print(json.dumps({"product": p, "publish": False, "csv_format": "modern", "weight_unit": "kg"}))' | \
-curl -X POST "http://127.0.0.1:8000/api/v1/export/bigcommerce.csv" \
-  -H "Content-Type: application/json" \
-  -d @- \
-  -o product.csv
-```
-
-Import source CSV into canonical product JSON:
+Import CSV:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
   -F "source_platform=shopify" \
-  -F "file=@./product.csv"
+  -F "file=@./source.csv"
 ```
 
-For multi-product CSVs, the response is a JSON array of canonical products instead of a single object.
-
-Export from canonical product JSON:
+Export from canonical payload:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
   -H "Content-Type: application/json" \
-  -d '{"product":{...canonical product...},"target_platform":"woocommerce","publish":false}' \
-  -o converted.csv
+  -d '{"product": {"source": {"platform": "shopify"}, "title": "Demo"}, "target_platform": "shopify"}' \
+  -o out.csv
 ```
 
-Batch export from multiple canonical products:
+## Canonical Model
 
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
-  -H "Content-Type: application/json" \
-  -d '{"product":[{...product 1...},{...product 2...}],"target_platform":"shopify","publish":false,"weight_unit":"g"}' \
-  -o batch.csv
-```
+All importers normalize into the Shelfshift canonical entities under:
 
-## Export request options
+- `shelfshift.core.canonical.entities`
+- `shelfshift.core.canonical.serialization`
 
-- Shopify: `publish`, `weight_unit` (`g`, `kg`, `lb`, `oz`)
-- BigCommerce: `publish`, `csv_format` (`modern`, `legacy`), `weight_unit` (`g`, `kg`, `lb`, `oz`)
-- Wix: `publish`, `weight_unit` (`kg`, `lb`)
-- Squarespace: `publish`, `product_page`, `squarespace_product_url`, `weight_unit` (`kg`, `lb`)
-- WooCommerce: `publish`, `weight_unit` (`kg`)
+This canonical layer is the contract between import and export stages.
 
-## Response behavior (`raw` field)
+## Extensibility
 
-- API responses include `raw` only when `DEBUG=true`.
-- Web UI previews intentionally exclude `raw` (URL and CSV), even when `DEBUG=true`.
+Registry hooks are available via:
 
-## Environment variables
+- `shelfshift.core.register_importer`
+- `shelfshift.core.register_exporter`
+- `shelfshift.core.list_importers`
+- `shelfshift.core.list_exporters`
 
-- `APP_NAME`: app title in the UI
-- `APP_TAGLINE`: subtitle shown in the UI hero section
-- `BRAND_PRIMARY`: primary accent color
-- `BRAND_SECONDARY`: secondary accent color
-- `BRAND_INK`: main text color
-- `DEBUG`: include/exclude `raw` payloads in responses
-- `LOG_VERBOSITY`: import log verbosity (`low`, `medium`, `high`, `extrahigh`); only applies when `DEBUG=true`
-- `RAPIDAPI_KEY`: required for Amazon/AliExpress importers
+Use these for custom importer/exporter integration in internal tooling.
+
+## Environment Variables
+
+- `APP_NAME`: server/web title
+- `APP_TAGLINE`: server/web subtitle
+- `BRAND_PRIMARY`: UI primary color
+- `BRAND_SECONDARY`: UI secondary color
+- `BRAND_INK`: UI text color
+- `DEBUG`: include/exclude `raw` in API import responses
+- `LOG_VERBOSITY`: `low | medium | high | extrahigh`
+- `RAPIDAPI_KEY`: required for Amazon/AliExpress URL imports
 - `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
 
-## Project layout
+## Repository Layout
 
 ```text
 shelfshift/
@@ -216,80 +254,22 @@ shelfshift/
   server/
     main.py
     config.py
+    schemas.py
     routers/
-app/
-  main.py
-  config.py
-  schemas.py
-  models/
-    entities.py
-    helpers.py
-    serialization.py
-  routers/
-    api.py
-    web_csv.py
-    web_url.py
-  helpers/
-    exporting.py
-    importing.py
-    payload.py
-    rendering.py
-  services/
-    importer/
-      product_url_detection.py
-      platforms/
-        common.py
-        shopify.py
-        squarespace.py
-        woocommerce.py
-        amazon.py
-        aliexpress.py
-    csv_importers/
-      batch.py
-      common.py
-      detection.py
-      shopify.py
-      bigcommerce.py
-      wix.py
-      squarespace.py
-      woocommerce.py
-    exporters/
-      batch.py
-      utils.py
-      weight_units.py
-      shopify_csv.py
-      bigcommerce_csv.py
-      wix_csv.py
-      squarespace_csv.py
-      woocommerce_csv.py
+    helpers/
     logging/
-      product_payloads.py
-  web/
-    templates/
-      base.html
-      index.html
-      url.html
-      csv.html
-      _product_editor.html
-      _product_editor_batch.html
-      _export_form.html
-    static/
-      styles.css
-      app.js
+    web/
 tests/
-  api/
-  csv_importers/
-  exporters/
-  importers/
-  models/
-  helpers/
-  fixtures/
-    exporter/<platform>/*.csv
-    importers/<platform>/*
 ```
 
-## Tests
+## Development
+
+Run tests:
 
 ```bash
 uv run pytest -q
 ```
+
+## License
+
+No license file is currently included in this repository.
