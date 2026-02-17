@@ -1,16 +1,31 @@
-"""URL-based importers.
-
-These functions avoid FastAPI-specific exceptions so they are safe for library
-and CLI usage.
-"""
-
+"""URL-based importers."""
 
 import os
 
-from app.models import Product
-from app.services.importer import ApiConfig, fetch_product_details, requires_rapidapi
-
-from ..detect.url import detect_product_url
+from ...canonical import Product
+from .api import (
+    AliExpressClient,
+    AmazonRapidApiClient,
+    ApiConfig,
+    Media,
+    Money,
+    Price,
+    ProductClient,
+    ProductClientFactory,
+    SquarespaceClient,
+    ShopifyClient,
+    Variant,
+    Weight,
+    WooCommerceClient,
+    _parse_aliexpress_result,
+    detect_product_url,
+    fetch_product_details,
+    format_decimal,
+    import_product,
+    normalize_currency,
+    parse_decimal_money,
+    requires_rapidapi,
+)
 
 
 def normalize_product_url(product_url: str) -> str:
@@ -63,7 +78,29 @@ def import_products_from_urls(
 
 
 __all__ = [
+    "AliExpressClient",
+    "AmazonRapidApiClient",
+    "ApiConfig",
+    "Media",
+    "Money",
+    "Price",
+    "Product",
+    "ProductClient",
+    "ProductClientFactory",
+    "SquarespaceClient",
+    "ShopifyClient",
+    "Variant",
+    "Weight",
+    "WooCommerceClient",
+    "_parse_aliexpress_result",
+    "detect_product_url",
+    "fetch_product_details",
+    "format_decimal",
+    "import_product",
     "import_product_from_url",
     "import_products_from_urls",
+    "normalize_currency",
     "normalize_product_url",
+    "parse_decimal_money",
+    "requires_rapidapi",
 ]

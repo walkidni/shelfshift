@@ -1,10 +1,17 @@
-from .aliexpress import AliExpressClient, _parse_aliexpress_result
-from .amazon import AmazonRapidApiClient
-from .common import ApiConfig, ProductClient
-from .squarespace import SquarespaceClient
-from .shopify import ShopifyClient
-from .woocommerce import WooCommerceClient
-from app.models import Product, Variant
+"""Compatibility facade for legacy ``app.services.importer.platforms`` imports."""
+
+from typeshift.core.importers.url.platforms import (
+    AliExpressClient,
+    AmazonRapidApiClient,
+    ApiConfig,
+    Product,
+    ProductClient,
+    SquarespaceClient,
+    ShopifyClient,
+    Variant,
+    WooCommerceClient,
+    _parse_aliexpress_result,
+)
 
 __all__ = [
     "AliExpressClient",
