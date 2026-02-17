@@ -8,7 +8,9 @@ and CLI usage.
 import os
 
 from app.models import Product
-from app.services.importer import ApiConfig, detect_product_url, fetch_product_details, requires_rapidapi
+from app.services.importer import ApiConfig, fetch_product_details, requires_rapidapi
+
+from ..detect.url import detect_product_url
 
 
 def normalize_product_url(product_url: str) -> str:
