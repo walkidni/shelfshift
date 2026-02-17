@@ -176,7 +176,8 @@ uvicorn shelfshift.server.main:app --reload
 Open:
 
 - Swagger UI: `http://127.0.0.1:8000/docs`
-- URL demo UI: `http://127.0.0.1:8000/`
+- Landing page: `http://127.0.0.1:8000/`
+- URL demo UI: `http://127.0.0.1:8000/url`
 - CSV demo UI: `http://127.0.0.1:8000/csv`
 
 ### API Routes
