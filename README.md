@@ -141,16 +141,34 @@ Import source CSV to canonical JSON:
 shelfshift import-csv ./source.csv --source-platform shopify
 ```
 
+For `bigcommerce`, `wix`, and `squarespace` source CSVs, also pass `--source-weight-unit`:
+
+```bash
+shelfshift import-csv ./source.csv --source-platform squarespace --source-weight-unit kg
+```
+
 Convert source CSV directly to target CSV:
 
 ```bash
 shelfshift convert ./source.csv --to shopify --out ./converted.csv --report ./report.json
 ```
 
+If the source CSV platform is `bigcommerce`, `wix`, or `squarespace`, include `--source-weight-unit`:
+
+```bash
+shelfshift convert ./source.csv --source squarespace --source-weight-unit kg --to shopify --out ./converted.csv
+```
+
 Validate canonicalized products from CSV:
 
 ```bash
 shelfshift validate ./source.csv --platform shopify --report ./validate.json
+```
+
+For `bigcommerce`, `wix`, and `squarespace` source CSVs, include `--source-weight-unit`:
+
+```bash
+shelfshift validate ./source.csv --platform wix --source-weight-unit kg --report ./validate.json
 ```
 
 Export canonical JSON payload to target CSV:
@@ -215,6 +233,15 @@ Import CSV:
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
   -F "source_platform=shopify" \
+  -F "file=@./source.csv"
+```
+
+For `bigcommerce`, `wix`, and `squarespace` source CSVs, include `source_weight_unit` (`g|kg|lb|oz`):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
+  -F "source_platform=squarespace" \
+  -F "source_weight_unit=kg" \
   -F "file=@./source.csv"
 ```
 
