@@ -52,17 +52,34 @@ This project is built for ecommerce developers and integration engineers who nee
 - Squarespace
 - WooCommerce
 
+## Compatibility
+
+- Python: `>=3.13`
+- URL imports: `shopify`, `woocommerce`, `squarespace`, `amazon`, `aliexpress`
+- CSV imports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
+- CSV exports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
+
 ## Installation
 
-Prerequisites:
-
-- Python 3.13+
-- `uv` (recommended): <https://astral.sh/uv>
-
-Install dependencies:
+### From PyPI (recommended for users)
 
 ```bash
+pip install shelfshift
+```
+
+Or with `uv` in a project:
+
+```bash
+uv add shelfshift
 uv sync
+```
+
+Quick smoke test:
+
+```bash
+python -c "import shelfshift, shelfshift.core; print(shelfshift.__version__)"
+shelfshift --help
+shelfshift-server --help
 ```
 
 ## Running Commands
@@ -285,37 +302,6 @@ Use these for custom importer/exporter integration in internal tooling.
 - `LOG_VERBOSITY`: `low | medium | high | extrahigh`
 - `RAPIDAPI_KEY`: required for Amazon/AliExpress URL imports
 - `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
-
-## Repository Layout
-
-```text
-shelfshift/
-  core/
-    canonical/
-    detect/
-    importers/
-    exporters/
-    validate/
-  cli/
-    main.py
-  server/
-    main.py
-    config.py
-    schemas.py
-    routers/
-    helpers/
-    logging/
-    web/
-tests/
-```
-
-## Development
-
-Run tests:
-
-```bash
-pytest -q
-```
 
 ## License
 

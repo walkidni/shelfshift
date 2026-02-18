@@ -19,7 +19,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
 }
 
 try:
-    __version__ = version("ecom-catalog-transfer")
+    __version__ = version("shelfshift")
 except PackageNotFoundError:
     __version__ = "0.0.0"
 
