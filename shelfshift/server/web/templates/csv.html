@@ -2,7 +2,10 @@
 
 {% block content %}
   <section class="panel grid">
-    <form class="import-form" method="post" action="/import.csv" enctype="multipart/form-data">
+    <form class="import-form" method="post" action="/import.csv" enctype="multipart/form-data" data-curl-form="csv-import">
+      <h2>CSV Import Playground</h2>
+      <p class="api-note">Build a request for <code>POST /api/v1/import/csv</code> and preview canonical payload output.</p>
+
       <label for="source_csv_file">CSV File</label>
       <input id="source_csv_file" name="file" type="file" accept=".csv,text/csv" required />
 
@@ -40,13 +43,17 @@
         </div>
       </div>
 
-      <button type="submit">Import CSV</button>
+      <button type="submit">Run CSV Import Preview</button>
     </form>
 
     <aside class="info">
-      <h2>CSV Import</h2>
-      <p class="api-note">API endpoint: <code>POST /api/v1/import/csv</code></p>
-      <p class="api-note">Upload limit: <code>5 MB</code></p>
+      <h2>Request Builder</h2>
+      <p class="method-line"><span class="method-chip">POST</span> <code>/api/v1/import/csv</code></p>
+      <p>Upload limit: <code>5 MB</code>. Auto-detection fills platform when possible.</p>
+      <p class="api-note">Generated curl:</p>
+      <pre class="command-preview"><code data-command-output="csv-import"></code></pre>
+      <button type="button" class="secondary-btn" data-action="copy-command" data-copy-source="csv-import">Copy curl</button>
+      <p class="copy-status" data-copy-status="csv-import" aria-live="polite"></p>
     </aside>
   </section>
 
@@ -54,14 +61,14 @@
   {% include "_product_editor_batch.html" %}
 
   {% set export_submit_label = "Export All as CSV" %}
-  {% set export_info_heading = "Batch Conversion" %}
-  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export</p>' %}
+  {% set export_info_heading = "CSV Export Playground" %}
+  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' canonical product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export testing</p>' %}
   {% include "_export_form.html" %}
   {% elif editor_product_payload %}
   {% include "_product_editor.html" %}
 
-  {% set export_submit_label = "Export Preview as CSV" %}
-  {% set export_info_heading = "Conversion" %}
+  {% set export_submit_label = "Export Canonical Payload as CSV" %}
+  {% set export_info_heading = "CSV Export Playground" %}
   {% set export_info_extra = "" %}
   {% include "_export_form.html" %}
   {% endif %}

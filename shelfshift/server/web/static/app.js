@@ -55,6 +55,156 @@
     return btoa(binary);
   };
 
+  const _escapeSingleQuotes = (value) => String(value || "").replace(/'/g, "'\\''");
+
+  const _buildApiUrl = (path) => {
+    const base = window.location && window.location.origin ? window.location.origin : "http://127.0.0.1:8000";
+    return `${base}${path}`;
+  };
+
+  const _setCommandText = (id, text) => {
+    const el = document.querySelector(`[data-command-output='${id}']`);
+    if (el) {
+      el.textContent = text;
+    }
+  };
+
+  const _buildUrlImportCommand = () => {
+    const form = document.querySelector("form[data-curl-form='url-import']");
+    if (!form) {
+      return;
+    }
+
+    const urls = Array.from(form.querySelectorAll("input[name='product_urls']"))
+      .map((input) => String(input.value || "").trim())
+      .filter((value) => value);
+    const payload = {
+      product_urls: urls.length > 0 ? urls : ["https://example.myshopify.com/products/demo-item"],
+    };
+    const payloadJson = JSON.stringify(payload);
+    const cmd = [
+      `curl -X POST "${_buildApiUrl("/api/v1/import")}" \\`,
+      '  -H "Content-Type: application/json" \\',
+      `  -d '${_escapeSingleQuotes(payloadJson)}'`,
+    ].join("\n");
+    _setCommandText("url-import", cmd);
+  };
+
+  const _buildCsvImportCommand = () => {
+    const form = document.querySelector("form[data-curl-form='csv-import']");
+    if (!form) {
+      return;
+    }
+    const sourcePlatform = form.querySelector("#source_platform");
+    const sourceWeightUnit = form.querySelector("#source_weight_unit");
+    const fileInput = form.querySelector("#source_csv_file");
+    const filename = fileInput && fileInput.files && fileInput.files[0]
+      ? fileInput.files[0].name
+      : "source.csv";
+    const lines = [
+      `curl -X POST "${_buildApiUrl("/api/v1/import/csv")}" \\`,
+      `  -F "source_platform=${sourcePlatform ? sourcePlatform.value : "shopify"}" \\`,
+    ];
+
+    if (sourceWeightUnit && !sourceWeightUnit.disabled && sourceWeightUnit.value) {
+      lines.push(`  -F "source_weight_unit=${sourceWeightUnit.value}" \\`);
+    }
+    lines.push(`  -F "file=@./${filename}"`);
+    _setCommandText("csv-import", lines.join("\n"));
+  };
+
+  const _buildExportFromProductCommand = () => {
+    const form = document.querySelector("form[data-curl-form='export-from-product']");
+    if (!form) {
+      return;
+    }
+    const target = form.querySelector("#preview_target_platform");
+    const weightUnit = form.querySelector("#preview_weight_unit");
+    const bigcommerceCsvFormat = form.querySelector("#preview_bigcommerce_csv_format");
+    const squarespaceProductPage = form.querySelector("#preview_squarespace_product_page");
+    const squarespaceProductUrl = form.querySelector("#preview_squarespace_product_url");
+    const options = {
+      publish: false,
+      weight_unit: weightUnit ? weightUnit.value : "g",
+    };
+    if (target && target.value === "bigcommerce" && bigcommerceCsvFormat && !bigcommerceCsvFormat.disabled) {
+      options.bigcommerce_csv_format = bigcommerceCsvFormat.value;
+    }
+    if (target && target.value === "squarespace") {
+      if (squarespaceProductPage && squarespaceProductPage.value) {
+        options.squarespace_product_page = squarespaceProductPage.value;
+      }
+      if (squarespaceProductUrl && squarespaceProductUrl.value) {
+        options.squarespace_product_url = squarespaceProductUrl.value;
+      }
+    }
+    const payload = {
+      product: { source: { platform: "shopify" }, title: "Demo product" },
+      target_platform: target ? target.value : "shopify",
+      options,
+    };
+    const payloadJson = JSON.stringify(payload);
+    const cmd = [
+      `curl -X POST "${_buildApiUrl("/api/v1/export/from-product.csv")}" \\`,
+      '  -H "Content-Type: application/json" \\',
+      `  -d '${_escapeSingleQuotes(payloadJson)}' \\`,
+      '  -o "./out.csv"',
+    ].join("\n");
+    _setCommandText("export-from-product", cmd);
+  };
+
+  const _setCopyStatus = (id, text) => {
+    const status = document.querySelector(`[data-copy-status='${id}']`);
+    if (status) {
+      status.textContent = text;
+    }
+  };
+
+  const _bindCommandCopyButtons = () => {
+    document.querySelectorAll("[data-action='copy-command']").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.copySource;
+        if (!id) {
+          return;
+        }
+        const output = document.querySelector(`[data-command-output='${id}']`);
+        if (!output) {
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(output.textContent || "");
+          _setCopyStatus(id, "Copied to clipboard.");
+        } catch {
+          _setCopyStatus(id, "Copy failed. Select and copy manually.");
+        }
+      });
+    });
+  };
+
+  const initCommandPreviews = () => {
+    _buildUrlImportCommand();
+    _buildCsvImportCommand();
+    _buildExportFromProductCommand();
+    _bindCommandCopyButtons();
+
+    const urlForm = document.querySelector("form[data-curl-form='url-import']");
+    if (urlForm) {
+      urlForm.addEventListener("input", _buildUrlImportCommand);
+    }
+
+    const csvForm = document.querySelector("form[data-curl-form='csv-import']");
+    if (csvForm) {
+      csvForm.addEventListener("change", _buildCsvImportCommand);
+      csvForm.addEventListener("input", _buildCsvImportCommand);
+    }
+
+    const exportForm = document.querySelector("form[data-curl-form='export-from-product']");
+    if (exportForm) {
+      exportForm.addEventListener("change", _buildExportFromProductCommand);
+      exportForm.addEventListener("input", _buildExportFromProductCommand);
+    }
+  };
+
   /* ── Loading spinner on form submit ─────────────────────────── */
   const initFormLoadingSpinners = () => {
     document.querySelectorAll("form[data-export-form], form.import-form").forEach((form) => {
@@ -136,6 +286,7 @@
       if (inputs.length > 0) {
         inputs[inputs.length - 1].focus();
       }
+      _buildUrlImportCommand();
     });
 
     list.addEventListener("click", (e) => {
@@ -147,6 +298,7 @@
       if (row && list.querySelectorAll("[data-url-row]").length > 1) {
         row.remove();
         _syncRemoveButtons();
+        _buildUrlImportCommand();
       }
     });
 
@@ -182,6 +334,8 @@
       squarespaceInputs.forEach((input) => {
         input.disabled = !showSquarespaceFields;
       });
+
+      _buildExportFromProductCommand();
     };
 
     targetPlatform.addEventListener("change", syncConditionalFields);
@@ -204,12 +358,14 @@
       sourceWeightFields.classList.toggle("is-hidden", !required);
       sourceWeightFields.setAttribute("aria-hidden", required ? "false" : "true");
       sourceWeightUnit.disabled = !required;
+      _buildCsvImportCommand();
     };
 
     const showPlatformFields = () => {
       if (platformFields) {
         platformFields.classList.remove("is-hidden");
       }
+      _buildCsvImportCommand();
     };
 
     const showDetectStatus = (message, isError) => {
@@ -249,10 +405,12 @@
         showPlatformFields();
         syncSourceWeightFields();
         showDetectStatus(`Detected: ${platformName}`, false);
+        _buildCsvImportCommand();
       } catch {
         showPlatformFields();
         syncSourceWeightFields();
         showDetectStatus("Could not auto-detect platform. Please select manually.", true);
+        _buildCsvImportCommand();
       }
     };
 
@@ -305,6 +463,8 @@
           input.disabled = !showPreviewSquarespace;
         });
       }
+
+      _buildExportFromProductCommand();
     };
 
     previewTargetPlatform.addEventListener("change", syncPreviewFields);
@@ -732,6 +892,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    initCommandPreviews();
     initUrlInputList();
     initUrlExportForm();
     initCsvImportForm();

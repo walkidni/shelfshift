@@ -1,8 +1,8 @@
 {% if editor_products_payload %}
   <section class="panel product-editor-batch" data-product-editor-batch>
-    <h2>Edit Products <span class="batch-count">({{ editor_products_payload | length }})</span></h2>
+    <h2>Canonical Payload Editor <span class="batch-count">({{ editor_products_payload | length }})</span></h2>
     <p class="api-note">
-      Expand a product to edit its fields, then click <code>Save all changes</code> to update the export payload.
+      Expand payload cards, edit fields, then click <code>Save all changes</code> to refresh the batch export payload.
     </p>
 
     <script type="application/json" id="editor-products-payload">{{ editor_products_payload | tojson }}</script>

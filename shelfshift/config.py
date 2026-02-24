@@ -48,14 +48,14 @@ def get_settings() -> Settings:
         if origin.strip()
     )
     return Settings(
-        app_name=os.getenv("APP_NAME", "Ecommerce Catalog Transfer"),
+        app_name=os.getenv("APP_NAME", "ShelfShift"),
         app_tagline=os.getenv(
             "APP_TAGLINE",
-            "Ingest product URLs and export import-ready CSV in seconds.",
+            "Developer toolkit for ecommerce catalog translation.",
         ),
-        brand_primary=os.getenv("BRAND_PRIMARY", "#e65c2f"),
-        brand_secondary=os.getenv("BRAND_SECONDARY", "#f8b84a"),
-        brand_ink=os.getenv("BRAND_INK", "#1f1916"),
+        brand_primary=os.getenv("BRAND_PRIMARY", "#18d9b6"),
+        brand_secondary=os.getenv("BRAND_SECONDARY", "#27c6f5"),
+        brand_ink=os.getenv("BRAND_INK", "#020b1a"),
         debug=_env_bool("DEBUG", default=False),
         log_verbosity=_env_choice(
             "LOG_VERBOSITY",

@@ -6,8 +6,10 @@
      preview_product_json_b64  – base64 product payload (from parent context)
 #}
 <section class="panel grid">
-  <form class="import-form" method="post" action="/export-from-product.csv" data-export-form>
+  <form class="import-form" method="post" action="/export-from-product.csv" data-export-form data-curl-form="export-from-product">
     <input type="hidden" name="product_json_b64" value="{{ preview_product_json_b64 }}" />
+    <h2>Export Playground</h2>
+    <p class="api-note">Test canonical payload export through web route <code>POST /export-from-product.csv</code>.</p>
 
     <label for="preview_target_platform">Target Platform</label>
     <div class="select-wrap">
@@ -48,6 +50,10 @@
   <aside class="info">
     <h2>{{ export_info_heading }}</h2>
     {% if export_info_extra %}{{ export_info_extra }}{% endif %}
-    <p class="api-note">API endpoint: <code>POST /api/v1/export/from-product.csv</code></p>
+    <p class="method-line"><span class="method-chip">POST</span> <code>/api/v1/export/from-product.csv</code></p>
+    <p class="api-note">Generated API curl:</p>
+    <pre class="command-preview"><code data-command-output="export-from-product"></code></pre>
+    <button type="button" class="secondary-btn" data-action="copy-command" data-copy-source="export-from-product">Copy curl</button>
+    <p class="copy-status" data-copy-status="export-from-product" aria-live="polite"></p>
   </aside>
 </section>

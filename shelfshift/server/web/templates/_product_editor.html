@@ -1,8 +1,8 @@
 {% if editor_product_payload %}
   <section class="panel product-editor" data-product-editor>
-    <h2>Edit Product</h2>
+    <h2>Canonical Payload Editor</h2>
     <p class="api-note">
-      Change fields below, then click <code>Save changes</code> to update the hidden export payload.
+      Edit normalized fields, then click <code>Save changes</code> to update the in-memory export payload used by the playground export form.
     </p>
 
     <script type="application/json" id="editor-product-payload">{{ editor_product_payload | tojson }}</script>
@@ -161,4 +161,3 @@
     </div>
   </section>
 {% endif %}
-

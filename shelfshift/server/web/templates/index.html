@@ -1,81 +1,65 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {# ── Value prop ──────────────────────────────────────────────── #}
-  <section class="panel landing-value">
-    <h2 class="landing-heading">Convert your entire product catalog between e&#8209;commerce&nbsp;platforms</h2>
-    <div class="steps">
-      <div class="step">
-        <span class="step-number">1</span>
-        <h3>Upload</h3>
-        <p>Export your full catalog CSV from your current platform and upload it here.</p>
-      </div>
-      <div class="step">
-        <span class="step-number">2</span>
-        <h3>Review &amp; Edit</h3>
-        <p>Inspect the normalized product data. Fix titles, prices, images&nbsp;&mdash; anything you need.</p>
-      </div>
-      <div class="step">
-        <span class="step-number">3</span>
-        <h3>Export</h3>
-        <p>Choose a target platform and download a ready-to-import CSV.</p>
-      </div>
+  <section class="panel">
+    <h2 class="landing-heading">Library-first tooling for catalog translation pipelines</h2>
+    <p class="landing-subtitle">
+      Use Shelfshift as a Python library or CLI in automation. The web interface is a thin facade for quickly exercising server features during local development.
+    </p>
+    <div class="surface-tags">
+      <span class="surface-tag"><code>shelfshift.core</code> canonical engine</span>
+      <span class="surface-tag"><code>shelfshift</code> CLI automation</span>
+      <span class="surface-tag"><code>shelfshift-server</code> self-hosted API</span>
     </div>
   </section>
 
-  {# ── Primary CTA ─────────────────────────────────────────────── #}
-  <a href="/csv" class="panel landing-card landing-card--primary">
-    <div class="landing-card-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-    </div>
-    <div class="landing-card-body">
-      <h3>Convert a catalog CSV</h3>
-      <p>Upload your full catalog export &rarr; Choose target platform &rarr; Download a ready&#8209;to&#8209;import&nbsp;file with all your products.</p>
-      <span class="landing-card-cta">Upload CSV &rarr;</span>
-    </div>
-  </a>
+  <section class="panel grid dev-grid">
+    <div class="dev-column">
+      <h2>Quick Start Commands</h2>
+      <p class="api-note">Install once, then use library/CLI directly.</p>
+      <pre class="command-preview"><code>pip install shelfshift
+shelfshift --help
+shelfshift detect ./source.csv</code></pre>
 
-  <p class="landing-alt">
-    Or <a href="/url" class="landing-alt-link">extract from a product URL &rarr;</a>
-  </p>
+      <h3>Library Sample</h3>
+      <pre class="command-preview"><code>from shelfshift.core import import_url, export_csv
 
-  {# ── Precision trust signals ─────────────────────────────────── #}
-  <section class="panel landing-trust">
-    <div class="trust-signals">
-      <div class="trust-signal">
-        <svg class="trust-signal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        <h4>Schema-aware mapping</h4>
-        <p>Columns are mapped per-platform, not guessed. Every field lands in the right place.</p>
-      </div>
-      <div class="trust-signal">
-        <svg class="trust-signal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <h4>Variant-level accuracy</h4>
-        <p>Variants, options, and images are preserved and correctly restructured for each target.</p>
-      </div>
-      <div class="trust-signal">
-        <svg class="trust-signal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <h4>No data loss</h4>
-        <p>Prices, weights, SKUs, inventory&nbsp;&mdash; everything carries over. Review before you export.</p>
-      </div>
+result = import_url("https://example.myshopify.com/products/demo-item")
+product = result.products[0]
+exported = export_csv(product, target="shopify", options={"publish": False, "weight_unit": "g"})</code></pre>
     </div>
+
+    <aside class="info">
+      <h2>Developer Facade</h2>
+      <p>Use these pages to sanity-check endpoint behavior quickly:</p>
+      <ul>
+        <li><a href="/url">URL Playground</a>: POST <code>/api/v1/import</code></li>
+        <li><a href="/csv">CSV Playground</a>: POST <code>/api/v1/import/csv</code></li>
+        <li>Export from canonical payload: POST <code>/api/v1/export/from-product.csv</code></li>
+      </ul>
+      <p class="api-note">For complete API surface, use <a href="/docs" target="_blank" rel="noopener noreferrer">Swagger UI</a>.</p>
+    </aside>
   </section>
 
-  {# ── Supported platforms ─────────────────────────────────────── #}
-  <section class="panel landing-platforms">
-    <h2 class="landing-heading">Supported platforms</h2>
-    <p class="landing-subtitle">Import from any of these stores via product URL or CSV. Export to all of them.</p>
-    <div class="platform-tags platform-tags--lg">
-      <span class="platform-tag">Shopify</span>
-      <span class="platform-tag">WooCommerce</span>
-      <span class="platform-tag">BigCommerce</span>
-      <span class="platform-tag">Squarespace</span>
-      <span class="platform-tag">Wix</span>
+  <section class="panel">
+    <h2>Core Capabilities</h2>
+    <div class="capability-grid">
+      <div class="capability-card">
+        <p class="capability-title">Detection</p>
+        <p>Detect URL or CSV source platform before import.</p>
+      </div>
+      <div class="capability-card">
+        <p class="capability-title">Canonicalization</p>
+        <p>Normalize imported data to one typed product contract.</p>
+      </div>
+      <div class="capability-card">
+        <p class="capability-title">Export</p>
+        <p>Emit target-platform CSVs from canonical product payloads.</p>
+      </div>
+      <div class="capability-card">
+        <p class="capability-title">Batch + Partial Success</p>
+        <p>Handle multiple products while preserving per-item errors.</p>
+      </div>
     </div>
   </section>
 {% endblock %}

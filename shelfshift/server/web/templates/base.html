@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;700;800&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v=5" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v=6" />
     <style>
       :root {
         --brand-primary: {{ brand.brand_primary }};
@@ -23,11 +23,16 @@
   <body>
     <a class="skip-nav" href="#main-content">Skip to content</a>
     <main id="main-content" class="shell">
-      <section class="panel hero">
+      <section class="panel hero hero-dev">
         <div class="hero-head">
           <div class="hero-copy">
+            <p class="eyebrow">Developer Toolkit</p>
             <h1 class="brand-name">{{ brand.app_name }}</h1>
             <p class="tagline">{{ brand.app_tagline }}</p>
+            <p class="hero-meta">
+              Primary surfaces: <code>shelfshift.core</code> and <code>shelfshift</code> CLI.
+              Web pages are a local API playground.
+            </p>
           </div>
           <nav class="topnav" aria-label="Workflow pages">
             <a
@@ -42,14 +47,17 @@
               class="topnav-link{% if active_page == 'csv' %} is-active{% endif %}"
               {% if active_page == 'csv' %}aria-current="page"{% endif %}
             >
-              CSV Import
+              CSV Playground
             </a>
             <a
               href="/url"
               class="topnav-link{% if active_page == 'url' %} is-active{% endif %}"
               {% if active_page == 'url' %}aria-current="page"{% endif %}
             >
-              URL Import
+              URL Playground
+            </a>
+            <a href="/docs" class="topnav-link topnav-link--utility" target="_blank" rel="noopener noreferrer">
+              Swagger
             </a>
           </nav>
         </div>
@@ -65,7 +73,6 @@
         sourceWeightRequiredPlatforms: {{ source_weight_unit_required_platforms | tojson }},
       };
     </script>
-    <script src="{{ url_for('static', path='/app.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', path='/app.js') }}?v=2" defer></script>
   </body>
 </html>
-

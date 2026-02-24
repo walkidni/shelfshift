@@ -2,7 +2,10 @@
 
 {% block content %}
   <section class="panel grid">
-    <form class="import-form" method="post" action="/import.url" data-export-form>
+    <form class="import-form" method="post" action="/import.url" data-export-form data-curl-form="url-import">
+      <h2>URL Import Playground</h2>
+      <p class="api-note">Build a request for <code>POST /api/v1/import</code>. Multiple URLs are supported for batch + partial-success behavior.</p>
+
       <label>Product page URLs</label>
       <div class="url-input-list" data-url-input-list>
         {% for url in form.product_urls %}
@@ -19,21 +22,17 @@
       </div>
       <button type="button" class="url-add-btn" data-action="add-url">+ Add URL</button>
 
-      <button type="submit">Import Products</button>
+      <button type="submit">Run Import Preview</button>
     </form>
 
     <aside class="info">
-      <h2>Supported Platforms</h2>
-      <p>Paste any <strong>product page URL</strong> from these stores:</p>
-      <div class="platform-tags">
-        <span class="platform-tag">Shopify</span>
-        <span class="platform-tag">Amazon</span>
-        <span class="platform-tag">AliExpress</span>
-        <span class="platform-tag">WooCommerce</span>
-        <span class="platform-tag">Squarespace</span>
-      </div>
-      <p class="api-note">The URL must point to a single product page &mdash; collection or category pages are not supported.</p>
-      <p class="api-note">API endpoint: <code>POST /api/v1/import</code></p>
+      <h2>Request Builder</h2>
+      <p class="method-line"><span class="method-chip">POST</span> <code>/api/v1/import</code></p>
+      <p>Supported URL sources: Shopify, WooCommerce, Squarespace, Amazon, AliExpress.</p>
+      <p class="api-note">Generated curl:</p>
+      <pre class="command-preview"><code data-command-output="url-import"></code></pre>
+      <button type="button" class="secondary-btn" data-action="copy-command" data-copy-source="url-import">Copy curl</button>
+      <p class="copy-status" data-copy-status="url-import" aria-live="polite"></p>
     </aside>
   </section>
 
@@ -41,14 +40,14 @@
   {% include "_product_editor_batch.html" %}
 
   {% set export_submit_label = "Export All as CSV" %}
-  {% set export_info_heading = "Batch Export" %}
-  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export</p>' %}
+  {% set export_info_heading = "CSV Export Playground" %}
+  {% set export_info_extra = '<p class="api-note">' ~ (editor_products_payload | length) ~ ' canonical product' ~ ('s' if editor_products_payload | length != 1 else '') ~ ' ready for export testing</p>' %}
   {% include "_export_form.html" %}
   {% elif editor_product_payload %}
   {% include "_product_editor.html" %}
 
-  {% set export_submit_label = "Export Preview as CSV" %}
-  {% set export_info_heading = "Export" %}
+  {% set export_submit_label = "Export Canonical Payload as CSV" %}
+  {% set export_info_heading = "CSV Export Playground" %}
   {% set export_info_extra = "" %}
   {% include "_export_form.html" %}
   {% endif %}
@@ -57,7 +56,7 @@
   <section class="panel error" role="alert">
     <h2>
       <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-      Some URLs Failed
+      Partial Import Errors
     </h2>
     <ul class="import-error-list">
       {% for err in url_import_errors %}
