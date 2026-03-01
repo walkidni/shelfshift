@@ -54,7 +54,7 @@ This project is built for ecommerce developers and integration engineers who nee
 
 ## Compatibility
 
-- Python: `>=3.13`
+- Python: `>=3.10`
 - URL imports: `shopify`, `woocommerce`, `squarespace`, `amazon`, `aliexpress`
 - CSV imports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
 - CSV exports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
