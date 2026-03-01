@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from ...core.api import export_csv
 from ...core.canonical.serialization import serialize_product_for_api
 from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
+from ..config import get_app_settings
 from ..helpers import importing as _importing_helpers
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
 from ..helpers.rendering import render_landing_page, render_web_page
@@ -46,6 +47,7 @@ def import_url_from_web(
 	request: Request,
 	product_urls: list[str] = Form(...),
 ) -> HTMLResponse:
+	settings = get_app_settings(request)
 	urls = [url.strip() for url in product_urls if url.strip()]
 	if not urls:
 		return render_web_page(
@@ -66,10 +68,10 @@ def import_url_from_web(
 
 	try:
 		if len(urls) == 1:
-			products = [_importing_helpers.run_import_product(urls[0])]
+			products = [_importing_helpers.run_import_product(urls[0], settings=settings)]
 			errors: list[dict[str, str]] = []
 		else:
-			products, errors = _importing_helpers.run_import_products(urls)
+			products, errors = _importing_helpers.run_import_products(urls, settings=settings)
 	except HTTPException as exc:
 		return render_web_page(
 			request,
@@ -149,6 +151,7 @@ def import_url_from_web(
 
 def _export_csv_response(
 	*,
+	request: Request,
 	product_urls: list[str],
 	target_platform: str,
 	publish: bool,
@@ -157,10 +160,11 @@ def _export_csv_response(
 	squarespace_product_page: str = "",
 	squarespace_product_url: str = "",
 ) -> Response:
+	settings = get_app_settings(request)
 	if len(product_urls) == 1:
-		products = _importing_helpers.run_import_product(product_urls[0])
+		products = _importing_helpers.run_import_product(product_urls[0], settings=settings)
 	else:
-		products_list, errors = _importing_helpers.run_import_products(product_urls)
+		products_list, errors = _importing_helpers.run_import_products(product_urls, settings=settings)
 		if errors and not products_list:
 			raise HTTPException(status_code=422, detail=errors[0]["detail"])
 		products = products_list if len(products_list) > 1 else products_list[0]
@@ -184,11 +188,13 @@ def _export_csv_response(
 
 @router.post("/export/shopify.csv")
 def export_shopify_csv_from_web(
+	request: Request,
 	product_url: str = Form(...),
 	publish: bool = Form(False),
 	weight_unit: str = Form("g"),
 ) -> Response:
 	return _export_csv_response(
+		request=request,
 		product_urls=[product_url],
 		target_platform="shopify",
 		publish=publish,
@@ -198,12 +204,14 @@ def export_shopify_csv_from_web(
 
 @router.post("/export/bigcommerce.csv")
 def export_bigcommerce_csv_from_web(
+	request: Request,
 	product_url: str = Form(...),
 	publish: bool = Form(False),
 	csv_format: str = Form("modern"),
 	weight_unit: str = Form("kg"),
 ) -> Response:
 	return _export_csv_response(
+		request=request,
 		product_urls=[product_url],
 		target_platform="bigcommerce",
 		publish=publish,
@@ -214,11 +222,13 @@ def export_bigcommerce_csv_from_web(
 
 @router.post("/export/wix.csv")
 def export_wix_csv_from_web(
+	request: Request,
 	product_url: str = Form(...),
 	publish: bool = Form(False),
 	weight_unit: str = Form("kg"),
 ) -> Response:
 	return _export_csv_response(
+		request=request,
 		product_urls=[product_url],
 		target_platform="wix",
 		publish=publish,
@@ -228,6 +238,7 @@ def export_wix_csv_from_web(
 
 @router.post("/export/squarespace.csv")
 def export_squarespace_csv_from_web(
+	request: Request,
 	product_url: str = Form(...),
 	publish: bool = Form(False),
 	squarespace_product_page: str = Form(default=""),
@@ -235,6 +246,7 @@ def export_squarespace_csv_from_web(
 	weight_unit: str = Form("kg"),
 ) -> Response:
 	return _export_csv_response(
+		request=request,
 		product_urls=[product_url],
 		target_platform="squarespace",
 		publish=publish,
@@ -246,11 +258,13 @@ def export_squarespace_csv_from_web(
 
 @router.post("/export/woocommerce.csv")
 def export_woocommerce_csv_from_web(
+	request: Request,
 	product_url: str = Form(...),
 	publish: bool = Form(False),
 	weight_unit: str = Form("kg"),
 ) -> Response:
 	return _export_csv_response(
+		request=request,
 		product_urls=[product_url],
 		target_platform="woocommerce",
 		publish=publish,
@@ -271,6 +285,7 @@ def export_csv_from_web(
 ) -> Response:
 	try:
 		return _export_csv_response(
+			request=request,
 			product_urls=[product_url],
 			target_platform=target_platform,
 			publish=publish,

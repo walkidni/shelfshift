@@ -9,7 +9,8 @@ def patch_run_import_product(
     expected_url: str,
     product: Product,
 ) -> None:
-    def fake_run_import_product(product_url: str) -> Product:
+    def fake_run_import_product(product_url: str, *, settings: Any) -> Product:
+        assert settings is not None
         assert product_url == expected_url
         return product
 

@@ -9,18 +9,19 @@ from ...core.exporters.shared.weight_units import (
     DEFAULT_WEIGHT_UNIT_BY_TARGET,
     WEIGHT_UNIT_ALLOWLIST_BY_TARGET,
 )
-from ..config import get_settings
+from ..config import get_app_settings
 
 
 def render_landing_page(
     request: Request,
     templates: Jinja2Templates,
 ) -> HTMLResponse:
+    settings = get_app_settings(request)
     return templates.TemplateResponse(
         request,
         "index.html",
         {
-            "brand": get_settings(),
+            "brand": settings,
             "active_page": "home",
             "weight_unit_allowlist": {},
             "weight_unit_defaults": {},
@@ -53,12 +54,13 @@ def render_web_page(
     url_import_errors: list[dict[str, str]] | None = None,
     status_code: int = 200,
 ) -> HTMLResponse:
+    settings = get_app_settings(request)
     urls = product_urls if product_urls else [""]
     return templates.TemplateResponse(
         request,
         template_name,
         {
-            "brand": get_settings(),
+            "brand": settings,
             "active_page": active_page,
             "error": error,
             "error_title": error_title,

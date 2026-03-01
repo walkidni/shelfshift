@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
 
 from ...core.api import detect_csv, detect_url, export_csv, import_csv, parse_product_payload
@@ -17,15 +17,15 @@ from ..schemas import (
 	ImportRequest,
 )
 from ...core.canonical.serialization import serialize_product_for_api
-from ..config import get_settings
+from ..config import get_app_settings
 from ..helpers import importing as _importing_helpers
 
-settings = get_settings()
 router = APIRouter()
 
 
 @router.get("/health")
-def health() -> dict:
+def health(request: Request) -> dict:
+	settings = get_app_settings(request)
 	return {"status": "ok", "app": settings.app_name}
 
 
@@ -41,16 +41,17 @@ def detect(url: str = Query(..., description="Product URL to classify")) -> dict
 
 
 @router.post("/api/v1/import")
-def import_from_api(payload: ImportRequest) -> Any:
+def import_from_api(payload: ImportRequest, request: Request) -> Any:
+	settings = get_app_settings(request)
 	urls = [url.strip() for url in payload.urls_list if url.strip()]
 	if not urls:
 		raise HTTPException(status_code=400, detail="product_urls is required")
 
 	if len(urls) == 1:
-		product = _importing_helpers.run_import_product(urls[0])
+		product = _importing_helpers.run_import_product(urls[0], settings=settings)
 		return serialize_product_for_api(product, include_raw=settings.debug)
 
-	products, errors = _importing_helpers.run_import_products(urls)
+	products, errors = _importing_helpers.run_import_products(urls, settings=settings)
 
 	return {
 		"products": [serialize_product_for_api(product, include_raw=settings.debug) for product in products],
@@ -72,10 +73,12 @@ def detect_csv_platform_api(
 
 @router.post("/api/v1/import/csv")
 def import_from_csv_api(
+	request: Request,
 	source_platform: str = Form(...),
 	source_weight_unit: str = Form(""),
 	file: UploadFile = File(...),
 ) -> dict | list[dict]:
+	settings = get_app_settings(request)
 	csv_bytes = file.file.read()
 	try:
 		result = import_csv(

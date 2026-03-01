@@ -31,7 +31,8 @@ def _patch_run_import_product(monkeypatch, url_to_product: dict[str, Product]) -
     """
     from fastapi import HTTPException
 
-    def fake(product_url: str) -> Product:
+    def fake(product_url: str, *, settings) -> Product:
+        assert settings is not None
         if product_url in url_to_product:
             return url_to_product[product_url]
         raise HTTPException(status_code=422, detail=f"Unsupported URL: {product_url}")

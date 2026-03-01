@@ -136,6 +136,17 @@ result = import_url([
 print(len(result.products), len(result.errors))
 ```
 
+Amazon/AliExpress import with explicit key (preferred over env fallback):
+
+```python
+from shelfshift.core import import_url
+
+result = import_url(
+    "https://www.amazon.com/dp/B0C1234567",
+    rapidapi_key="your-rapidapi-key",
+)
+```
+
 ## Quick Start (CLI)
 
 Detect URL or CSV input:
@@ -150,6 +161,12 @@ Import URL(s) to canonical JSON:
 ```bash
 shelfshift import-url "https://example.myshopify.com/products/demo-item"
 shelfshift import-url "https://store-a.com/products/a" "https://store-b.com/products/b"
+```
+
+For Amazon/AliExpress URLs, pass an explicit key (or set `RAPIDAPI_KEY` in env):
+
+```bash
+shelfshift import-url "https://www.amazon.com/dp/B0C1234567" --rapidapi-key "your-rapidapi-key"
 ```
 
 Import source CSV to canonical JSON:
@@ -206,6 +223,27 @@ or:
 
 ```bash
 uvicorn shelfshift.server.main:app --reload
+```
+
+Programmatic app creation with explicit settings:
+
+```python
+from shelfshift.config import Settings
+from shelfshift.server.main import create_app
+
+app = create_app(
+    settings=Settings(
+        app_name="ShelfShift Internal",
+        app_tagline="Catalog bridge",
+        brand_primary="#18d9b6",
+        brand_secondary="#27c6f5",
+        brand_ink="#020b1a",
+        debug=True,
+        log_verbosity="high",
+        rapidapi_key="your-key",
+        cors_allow_origins=("https://admin.example.com",),
+    )
+)
 ```
 
 Open:
@@ -290,6 +328,16 @@ Registry hooks are available via:
 - `shelfshift.core.list_exporters`
 
 Use these for custom importer/exporter integration in internal tooling.
+
+## Runtime Configuration Precedence
+
+Shelfshift resolves runtime settings in this order:
+
+1. Explicit runtime input (API args, CLI flags, `create_app(settings=...)`).
+2. Process environment (including values loaded from `.env`).
+3. Built-in defaults.
+
+Configuration is resolved per core call or per server app instance (no request-level live reload).
 
 ## Environment Variables
 

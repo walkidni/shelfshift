@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .canonical.entities import Product
-from .config import CoreConfig, config_from_env
+from .config import CoreConfig, config_from_env, resolve_rapidapi_key
 from .detect import detect_csv_platform as _detect_csv_platform
 from .detect import detect_product_url as _detect_product_url
 from .importers.csv.common import parse_canonical_product_payload
@@ -62,7 +62,7 @@ def import_url(
     rapidapi_key: str | None = None,
 ) -> ImportResult:
     config = config_from_env(strict=strict, debug=debug)
-    resolved_rapidapi_key = rapidapi_key if rapidapi_key is not None else config.rapidapi_key
+    resolved_rapidapi_key = resolve_rapidapi_key(rapidapi_key)
 
     if isinstance(urls, str):
         product = import_product_from_url(urls, rapidapi_key=resolved_rapidapi_key)
@@ -72,7 +72,7 @@ def import_url(
         list(urls),
         rapidapi_key=resolved_rapidapi_key,
     )
-    if strict and errors:
+    if config.strict and errors:
         raise ValueError(f"Strict mode failed with {len(errors)} URL import error(s).")
     return ImportResult(products=products, errors=errors)
 

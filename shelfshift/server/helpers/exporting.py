@@ -18,6 +18,7 @@ from ...core.exporters import (
     products_to_woocommerce_csv,
     resolve_weight_unit,
 )
+from ..config import Settings, get_settings
 from . import importing as _importing
 
 
@@ -124,6 +125,7 @@ def csv_attachment_response(csv_text: str, filename: str) -> Response:
 def export_csv_attachment_for_target(
     product_url: str,
     *,
+    settings: Settings | None = None,
     target_platform: str,
     publish: bool,
     weight_unit: str,
@@ -131,7 +133,8 @@ def export_csv_attachment_for_target(
     squarespace_product_page: str = "",
     squarespace_product_url: str = "",
 ) -> Response:
-    product = _importing.run_import_product(product_url)
+    resolved_settings = settings if settings is not None else get_settings()
+    product = _importing.run_import_product(product_url, settings=resolved_settings)
     csv_text, filename = export_csv_for_target(
         product,
         target_platform=target_platform,

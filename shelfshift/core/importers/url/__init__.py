@@ -1,8 +1,7 @@
 """URL-based importers."""
 
-import os
-
 from ...canonical import Product
+from ...config import resolve_rapidapi_key
 from .api import (
     AliExpressClient,
     AmazonRapidApiClient,
@@ -49,7 +48,7 @@ def import_product_from_url(
     rapidapi_key: str | None = None,
 ) -> Product:
     normalized_url = normalize_product_url(product_url)
-    resolved_rapidapi_key = rapidapi_key if rapidapi_key is not None else os.getenv("RAPIDAPI_KEY")
+    resolved_rapidapi_key = resolve_rapidapi_key(rapidapi_key)
 
     if requires_rapidapi(normalized_url) and not resolved_rapidapi_key:
         raise ValueError("RAPIDAPI_KEY is required for Amazon and AliExpress imports.")

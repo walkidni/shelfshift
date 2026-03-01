@@ -8,6 +8,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from shelfshift.core.config import resolve_rapidapi_key
 from shelfshift.core import (
     convert_csv,
     detect_csv,
@@ -37,10 +38,11 @@ def _cmd_detect_csv(args: argparse.Namespace) -> int:
 
 
 def _cmd_import_url(args: argparse.Namespace) -> int:
+    resolved_rapidapi_key = resolve_rapidapi_key(args.rapidapi_key)
     result = import_url(
         args.url,
         strict=args.strict,
-        rapidapi_key=args.rapidapi_key,
+        rapidapi_key=resolved_rapidapi_key,
     )
     _json_dump(
         {

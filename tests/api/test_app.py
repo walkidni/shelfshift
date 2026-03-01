@@ -4,7 +4,6 @@ import io
 import pandas as pd
 
 from shelfshift.server.main import app
-from shelfshift.server.routers import api as api_router
 from shelfshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
 from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
 from shelfshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
@@ -99,7 +98,7 @@ def test_import_endpoint_uses_service(monkeypatch) -> None:
         "min_price": None,
         "max_price": None,
     }
-    assert payload.get("raw") == ({} if api_router.settings.debug else None)
+    assert payload.get("raw") == ({} if app.state.settings.debug else None)
 
 
 def test_import_endpoint_accepts_woocommerce_url(monkeypatch) -> None:

@@ -10,14 +10,13 @@ import requests
 from ...core.canonical.entities import Product
 from ...core.importers.csv import import_product_from_csv, import_products_from_csv
 from ...core.importers.url import ApiConfig, detect_product_url, fetch_product_details, requires_rapidapi
-from ..config import get_settings
+from ..config import Settings
 from ..logging import product_result_to_loggable
 
-settings = get_settings()
 logger = logging.getLogger("uvicorn.error")
 
 
-def _api_config() -> ApiConfig:
+def _api_config(settings: Settings) -> ApiConfig:
     return ApiConfig(
         rapidapi_key=settings.rapidapi_key,
     )
@@ -39,7 +38,7 @@ def normalize_url(product_url: str) -> str:
     return normalized
 
 
-def run_import_product(product_url: str) -> Product:
+def run_import_product(product_url: str, *, settings: Settings) -> Product:
     normalized_url = normalize_url(product_url)
 
     if requires_rapidapi(normalized_url) and not settings.rapidapi_key:
@@ -49,10 +48,18 @@ def run_import_product(product_url: str) -> Product:
         )
 
     try:
-        product = fetch_product_details(normalized_url, _api_config())
+        product = fetch_product_details(normalized_url, _api_config(settings))
         logger.debug(
             "Imported product summary:\n%s",
-            json.dumps(product_result_to_loggable(product), ensure_ascii=False, indent=2),
+            json.dumps(
+                product_result_to_loggable(
+                    product,
+                    verbosity=settings.log_verbosity,
+                    debug_enabled=settings.debug,
+                ),
+                ensure_ascii=False,
+                indent=2,
+            ),
         )
         return product
     except requests.HTTPError as exc:
@@ -67,7 +74,11 @@ def run_import_product(product_url: str) -> Product:
         raise HTTPException(status_code=500, detail=f"Internal import error: {exc}") from exc
 
 
-def run_import_products(urls: list[str]) -> tuple[list[Product], list[dict[str, str]]]:
+def run_import_products(
+    urls: list[str],
+    *,
+    settings: Settings,
+) -> tuple[list[Product], list[dict[str, str]]]:
     """Import multiple URLs with partial-success semantics.
 
     Returns (products, errors) where *errors* is a list of
@@ -77,7 +88,7 @@ def run_import_products(urls: list[str]) -> tuple[list[Product], list[dict[str, 
     errors: list[dict[str, str]] = []
     for url in urls:
         try:
-            products.append(run_import_product(url))
+            products.append(run_import_product(url, settings=settings))
         except HTTPException as exc:
             errors.append({"url": url, "detail": exc.detail})
     return products, errors

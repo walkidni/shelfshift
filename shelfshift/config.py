@@ -7,7 +7,6 @@ framework-agnostic.
 
 import os
 from dataclasses import dataclass
-from functools import lru_cache
 
 
 @dataclass(frozen=True)
@@ -40,8 +39,7 @@ def _env_choice(name: str, default: str, *, allowed: set[str]) -> str:
     return default
 
 
-@lru_cache(maxsize=1)
-def get_settings() -> Settings:
+def settings_from_env() -> Settings:
     origins = tuple(
         origin.strip()
         for origin in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
@@ -67,4 +65,8 @@ def get_settings() -> Settings:
     )
 
 
-__all__ = ["Settings", "get_settings"]
+def get_settings() -> Settings:
+    return settings_from_env()
+
+
+__all__ = ["Settings", "get_settings", "settings_from_env"]

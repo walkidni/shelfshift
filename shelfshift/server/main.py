@@ -13,29 +13,31 @@ from fastapi.staticfiles import StaticFiles
 ROOT_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT_DIR / ".env")
 
-from .config import get_settings
+from .config import Settings, get_settings
 from .routers import api, web_csv, web_url
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "web" / "static"
 
-settings = get_settings()
 logger = logging.getLogger("uvicorn.error")
-logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
 
-def create_app() -> FastAPI:
+def create_app(settings: Settings | None = None) -> FastAPI:
+    resolved_settings = settings if settings is not None else get_settings()
+    logger.setLevel(logging.DEBUG if resolved_settings.debug else logging.INFO)
+
     fastapi_app = FastAPI(
-        title=settings.app_name,
+        title=resolved_settings.app_name,
         summary="Ingest product URLs and export importable platform CSV files",
         version="1.0.0",
     )
+    fastapi_app.state.settings = resolved_settings
 
     fastapi_app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     fastapi_app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(settings.cors_allow_origins),
+        allow_origins=list(resolved_settings.cors_allow_origins),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -48,12 +50,13 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+settings = app.state.settings
 
 
 def run() -> None:
     import uvicorn
 
-    uvicorn.run("shelfshift.server.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    uvicorn.run("shelfshift.server.main:app", host="0.0.0.0", port=8000, reload=bool(app.state.settings.debug))
 
 
 __all__ = ["BASE_DIR", "STATIC_DIR", "app", "create_app", "logger", "run", "settings"]
