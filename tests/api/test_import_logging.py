@@ -44,7 +44,7 @@ def _build_sample_product() -> Product:
 def test_product_result_to_loggable_extrahigh_is_full_and_includes_raw() -> None:
     product = _build_sample_product()
 
-    loggable = product_result_to_loggable(product, verbosity="extrahigh")
+    loggable = product_result_to_loggable(product, verbosity="extrahigh", debug_enabled=True)
 
     assert loggable["source"]["id"] == "1005008518647948"
     assert loggable["price"]["current"] == {"amount": "50.4", "currency": "USD"}
@@ -59,7 +59,7 @@ def test_product_result_to_loggable_extrahigh_is_full_and_includes_raw() -> None
 def test_product_result_to_loggable_high_truncates_and_excludes_raw() -> None:
     product = _build_sample_product()
 
-    loggable = product_result_to_loggable(product, verbosity="high")
+    loggable = product_result_to_loggable(product, verbosity="high", debug_enabled=True)
 
     assert loggable["source"]["id"] == "1005008518647948"
     assert loggable["price"]["current"] == {"amount": "50.4", "currency": "USD"}
@@ -73,7 +73,7 @@ def test_product_result_to_loggable_high_truncates_and_excludes_raw() -> None:
 def test_product_result_to_loggable_medium_omits_ids_and_sku_and_simplifies_variants() -> None:
     product = _build_sample_product()
 
-    loggable = product_result_to_loggable(product, verbosity="medium")
+    loggable = product_result_to_loggable(product, verbosity="medium", debug_enabled=True)
 
     assert "id" not in loggable
     assert loggable["price"] == "50.4$"
@@ -89,7 +89,7 @@ def test_product_result_to_loggable_medium_omits_ids_and_sku_and_simplifies_vari
 def test_product_result_to_loggable_low_is_compact() -> None:
     product = _build_sample_product()
 
-    loggable = product_result_to_loggable(product, verbosity="low")
+    loggable = product_result_to_loggable(product, verbosity="low", debug_enabled=True)
 
     assert set(loggable.keys()) == {"platform", "title", "price", "images", "variants_count", "brand", "category"}
     assert loggable["platform"] == "aliexpress"
