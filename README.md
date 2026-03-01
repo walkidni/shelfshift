@@ -79,7 +79,6 @@ Quick smoke test:
 ```bash
 python -c "import shelfshift, shelfshift.core; print(shelfshift.__version__)"
 shelfshift --help
-shelfshift-server --help
 ```
 
 ## Running Commands
