@@ -17,7 +17,9 @@ from .config import Settings, get_settings
 from .routers import api, web_csv, web_url
 
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "web" / "static"
+PACKAGE_STATIC_DIR = BASE_DIR / "web" / "static"
+PUBLIC_STATIC_DIR = ROOT_DIR / "public" / "static"
+STATIC_DIR = PUBLIC_STATIC_DIR if PUBLIC_STATIC_DIR.exists() else PACKAGE_STATIC_DIR
 
 logger = logging.getLogger("uvicorn.error")
 

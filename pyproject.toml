@@ -49,6 +49,10 @@ dev = [
 [tool.uv]
 package = true
 
+[tool.setuptools.packages.find]
+include = ["shelfshift*"]
+exclude = ["api*"]
+
 [tool.setuptools.package-data]
 "shelfshift.server" = [
     "web/templates/*.html",
