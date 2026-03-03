@@ -448,7 +448,6 @@ class WooCommerceClient(ProductClient):
             requires_shipping=requires_shipping,
             track_quantity=track_quantity,
             is_digital=is_digital,
-            raw=payload,
             price=make_price(
                 amount=amount,
                 currency=currency,
@@ -618,7 +617,6 @@ class WooCommerceClient(ProductClient):
             requires_shipping=True,
             track_quantity=True,
             is_digital=False,
-            raw=product_data,
             price=make_price(amount=default_price, currency=default_currency),
             media=media,
             identifiers=product_identifiers,

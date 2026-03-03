@@ -37,9 +37,9 @@ def fetch_product_details(url: str) -> Product:
     return client.fetch_product(url)
 
 
-def import_product(url: str, include_raw: bool = False) -> dict:
+def import_product(url: str) -> dict:
     product = fetch_product_details(url)
-    return product.to_dict(include_raw=include_raw)
+    return product.to_dict()
 
 
 __all__ = [

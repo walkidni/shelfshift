@@ -94,7 +94,6 @@ class Variant:
     weight: Weight | None = None
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
-    raw: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         self.option_values = _normalize_option_values(self.option_values)
@@ -113,7 +112,7 @@ class Variant:
         if isinstance(self.identifiers, dict):
             self.identifiers = Identifiers(values=_clean_identifier_values(self.identifiers))
 
-    def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = {
             "id": self.id,
             "sku": self.sku,
@@ -133,8 +132,6 @@ class Variant:
             "media": [_media_to_dict(item) for item in self.media],
             "identifiers": {"values": dict(self.identifiers.values)},
         }
-        if include_raw:
-            data["raw"] = self.raw
         return data
 
 
@@ -157,7 +154,6 @@ class Product:
     is_digital: bool = False
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
-    raw: dict[str, Any] | None = None
     provenance: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -206,7 +202,7 @@ class Product:
         self.source.slug = _clean_text(self.source.slug)
         self.source.url = _normalize_url(self.source.url)
 
-    def to_dict(self, include_raw: bool = True) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         data = {
             "source": {
                 "platform": self.source.platform,
@@ -231,7 +227,7 @@ class Product:
                 {"name": option.name, "values": list(option.values)}
                 for option in self.options
             ],
-            "variants": [variant.to_dict(include_raw=include_raw) for variant in self.variants],
+            "variants": [variant.to_dict() for variant in self.variants],
             "price": _price_to_dict(self.price),
             "weight": _weight_to_dict(self.weight),
             "requires_shipping": self.requires_shipping,
@@ -241,8 +237,6 @@ class Product:
             "identifiers": {"values": dict(self.identifiers.values)},
             "provenance": dict(self.provenance),
         }
-        if include_raw:
-            data["raw"] = self.raw
         return data
 
 

@@ -15,7 +15,6 @@ def test_single_variant_uses_default_title_option() -> None:
         description="Demo description",
         price={"amount": 12.0, "currency": "USD"},
         images=[],
-        raw={},
     )
 
     csv_text, filename = product_to_shopify_csv(product, publish=False)
@@ -60,7 +59,6 @@ def test_multi_variant_maps_two_options() -> None:
                 image="https://cdn.example.com/tee-white-l.jpg",
             ),
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=True)
@@ -105,7 +103,6 @@ def test_multiple_images_create_extra_rows() -> None:
                 image="https://cdn.example.com/poster-variant.jpg",
             )
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
@@ -136,7 +133,6 @@ def test_body_html_round_trips_quotes_commas_newlines() -> None:
         description=body,
         price={"amount": 12.0, "currency": "USD"},
         images=[],
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
@@ -155,7 +151,6 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
         price={"amount": 49.5, "currency": "USD"},
         images=[],
         variants=[Variant(id="B00ABC1234", price_amount=49.5, inventory_quantity=None)],
-        raw={},
     )
 
     csv_text, filename = product_to_shopify_csv(product, publish=False)
@@ -186,7 +181,6 @@ def test_shopify_export_allows_weight_unit_override_without_changing_grams() -> 
                 weight=250,
             )
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=True, weight_unit="lb")
@@ -212,7 +206,6 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
                 price_amount=50.4,
             )
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
@@ -243,7 +236,6 @@ def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
             )
         ],
         slug="large-boxy-quilt-pouch-r",
-        raw={},
     )
 
     csv_text, _ = product_to_shopify_csv(product, publish=False)
@@ -276,7 +268,6 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
                 image="https://cdn.example.com/legacy-variant.jpg",
             )
         ],
-        raw={},
     )
     product.price = Price(current=Money(amount=Decimal("55.5"), currency="eur"))
     product.media = [

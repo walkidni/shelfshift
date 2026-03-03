@@ -74,7 +74,7 @@ def test_squarespace_import_prefers_page_json_when_product_structured_content_ex
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(source_url)
-    parsed = product.to_dict(include_raw=False)
+    parsed = product.to_dict()
 
     assert calls == [page_json_url]
     assert parsed["source"]["platform"] == "squarespace"
@@ -157,7 +157,7 @@ def test_squarespace_import_falls_back_to_html_json_ld_when_page_json_has_no_pro
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(source_url)
-    parsed = product.to_dict(include_raw=False)
+    parsed = product.to_dict()
 
     assert calls == [page_json_url, source_url]
     assert parsed["source"]["platform"] == "squarespace"

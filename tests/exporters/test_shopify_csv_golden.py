@@ -48,7 +48,6 @@ def test_shopify_csv_matches_golden_fixture_two_variants() -> None:
         category="Wrong Category",
         tags=["tee", "v-neck"],
         slug="v-neck-tee",
-        raw={},
     )
     product.options = [OptionDef(name="Size", values=["S", "M"])]
     product.taxonomy = CategorySet(paths=[["Shirts"]], primary=["Shirts"])
@@ -91,7 +90,6 @@ def test_shopify_csv_matches_golden_fixture_simple_product() -> None:
                 weight=250,
             )
         ],
-        raw={},
     )
     product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
     product.variants[0].price = Price(current=Money(amount=12.0, currency="USD"))

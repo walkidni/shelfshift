@@ -24,7 +24,6 @@ def test_simple_product_maps_qty_stock() -> None:
                 weight=250,
             )
         ],
-        raw={},
     )
 
     csv_text, filename = product_to_woocommerce_csv(product, publish=False)
@@ -72,7 +71,6 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
                 image="https://cdn.example.com/mask-neck.jpg",
             ),
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
@@ -114,7 +112,6 @@ def test_available_without_qty_does_not_emit_stock() -> None:
         images=[],
         variants=[Variant(id="v1", price_amount=6.5, available=False, inventory_quantity=None)],
         is_digital=True,
-        raw={},
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
@@ -140,7 +137,6 @@ def test_multiple_variants_without_options_synthesizes_option_attribute() -> Non
             Variant(id="v1", sku="TEE-BLK", title="Black", price_amount=19.99),
             Variant(id="v2", sku="TEE-WHT", title="White", price_amount=21.99),
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_woocommerce_csv(product, publish=False)
@@ -183,7 +179,6 @@ def test_woocommerce_export_prefers_typed_fields_when_present() -> None:
                 image="https://cdn.example.com/legacy-wrong-v2.jpg",
             ),
         ],
-        raw={},
     )
     product.price = Price(current=Money(amount=Decimal("18.5"), currency="USD"))
     product.options = [OptionDef(name="Color", values=["Black", "White"])]

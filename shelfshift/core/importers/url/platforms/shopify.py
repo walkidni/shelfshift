@@ -151,7 +151,6 @@ class ShopifyClient(ProductClient):
             requires_shipping=True,
             track_quantity=False,
             is_digital=False,
-            raw=product_ld,
             price=make_price(amount=price_amount, currency=currency),
             media=[
                 Media(
@@ -367,7 +366,6 @@ class ShopifyClient(ProductClient):
             requires_shipping=requires_shipping,
             track_quantity=track_quantity,
             is_digital=is_digital,
-            raw=payload,
             price=make_price(
                 amount=price_amount,
                 currency=currency,

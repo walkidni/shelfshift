@@ -49,7 +49,6 @@ def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
         category="Wrong Category",
         tags=["tee", "v-neck"],
         slug="v-neck-tee",
-        raw={},
     )
     product.price = Price(current=Money(amount=Decimal("24.99"), currency="USD"))
     product.options = [OptionDef(name="Size", values=["S", "M"])]
@@ -93,7 +92,6 @@ def test_woocommerce_csv_matches_golden_fixture_simple_product() -> None:
                 weight=250,
             )
         ],
-        raw={},
     )
     product.price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
     product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]

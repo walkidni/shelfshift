@@ -50,7 +50,7 @@ def test_woocommerce_storefront_url_uses_store_api_slug_and_parses_product(monke
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product("https://demo-store.com/product/adjustable-wrench-set/")
-    parsed = product.to_dict(include_raw=False)
+    parsed = product.to_dict()
 
     assert calls == [("https://demo-store.com/wp-json/wc/store/v1/products", {"slug": "adjustable-wrench-set"})]
     assert parsed["source"]["platform"] == "woocommerce"
@@ -64,7 +64,6 @@ def test_woocommerce_storefront_url_uses_store_api_slug_and_parses_product(monke
     assert parsed["options"] == [{"name": "Material", "values": ["Steel"]}]
     assert len(parsed["variants"]) == 1
     assert parsed["variants"][0]["id"] == "101"
-    assert product.raw == api_payload
 
 
 def test_woocommerce_store_api_url_imports_directly_without_normalizing(monkeypatch) -> None:
@@ -107,7 +106,7 @@ def test_woocommerce_store_api_url_imports_directly_without_normalizing(monkeypa
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(api_url)
-    parsed = product.to_dict(include_raw=False)
+    parsed = product.to_dict()
 
     assert calls == [api_url]
     assert parsed["source"]["platform"] == "woocommerce"
@@ -117,7 +116,6 @@ def test_woocommerce_store_api_url_imports_directly_without_normalizing(monkeypa
     assert parsed["variants"][0]["id"] == "501"
     assert parsed["variants"][0]["option_values"] == [{"name": "Size", "value": "300mm"}]
     assert parsed["variants"][0]["inventory"]["quantity"] == 7
-    assert product.raw == api_payload
 
 
 def test_woocommerce_import_falls_back_to_default_variant_for_broken_variations(monkeypatch) -> None:
@@ -181,7 +179,7 @@ def test_woocommerce_store_api_failure_uses_heuristic_html_fallback(monkeypatch)
     monkeypatch.setattr(client._http, "get", fake_get)
 
     product = client.fetch_product(api_url)
-    parsed = product.to_dict(include_raw=False)
+    parsed = product.to_dict()
 
     assert calls == [api_url, fallback_url]
     assert parsed["title"] == "Brake Disc Rotor"

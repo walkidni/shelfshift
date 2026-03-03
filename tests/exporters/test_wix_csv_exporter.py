@@ -33,7 +33,6 @@ def test_wix_export_maps_product_and_variant_rows() -> None:
             ),
         ],
         slug="guava-glow-set",
-        raw={},
     )
 
     csv_text, filename = product_to_wix_csv(product, publish=True)
@@ -77,7 +76,6 @@ def test_wix_export_synthesizes_option_column_when_variants_have_no_options() ->
             Variant(id="v1", sku="AE-1", title="Only Face mask", price_amount=50.4),
             Variant(id="v2", sku="AE-2", title="Only Neck White", price_amount=60.4),
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=False)
@@ -106,7 +104,6 @@ def test_wix_export_emits_media_rows_for_additional_images() -> None:
             "https://cdn.example.com/tee-3.jpg",
         ],
         variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
-        raw={},
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=True)
@@ -131,7 +128,6 @@ def test_wix_export_supports_lb_weight_unit() -> None:
         price={"amount": 19.99, "currency": "USD"},
         images=["https://cdn.example.com/tee-1.jpg"],
         variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4, weight=333)],
-        raw={},
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=True, weight_unit="lb")
@@ -150,7 +146,6 @@ def test_wix_export_truncates_name_and_plain_description_to_wix_limits() -> None
         price={"amount": 19.99, "currency": "USD"},
         images=["https://cdn.example.com/tee-1.jpg"],
         variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
-        raw={},
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=True)
@@ -174,7 +169,6 @@ def test_wix_export_truncates_using_utf16_units_for_wix_limits() -> None:
         price={"amount": 19.99, "currency": "USD"},
         images=["https://cdn.example.com/tee-1.jpg"],
         variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4)],
-        raw={},
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=True)
@@ -205,7 +199,6 @@ def test_wix_export_prefers_typed_fields_when_present() -> None:
                 inventory_quantity=999,
             )
         ],
-        raw={},
     )
     product.options = [OptionDef(name="Color", values=["Blue"])]
     product.media = [

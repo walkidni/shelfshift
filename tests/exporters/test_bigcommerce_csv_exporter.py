@@ -40,7 +40,6 @@ def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None
             ),
         ],
         slug="classic-tee",
-        raw={},
     )
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=False)
@@ -97,7 +96,6 @@ def test_bigcommerce_export_simple_product_uses_product_and_image_rows() -> None
         price={"amount": 12.0, "currency": "USD"},
         images=["https://cdn.example.com/mug.jpg"],
         variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, image="//cdn.example.com/mug-variant.jpg")],
-        raw={},
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=True)
@@ -139,7 +137,6 @@ def test_bigcommerce_export_uses_swatch_only_when_value_data_is_present() -> Non
                 price_amount=19.99,
             )
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=False)
@@ -166,7 +163,6 @@ def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() ->
             )
         ],
         weight=100.0,
-        raw={},
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=False)
@@ -191,7 +187,6 @@ def test_bigcommerce_export_supports_lb_weight_unit() -> None:
                 weight=220,
             )
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=False, weight_unit="lb")
@@ -212,7 +207,6 @@ def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
         variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, inventory_quantity=5, weight=250)],
         category="Mugs",
         slug="demo-mug",
-        raw={},
     )
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=True, csv_format="legacy")
@@ -238,7 +232,6 @@ def test_bigcommerce_export_uses_modern_format_by_default() -> None:
         description="Demo description",
         price={"amount": 12.0, "currency": "USD"},
         variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0)],
-        raw={},
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=False)
@@ -267,7 +260,6 @@ def test_bigcommerce_modern_prefers_typed_fields_when_present() -> None:
                 image="https://cdn.example.com/legacy-wrong-variant.jpg",
             )
         ],
-        raw={},
     )
     product.options = [OptionDef(name="Color", values=["Blue"])]
     product.taxonomy = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])
@@ -314,7 +306,6 @@ def test_bigcommerce_legacy_prefers_typed_fields_when_present() -> None:
                 inventory_quantity=999,
             )
         ],
-        raw={},
     )
     product.taxonomy = CategorySet(paths=[["Drinkware", "Mugs"]], primary=["Drinkware", "Mugs"])
     product.media = [Media(url="https://cdn.example.com/typed-mug.jpg", is_primary=True)]

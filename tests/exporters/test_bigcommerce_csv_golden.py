@@ -49,7 +49,6 @@ def test_bigcommerce_csv_matches_golden_fixture_two_variants() -> None:
             ),
         ],
         slug="classic-tee",
-        raw={},
     )
     product.options = [
         OptionDef(name="Color", values=["Black", "White"]),
@@ -102,7 +101,6 @@ def test_bigcommerce_csv_matches_golden_fixture_simple_product() -> None:
                 image="https://cdn.example.com/legacy-wrong-variant.jpg",
             )
         ],
-        raw={},
     )
     product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
     product.variants[0].price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
@@ -129,7 +127,6 @@ def test_bigcommerce_csv_matches_golden_fixture_missing_optional_fields() -> Non
         price=None,
         images=[],
         variants=[],
-        raw={},
     )
 
     csv_text, filename = product_to_bigcommerce_csv(product, publish=False)
@@ -161,7 +158,6 @@ def test_bigcommerce_csv_matches_golden_fixture_edge_numbers() -> None:
                 weight=0,
             )
         ],
-        raw={},
     )
     product.variants[0].price = Price(current=Money(amount=Decimal("19.9999"), currency="USD"))
 
@@ -207,7 +203,6 @@ def test_bigcommerce_csv_matches_golden_fixture_media_edge_cases() -> None:
                 image="https://cdn.example.com/legacy-wrong-v2.jpg",
             ),
         ],
-        raw={},
     )
     product.options = [OptionDef(name="Color", values=["Black", "White"])]
     product.media = [
@@ -248,7 +243,6 @@ def test_bigcommerce_legacy_csv_matches_golden_fixture_simple_product() -> None:
         variants=[Variant(id="v1", sku="MUG-001", price_amount=111.0, inventory_quantity=999, weight=250)],
         category="Wrong Category",
         slug="demo-mug",
-        raw={},
     )
     product.taxonomy = CategorySet(paths=[["Mugs"]], primary=["Mugs"])
     product.media = [

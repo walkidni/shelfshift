@@ -27,7 +27,6 @@ def test_single_variant_maps_visible_and_hosted_images() -> None:
                 weight=250,
             )
         ],
-        raw={},
     )
 
     csv_text, filename = product_to_squarespace_csv(
@@ -82,7 +81,6 @@ def test_multi_variant_uses_first_row_for_product_fields() -> None:
         ],
         category="Shirts",
         tags=["tee", "v-neck"],
-        raw={},
     )
 
     csv_text, _ = product_to_squarespace_csv(
@@ -127,7 +125,6 @@ def test_multiple_variants_without_options_synthesizes_option_column() -> None:
             Variant(id="v1", sku="TEE-BLK", title="Black", price_amount=19.99),
             Variant(id="v2", sku="TEE-WHT", title="White", price_amount=21.99),
         ],
-        raw={},
     )
 
     csv_text, _ = product_to_squarespace_csv(
@@ -155,7 +152,6 @@ def test_missing_inventory_defaults_to_unlimited_stock() -> None:
         price={"amount": 19.99, "currency": "USD"},
         images=[],
         variants=[Variant(id="v1", sku="TEE-BLK", price_amount=19.99, inventory_quantity=None)],
-        raw={},
     )
 
     csv_text, _ = product_to_squarespace_csv(
@@ -178,7 +174,6 @@ def test_squarespace_export_supports_lb_weight_unit() -> None:
         price={"amount": 12.0, "currency": "USD"},
         images=[],
         variants=[Variant(id="v1", sku="AMZ-MUG-001", price_amount=12.0, weight=250)],
-        raw={},
     )
 
     csv_text, _ = product_to_squarespace_csv(
@@ -213,7 +208,6 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
                 image="https://cdn.example.com/legacy-wrong-variant.jpg",
             )
         ],
-        raw={},
     )
     product.options = [OptionDef(name="Color", values=["Blue"])]
     product.taxonomy = CategorySet(paths=[["Men", "Shirts"]], primary=["Men", "Shirts"])

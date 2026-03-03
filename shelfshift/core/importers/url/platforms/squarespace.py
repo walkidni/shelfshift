@@ -399,7 +399,6 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
         requires_shipping=not is_digital,
         track_quantity=True,
         is_digital=is_digital,
-        raw=product_data,
         price=make_price(amount=default_price, currency=default_currency),
         media=[
             Media(
@@ -723,7 +722,6 @@ def _parse_page_json_product(
         requires_shipping=not is_digital,
         track_quantity=True,
         is_digital=is_digital,
-        raw=payload,
         price=make_price(amount=default_price, currency=default_currency),
         media=media,
         options=option_defs,

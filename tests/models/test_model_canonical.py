@@ -36,7 +36,7 @@ def test_weight_is_typed_and_serialized_as_object() -> None:
         variants=[Variant(id="v-1", weight=Weight(value=Decimal("250"), unit="g"))],
     )
 
-    payload = product.to_dict(include_raw=False)
+    payload = product.to_dict()
 
     assert payload["weight"] == {"value": "1100", "unit": "g"}
     assert payload["variants"][0]["weight"] == {"value": "250", "unit": "g"}
@@ -48,7 +48,7 @@ def test_variant_inventory_serialization_includes_available() -> None:
         inventory={"track_quantity": True, "quantity": 4, "available": True, "allow_backorder": False},
     )
 
-    payload = variant.to_dict(include_raw=False)
+    payload = variant.to_dict()
 
     assert "available" not in payload
     assert payload["inventory"] == {

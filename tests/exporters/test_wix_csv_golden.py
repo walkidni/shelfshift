@@ -42,7 +42,6 @@ def test_wix_csv_matches_golden_fixture_two_variants() -> None:
             ),
         ],
         slug="guava-glow-set",
-        raw={},
     )
     product.options = [OptionDef(name="Size", values=["Small", "Medium"])]
     product.media = [Media(url="https://example.com/img1.jpg", is_primary=True)]
@@ -81,7 +80,6 @@ def test_wix_csv_matches_golden_fixture_simple_product() -> None:
                 inventory_quantity=999,
             )
         ],
-        raw={},
     )
     product.media = [Media(url="https://cdn.example.com/mug.jpg", is_primary=True)]
     product.variants[0].price = Price(current=Money(amount=Decimal("12.0"), currency="USD"))
@@ -108,7 +106,6 @@ def test_wix_csv_matches_golden_fixture_missing_optional_fields() -> None:
         price=None,
         images=[],
         variants=[],
-        raw={},
     )
 
     csv_text, filename = product_to_wix_csv(product, publish=False)
@@ -140,7 +137,6 @@ def test_wix_csv_matches_golden_fixture_edge_numbers() -> None:
                 weight=333,
             )
         ],
-        raw={},
     )
     product.variants[0].price = Price(current=Money(amount=Decimal("12.3456"), currency="USD"))
     product.variants[0].inventory = Inventory(track_quantity=True, quantity=0, available=False)
@@ -185,7 +181,6 @@ def test_wix_csv_matches_golden_fixture_media_edge_cases() -> None:
                 inventory_quantity=999,
             ),
         ],
-        raw={},
     )
     product.options = [OptionDef(name="Color", values=["Black", "White"])]
     product.media = [

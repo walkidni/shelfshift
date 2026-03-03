@@ -43,7 +43,7 @@ def _cmd_import_url(args: argparse.Namespace) -> int:
     )
     _json_dump(
         {
-            "products": [p.to_dict(include_raw=args.include_raw) for p in result.products],
+            "products": [p.to_dict() for p in result.products],
             "errors": result.errors,
         }
     )
@@ -59,7 +59,7 @@ def _cmd_import_csv(args: argparse.Namespace) -> int:
     )
     _json_dump(
         {
-            "products": [p.to_dict(include_raw=args.include_raw) for p in result.products],
+            "products": [p.to_dict() for p in result.products],
             "errors": result.errors,
         }
     )
@@ -114,7 +114,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     import_url_cmd = subparsers.add_parser("import-url", help="Import canonical products from one or more URLs")
     import_url_cmd.add_argument("url", nargs="+", help="One or more product URLs")
-    import_url_cmd.add_argument("--include-raw", action="store_true")
     import_url_cmd.add_argument("--strict", action="store_true")
     import_url_cmd.set_defaults(func=lambda args: _cmd_import_url(argparse.Namespace(**{**vars(args), "url": args.url if len(args.url) > 1 else args.url[0]})))
 
@@ -141,7 +140,6 @@ def build_parser() -> argparse.ArgumentParser:
     import_csv_cmd.add_argument("input", help="Source CSV file path")
     import_csv_cmd.add_argument("--source-platform", default=None)
     import_csv_cmd.add_argument("--source-weight-unit", default="")
-    import_csv_cmd.add_argument("--include-raw", action="store_true")
     import_csv_cmd.add_argument("--strict", action="store_true")
     import_csv_cmd.set_defaults(func=_cmd_import_csv)
 

@@ -56,7 +56,7 @@ def test_shopify_import_happy_path_matches_expected_fixture(monkeypatch) -> None
     product = client.fetch_product(source_url)
 
     assert calls == [api_url]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
 
 
 def test_shopify_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -85,7 +85,7 @@ def test_shopify_import_html_fallback_matches_expected_fixture(monkeypatch) -> N
     product = client.fetch_product(source_url)
 
     assert calls == [api_url, source_url]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
 
 
 def test_squarespace_import_happy_path_matches_expected_fixture(monkeypatch) -> None:
@@ -110,7 +110,7 @@ def test_squarespace_import_happy_path_matches_expected_fixture(monkeypatch) -> 
     product = client.fetch_product(source_url)
 
     assert calls == [page_json_url]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
 
 
 def test_squarespace_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -140,7 +140,7 @@ def test_squarespace_import_html_fallback_matches_expected_fixture(monkeypatch) 
     product = client.fetch_product(source_url)
 
     assert calls == [page_json_url, source_url]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
 
 
 def test_woocommerce_import_happy_path_matches_expected_fixture(monkeypatch) -> None:
@@ -166,7 +166,7 @@ def test_woocommerce_import_happy_path_matches_expected_fixture(monkeypatch) -> 
     product = client.fetch_product(source_url)
 
     assert calls == [(api_url, {"slug": "adjustable-wrench-set"})]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
 
 
 def test_woocommerce_import_html_fallback_matches_expected_fixture(monkeypatch) -> None:
@@ -196,4 +196,4 @@ def test_woocommerce_import_html_fallback_matches_expected_fixture(monkeypatch) 
     product = client.fetch_product(api_url)
 
     assert calls == [api_url, fallback_url]
-    assert product.to_dict(include_raw=False) == expected
+    assert product.to_dict() == expected
