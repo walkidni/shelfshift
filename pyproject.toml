@@ -43,14 +43,6 @@ dev = [
 [tool.uv]
 package = true
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["shelfshift*"]
-exclude = ["api*"]
-
 [tool.ruff]
 target-version = "py310"
 line-length = 100
