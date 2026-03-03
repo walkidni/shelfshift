@@ -132,13 +132,60 @@ Use these when you need deterministic canonical normalization/derivation helpers
 
 ### Platform row mappers (pre-CSV control)
 
-Modules:
+Use these low-level mappers when you want platform-ready row dictionaries before CSV serialization.
 
-- `shelfshift.core.exporters.platforms.shopify.product_to_shopify_rows(product: Product, *, publish: bool, weight_unit: str = "g") -> list[dict[str, str]]`
-- `shelfshift.core.exporters.platforms.bigcommerce.product_to_bigcommerce_rows(product: Product, *, publish: bool, csv_format: Literal["modern", "legacy"] = "modern", weight_unit: str = "kg") -> list[dict[str, str]]`
-- `shelfshift.core.exporters.platforms.wix.product_to_wix_rows(product: Product, *, publish: bool, weight_unit: str = "kg") -> list[dict[str, str]]`
-- `shelfshift.core.exporters.platforms.squarespace.product_to_squarespace_rows(product: Product, *, publish: bool, product_page: str = "", product_url: str = "", weight_unit: str = "kg") -> list[dict[str, str]]`
-- `shelfshift.core.exporters.platforms.woocommerce.product_to_woocommerce_rows(product: Product, *, publish: bool, weight_unit: str = "kg") -> list[dict[str, str]]`
+- Shopify (`shelfshift.core.exporters.platforms.shopify`)
+```python
+product_to_shopify_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "g",
+) -> list[dict[str, str]]
+```
+
+- BigCommerce (`shelfshift.core.exporters.platforms.bigcommerce`)
+```python
+product_to_bigcommerce_rows(
+    product: Product,
+    *,
+    publish: bool,
+    csv_format: Literal["modern", "legacy"] = "modern",
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]
+```
+
+- Wix (`shelfshift.core.exporters.platforms.wix`)
+```python
+product_to_wix_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]
+```
+
+- Squarespace (`shelfshift.core.exporters.platforms.squarespace`)
+```python
+product_to_squarespace_rows(
+    product: Product,
+    *,
+    publish: bool,
+    product_page: str = "",
+    product_url: str = "",
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]
+```
+
+- WooCommerce (`shelfshift.core.exporters.platforms.woocommerce`)
+```python
+product_to_woocommerce_rows(
+    product: Product,
+    *,
+    publish: bool,
+    weight_unit: str = "kg",
+) -> list[dict[str, str]]
+```
 
 Use these when you want platform-ready CSV row dicts for custom post-processing before writing CSV text.
 
