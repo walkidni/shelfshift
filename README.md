@@ -55,9 +55,9 @@ with open("./shopify.csv", "wb") as f:
 
 ## Documentation
 
-- Start here: [Guides Index](guides/INDEX.md)
-- Library guides: [Library Index](guides/library/INDEX.md)
-- CLI guides: [CLI Index](guides/cli/INDEX.md)
+- Start here: [Guides Index](https://github.com/walkidni/shelfshift/blob/main/guides/INDEX.md)
+- Library guides: [Library Index](https://github.com/walkidni/shelfshift/blob/main/guides/library/INDEX.md)
+- CLI guides: [CLI Index](https://github.com/walkidni/shelfshift/blob/main/guides/cli/INDEX.md)
 
 ## Development Note
 
