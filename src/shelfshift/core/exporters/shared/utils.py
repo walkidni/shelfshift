@@ -63,10 +63,7 @@ def _utcnow() -> datetime:
 
 def utc_timestamp_compact(now: datetime | None = None) -> str:
     dt = now or _utcnow()
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    else:
-        dt = dt.astimezone(timezone.utc)
+    dt = dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
     return dt.strftime("%Y%m%dT%H%M%SZ")
 
 

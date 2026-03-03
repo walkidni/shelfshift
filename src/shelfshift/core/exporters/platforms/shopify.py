@@ -58,7 +58,7 @@ def _format_bool(value: bool) -> str:
 def _format_grams(value: float | None) -> str:
     if value is None:
         return ""
-    return str(max(0, int(round(value))))
+    return str(max(0, round(value)))
 
 
 def _format_inventory_qty(value: int | None) -> str:
