@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-# Ensure `import app` works when running `pytest` without needing PYTHONPATH hacks.
+# Ensure imports resolve from `src/` when running `pytest` directly.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 
 @pytest.fixture(autouse=True)

@@ -2,20 +2,26 @@
 
 Thanks for contributing to Shelfshift.
 
-## Local development setup
+## Local Development Setup
 
 Prerequisites:
 
-- Python 3.13+
+- Python 3.10+
 - `uv` (recommended): <https://astral.sh/uv>
 
-Install project dependencies:
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-## Run commands locally
+Optional smoke check:
+
+```bash
+python -c "import shelfshift; print(shelfshift.__version__)"
+```
+
+## Run Commands Locally
 
 One-off invocation:
 
@@ -32,7 +38,7 @@ shelfshift detect ./source.csv
 
 When `.venv` is activated, you do not need `uv run`.
 
-## Run tests
+## Run Tests
 
 Activate the virtual environment in the same command/session before running tests:
 
@@ -41,25 +47,26 @@ source .venv/bin/activate
 pytest -q
 ```
 
-## Repository layout
+## Repository Layout
 
 ```text
-shelfshift/
-  core/
-    canonical/
-    detect/
-    importers/
-    exporters/
-    validate/
-  cli/
-    main.py
-  server/
-    main.py
-    config.py
-    schemas.py
-    routers/
-    helpers/
-    logging/
-    web/
+src/
+  shelfshift/
+    __init__.py
+    cli/
+      main.py
+    core/
+      api.py
+      registry.py
+      canonical/
+      detect/
+      importers/
+        csv/
+        url/
+      exporters/
+        platforms/
+        shared/
+      validate/
 tests/
+guides/
 ```

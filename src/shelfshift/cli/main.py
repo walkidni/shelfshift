@@ -19,7 +19,7 @@ from shelfshift.core import (
 )
 from shelfshift.core.canonical.io import json_to_product, json_to_products
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 
 def _json_dump(data: Any) -> None:
