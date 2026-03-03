@@ -1,92 +1,43 @@
 from __future__ import annotations
 
+import pytest
+
 from shelfshift.core import api as core_api
 from shelfshift.core.importers import url as url_importers
-from tests.helpers._model_builders import Product
 
 
 _AMAZON_URL = "https://www.amazon.com/dp/B0C1234567"
+_ALIEXPRESS_URL = "https://www.aliexpress.com/item/1005008518647948.html"
 
 
-def _sample_product() -> Product:
-    return Product(
-        platform="amazon",
-        id="B0C1234567",
-        title="Demo Product",
-        description="Demo",
-        price={"amount": 10.0, "currency": "USD"},
-        images=[],
-        options={},
-        variants=[],
-        raw={},
+def test_import_product_from_url_rejects_detectable_but_unsupported_platforms() -> None:
+    with pytest.raises(ValueError, match="Unsupported URL import source"):
+        url_importers.import_product_from_url(_AMAZON_URL)
+
+    with pytest.raises(ValueError, match="Unsupported URL import source"):
+        url_importers.import_product_from_url(_ALIEXPRESS_URL)
+
+
+def test_import_products_from_urls_collects_unsupported_platform_errors(monkeypatch) -> None:
+    class _FakeProduct:
+        pass
+
+    monkeypatch.setattr(url_importers, "_fetch_product_details", lambda _url: _FakeProduct())
+
+    products, errors = url_importers.import_products_from_urls(
+        [
+            "https://demo.myshopify.com/products/red-rain-coat",
+            _AMAZON_URL,
+            _ALIEXPRESS_URL,
+        ]
     )
 
-
-def test_import_product_from_url_prefers_explicit_rapidapi_key(monkeypatch) -> None:
-    monkeypatch.setenv("RAPIDAPI_KEY", "env-key")
-    captured: dict[str, str | None] = {}
-
-    def fake_fetch(_url, cfg):
-        captured["rapidapi_key"] = cfg.rapidapi_key
-        return _sample_product()
-
-    monkeypatch.setattr(url_importers, "_fetch_product_details", fake_fetch)
-
-    result = url_importers.import_product_from_url(_AMAZON_URL, rapidapi_key="explicit-key")
-    assert result.source.id == "B0C1234567"
-    assert captured["rapidapi_key"] == "explicit-key"
+    assert len(products) == 1
+    assert len(errors) == 2
+    assert {error["url"] for error in errors} == {_AMAZON_URL, _ALIEXPRESS_URL}
+    assert all("Unsupported URL import source" in error["detail"] for error in errors)
 
 
-def test_import_product_from_url_uses_env_rapidapi_key_when_explicit_missing(monkeypatch) -> None:
-    monkeypatch.setenv("RAPIDAPI_KEY", "env-key")
-    captured: dict[str, str | None] = {}
-
-    def fake_fetch(_url, cfg):
-        captured["rapidapi_key"] = cfg.rapidapi_key
-        return _sample_product()
-
-    monkeypatch.setattr(url_importers, "_fetch_product_details", fake_fetch)
-
-    result = url_importers.import_product_from_url(_AMAZON_URL)
-    assert result.source.id == "B0C1234567"
-    assert captured["rapidapi_key"] == "env-key"
-
-
-def test_import_product_from_url_errors_when_rapidapi_key_missing(monkeypatch) -> None:
-    monkeypatch.delenv("RAPIDAPI_KEY", raising=False)
-    try:
-        url_importers.import_product_from_url(_AMAZON_URL)
-    except ValueError as exc:
-        assert "RAPIDAPI_KEY is required" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError when RAPIDAPI_KEY is missing.")
-
-
-def test_core_import_url_prefers_explicit_rapidapi_key(monkeypatch) -> None:
-    monkeypatch.setenv("RAPIDAPI_KEY", "env-key")
-    captured: dict[str, str | None] = {}
-
-    def fake_import_product_from_url(_url: str, *, rapidapi_key: str | None = None):
-        captured["rapidapi_key"] = rapidapi_key
-        return _sample_product()
-
-    monkeypatch.setattr(core_api, "import_product_from_url", fake_import_product_from_url)
-
-    result = core_api.import_url(_AMAZON_URL, rapidapi_key="explicit-key")
-    assert len(result.products) == 1
-    assert captured["rapidapi_key"] == "explicit-key"
-
-
-def test_core_import_url_uses_env_rapidapi_key_when_explicit_missing(monkeypatch) -> None:
-    monkeypatch.setenv("RAPIDAPI_KEY", "env-key")
-    captured: dict[str, str | None] = {}
-
-    def fake_import_product_from_url(_url: str, *, rapidapi_key: str | None = None):
-        captured["rapidapi_key"] = rapidapi_key
-        return _sample_product()
-
-    monkeypatch.setattr(core_api, "import_product_from_url", fake_import_product_from_url)
-
-    result = core_api.import_url(_AMAZON_URL)
-    assert len(result.products) == 1
-    assert captured["rapidapi_key"] == "env-key"
+def test_core_import_url_strict_raises_for_unsupported_platforms() -> None:
+    with pytest.raises(ValueError, match="Strict mode failed with 1 URL import error"):
+        core_api.import_url([_AMAZON_URL], strict=True)

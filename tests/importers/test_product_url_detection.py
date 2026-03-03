@@ -1,4 +1,3 @@
-from shelfshift.core.importers.url import requires_rapidapi
 from shelfshift.core.detect.url import detect_product_url
 
 
@@ -94,10 +93,15 @@ def test_detect_unknown_platform_returns_none() -> None:
     assert unknown["slug"] is None
 
 
-def test_requires_rapidapi_only_for_amazon_and_aliexpress() -> None:
-    assert requires_rapidapi("https://www.amazon.com/dp/B0C1234567") is True
-    assert requires_rapidapi("https://www.aliexpress.com/item/1005008518647948.html") is True
-    assert requires_rapidapi("https://demo.myshopify.com/products/red-rain-coat") is False
-    assert requires_rapidapi("https://demo-store.com/product/adjustable-wrench-set/") is False
-    assert requires_rapidapi("https://demo-store.com/wp-json/wc/store/v1/products/123") is False
-    assert requires_rapidapi("https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy") is False
+def test_detect_amazon_and_aliexpress_urls() -> None:
+    amazon = detect_product_url("https://www.amazon.com/dp/B0C1234567")
+    assert amazon["platform"] == "amazon"
+    assert amazon["is_product"] is True
+    assert amazon["product_id"] == "B0C1234567"
+    assert amazon["slug"] is None
+
+    aliexpress = detect_product_url("https://www.aliexpress.com/item/1005008518647948.html")
+    assert aliexpress["platform"] == "aliexpress"
+    assert aliexpress["is_product"] is True
+    assert aliexpress["product_id"] == "1005008518647948"
+    assert aliexpress["slug"] is None
