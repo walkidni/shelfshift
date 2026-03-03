@@ -1,6 +1,5 @@
 import json
 import re
-from dataclasses import dataclass
 from typing import Any, Iterable
 
 import requests
@@ -40,16 +39,6 @@ class ProductClient:
 
     def fetch_product(self, url: str) -> Product:
         raise NotImplementedError
-
-
-@dataclass
-class ApiConfig:
-    """
-    Minimal configuration for RapidAPI-backed clients.
-    Hosts/endpoints are hardcoded in the clients.
-    """
-
-    rapidapi_key: str | None = None
 
 
 def dedupe(seq: Iterable[str]) -> list[str]:

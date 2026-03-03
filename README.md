@@ -16,8 +16,6 @@ This project is built for ecommerce developers and integration engineers who nee
 
 - `shelfshift.core`: the primary product (importable Python library)
 - `shelfshift` CLI: automation and local workflows
-- `shelfshift.server`: self-hosted FastAPI API surface
-- Web UI: demo interface for core/server capabilities, not the primary target
 
 ## Core Capabilities
 
@@ -32,7 +30,6 @@ This project is built for ecommerce developers and integration engineers who nee
 
 - Library: `shelfshift.core`
 - CLI: `shelfshift` (entrypoint from `pyproject.toml`)
-- Server runner: `shelfshift-server`
 
 ## Supported Inputs
 
@@ -41,8 +38,8 @@ This project is built for ecommerce developers and integration engineers who nee
 - Shopify product URLs
 - WooCommerce product/store API URLs
 - Squarespace product URLs
-- Amazon product URLs (requires `RAPIDAPI_KEY`)
-- AliExpress product URLs (requires `RAPIDAPI_KEY`)
+
+URL detection also classifies Amazon and AliExpress URLs, but URL importing is intentionally limited to the three sources above.
 
 ### CSV import sources
 
@@ -55,7 +52,7 @@ This project is built for ecommerce developers and integration engineers who nee
 ## Compatibility
 
 - Python: `>=3.10`
-- URL imports: `shopify`, `woocommerce`, `squarespace`, `amazon`, `aliexpress`
+- URL imports: `shopify`, `woocommerce`, `squarespace`
 - CSV imports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
 - CSV exports: `shopify`, `bigcommerce`, `wix`, `squarespace`, `woocommerce`
 
@@ -83,7 +80,7 @@ shelfshift --help
 
 ## Running Commands
 
-Use one of the following workflows for CLI and server commands:
+Use one of the following workflows for CLI commands:
 
 1. One-off invocation with `uv run`:
 
@@ -135,17 +132,6 @@ result = import_url([
 print(len(result.products), len(result.errors))
 ```
 
-Amazon/AliExpress import with explicit key (preferred over env fallback):
-
-```python
-from shelfshift.core import import_url
-
-result = import_url(
-    "https://www.amazon.com/dp/B0C1234567",
-    rapidapi_key="your-rapidapi-key",
-)
-```
-
 ## Quick Start (CLI)
 
 Detect URL or CSV input:
@@ -160,12 +146,6 @@ Import URL(s) to canonical JSON:
 ```bash
 shelfshift import-url "https://example.myshopify.com/products/demo-item"
 shelfshift import-url "https://store-a.com/products/a" "https://store-b.com/products/b"
-```
-
-For Amazon/AliExpress URLs, pass an explicit key (or set `RAPIDAPI_KEY` in env):
-
-```bash
-shelfshift import-url "https://www.amazon.com/dp/B0C1234567" --rapidapi-key "your-rapidapi-key"
 ```
 
 Import source CSV to canonical JSON:
@@ -210,110 +190,12 @@ Export canonical JSON payload to target CSV:
 shelfshift export-csv ./canonical.json --to woocommerce --out ./woocommerce.csv
 ```
 
-## Self-Hosted API (FastAPI)
-
-Start server:
-
-```bash
-shelfshift-server
-```
-
-or:
-
-```bash
-uvicorn shelfshift.server.main:app --reload
-```
-
-Programmatic app creation with explicit settings:
-
-```python
-from shelfshift.config import Settings
-from shelfshift.server.main import create_app
-
-app = create_app(
-    settings=Settings(
-        app_name="ShelfShift Internal",
-        app_tagline="Catalog bridge",
-        brand_primary="#18d9b6",
-        brand_secondary="#27c6f5",
-        brand_ink="#020b1a",
-        debug=True,
-        log_verbosity="high",
-        rapidapi_key="your-key",
-        cors_allow_origins=("https://admin.example.com",),
-    )
-)
-```
-
-Open:
-
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- Landing page: `http://127.0.0.1:8000/`
-- URL demo UI: `http://127.0.0.1:8000/url`
-- CSV demo UI: `http://127.0.0.1:8000/csv`
-
-### API Routes
-
-- `GET /health`
-- `GET /api/v1/detect`
-- `POST /api/v1/import`
-- `POST /api/v1/detect/csv`
-- `POST /api/v1/import/csv`
-- `POST /api/v1/export/from-product.csv`
-- `POST /api/v1/export/shopify.csv`
-- `POST /api/v1/export/bigcommerce.csv`
-- `POST /api/v1/export/wix.csv`
-- `POST /api/v1/export/squarespace.csv`
-- `POST /api/v1/export/woocommerce.csv`
-
-## API Examples
-
-Detect URL:
-
-```bash
-curl "http://127.0.0.1:8000/api/v1/detect?url=https://example.myshopify.com/products/demo-item"
-```
-
-Import URL(s):
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/import" \
-  -H "Content-Type: application/json" \
-  -d '{"product_urls": ["https://example.myshopify.com/products/demo-item"]}'
-```
-
-Import CSV:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
-  -F "source_platform=shopify" \
-  -F "file=@./source.csv"
-```
-
-For `bigcommerce`, `wix`, and `squarespace` source CSVs, include `source_weight_unit` (`g|kg|lb|oz`):
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/import/csv" \
-  -F "source_platform=squarespace" \
-  -F "source_weight_unit=kg" \
-  -F "file=@./source.csv"
-```
-
-Export from canonical payload:
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/export/from-product.csv" \
-  -H "Content-Type: application/json" \
-  -d '{"product": {"source": {"platform": "shopify"}, "title": "Demo"}, "target_platform": "shopify"}' \
-  -o out.csv
-```
-
 ## Canonical Model
 
 All importers normalize into the Shelfshift canonical entities under:
 
 - `shelfshift.core.canonical.entities`
-- `shelfshift.core.canonical.serialization`
+- `shelfshift.core.canonical.io`
 
 This canonical layer is the contract between import and export stages.
 
@@ -321,10 +203,10 @@ This canonical layer is the contract between import and export stages.
 
 Registry hooks are available via:
 
-- `shelfshift.core.register_importer`
-- `shelfshift.core.register_exporter`
-- `shelfshift.core.list_importers`
-- `shelfshift.core.list_exporters`
+- `shelfshift.core.registry.register_importer`
+- `shelfshift.core.registry.register_exporter`
+- `shelfshift.core.registry.list_importers`
+- `shelfshift.core.registry.list_exporters`
 
 Use these for custom importer/exporter integration in internal tooling.
 
@@ -332,23 +214,15 @@ Use these for custom importer/exporter integration in internal tooling.
 
 Shelfshift resolves runtime settings in this order:
 
-1. Explicit runtime input (API args, CLI flags, `create_app(settings=...)`).
+1. Explicit runtime input (library args, CLI flags).
 2. Process environment (including values loaded from `.env`).
 3. Built-in defaults.
 
-Configuration is resolved per core call or per server app instance (no request-level live reload).
+Configuration is resolved per core call.
 
 ## Environment Variables
 
-- `APP_NAME`: server/web title
-- `APP_TAGLINE`: server/web subtitle
-- `BRAND_PRIMARY`: UI primary color
-- `BRAND_SECONDARY`: UI secondary color
-- `BRAND_INK`: UI text color
-- `DEBUG`: include/exclude `raw` in API import responses
-- `LOG_VERBOSITY`: `low | medium | high | extrahigh`
-- `RAPIDAPI_KEY`: required for Amazon/AliExpress URL imports
-- `CORS_ALLOW_ORIGINS`: comma-separated CORS allowlist
+No environment variables are required for `shelfshift.core` or the CLI.
 
 ## License
 

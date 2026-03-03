@@ -8,7 +8,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from shelfshift.core.config import resolve_rapidapi_key
 from shelfshift.core import (
     convert_csv,
     detect_csv,
@@ -38,11 +37,9 @@ def _cmd_detect_csv(args: argparse.Namespace) -> int:
 
 
 def _cmd_import_url(args: argparse.Namespace) -> int:
-    resolved_rapidapi_key = resolve_rapidapi_key(args.rapidapi_key)
     result = import_url(
         args.url,
         strict=args.strict,
-        rapidapi_key=resolved_rapidapi_key,
     )
     _json_dump(
         {
@@ -117,7 +114,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     import_url_cmd = subparsers.add_parser("import-url", help="Import canonical products from one or more URLs")
     import_url_cmd.add_argument("url", nargs="+", help="One or more product URLs")
-    import_url_cmd.add_argument("--rapidapi-key", default=None)
     import_url_cmd.add_argument("--include-raw", action="store_true")
     import_url_cmd.add_argument("--strict", action="store_true")
     import_url_cmd.set_defaults(func=lambda args: _cmd_import_url(argparse.Namespace(**{**vars(args), "url": args.url if len(args.url) > 1 else args.url[0]})))

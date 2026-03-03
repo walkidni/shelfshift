@@ -7,10 +7,10 @@ from typing import Any
 
 from .canonical.entities import Product
 from .canonical.io import json_to_product, json_to_products
-from .config import CoreConfig, config_from_env, resolve_rapidapi_key
+from .config import CoreConfig, config_from_env
 from .detect import detect_csv_platform as _detect_csv_platform
 from .detect import detect_product_url as _detect_product_url
-from .importers.csv import import_product_from_csv, import_products_from_csv
+from .importers.csv import import_products_from_csv
 from .importers.url import import_product_from_url, import_products_from_urls
 from .registry import get_exporter
 from .validate.report import ValidationReport
@@ -60,18 +60,15 @@ def import_url(
     *,
     strict: bool = False,
     debug: bool = False,
-    rapidapi_key: str | None = None,
 ) -> ImportResult:
     config = config_from_env(strict=strict, debug=debug)
-    resolved_rapidapi_key = resolve_rapidapi_key(rapidapi_key)
 
     if isinstance(urls, str):
-        product = import_product_from_url(urls, rapidapi_key=resolved_rapidapi_key)
+        product = import_product_from_url(urls)
         return ImportResult(products=[product], errors=[])
 
     products, errors = import_products_from_urls(
         list(urls),
-        rapidapi_key=resolved_rapidapi_key,
     )
     if config.strict and errors:
         raise ValueError(f"Strict mode failed with {len(errors)} URL import error(s).")

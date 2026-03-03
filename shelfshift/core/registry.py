@@ -3,8 +3,6 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
-
 from .canonical.entities import Product
 
 ImporterFn = Callable[..., Product | list[Product] | tuple[list[Product], list[dict[str, str]]]]

@@ -18,7 +18,6 @@ class Settings:
     brand_ink: str
     debug: bool
     log_verbosity: str
-    rapidapi_key: str | None
     cors_allow_origins: tuple[str, ...]
 
 
@@ -60,7 +59,6 @@ def settings_from_env() -> Settings:
             default="medium",
             allowed={"low", "medium", "high", "extrahigh"},
         ),
-        rapidapi_key=os.getenv("RAPIDAPI_KEY"),
         cors_allow_origins=origins or ("*",),
     )
 
