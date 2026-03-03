@@ -24,15 +24,6 @@ def test_import_products_rejects_empty_csv() -> None:
         )
 
 
-def test_import_products_rejects_oversized_csv() -> None:
-    big = b"x" * (5 * 1024 * 1024 + 1)
-    with pytest.raises(ValueError, match="exceeds 5 MB"):
-        import_products_from_csv(
-            source_platform="shopify",
-            csv_bytes=big,
-        )
-
-
 def test_import_products_requires_weight_unit_for_bigcommerce() -> None:
     csv_text = "Item,Name,Type,SKU,Price,Weight\nProduct,Test,physical,T1,10.00,\n"
     with pytest.raises(ValueError, match="source_weight_unit is required"):

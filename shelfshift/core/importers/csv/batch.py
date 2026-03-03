@@ -7,7 +7,6 @@ from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
 
 from .bigcommerce import parse_bigcommerce_csv
 from .common import (
-    MAX_CSV_UPLOAD_BYTES,
     add_csv_provenance,
     apply_extra_product_fields,
     apply_extra_variant_fields,
@@ -63,8 +62,6 @@ def import_products_from_csv(
         )
     if not csv_bytes:
         raise ValueError("CSV file is empty.")
-    if len(csv_bytes) > MAX_CSV_UPLOAD_BYTES:
-        raise ValueError("CSV file exceeds 5 MB limit.")
 
     resolved_weight_unit = str(source_weight_unit or "").strip().lower()
     if platform in _WEIGHT_UNIT_REQUIRED_PLATFORMS and not resolved_weight_unit:

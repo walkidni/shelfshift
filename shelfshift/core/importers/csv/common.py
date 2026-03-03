@@ -20,7 +20,6 @@ from ...canonical import (
 from ...canonical.helpers import parse_decimal_money
 
 
-MAX_CSV_UPLOAD_BYTES = 5 * 1024 * 1024
 _HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 
 

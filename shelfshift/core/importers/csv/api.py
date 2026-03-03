@@ -2,7 +2,7 @@
 
 from ...canonical import Product
 from .bigcommerce import parse_bigcommerce_csv
-from .common import MAX_CSV_UPLOAD_BYTES, decode_csv_bytes
+from .common import decode_csv_bytes
 from .shopify import parse_shopify_csv
 from .squarespace import parse_squarespace_csv
 from .wix import parse_wix_csv
@@ -24,8 +24,6 @@ def import_product_from_csv(
         )
     if not csv_bytes:
         raise ValueError("CSV file is empty.")
-    if len(csv_bytes) > MAX_CSV_UPLOAD_BYTES:
-        raise ValueError("CSV file exceeds 5 MB limit.")
 
     resolved_weight_unit = str(source_weight_unit or "").strip().lower()
     if platform in _WEIGHT_UNIT_REQUIRED_PLATFORMS and not resolved_weight_unit:
