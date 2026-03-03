@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shelfshift"
-version = "1.0.1"
+version = "1.0.2"
 description = "Developer toolkit for ecommerce catalog translation across URL/CSV sources and platform CSV targets."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -51,7 +51,7 @@ exclude = [".venv", "docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C4", "RUF"]
-ignore = []
+ignore = ["E501"]
 fixable = ["ALL"]
 
 [tool.ruff.format]
