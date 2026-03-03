@@ -79,12 +79,14 @@ Most users should stay on `shelfshift.core`. If you need extension points or low
 
 Module: `shelfshift.core.registry`
 
-- `register_importer(key: str, handler: ImporterFn) -> None`
-- `register_exporter(key: str, handler: ExporterFn) -> None`
-- `get_importer(key: str) -> ImporterFn`
-- `get_exporter(key: str) -> ExporterFn`
-- `list_importers() -> list[str]`
-- `list_exporters() -> list[str]`
+```python
+register_importer(key: str, handler: ImporterFn) -> None
+register_exporter(key: str, handler: ExporterFn) -> None
+get_importer(key: str) -> ImporterFn
+get_exporter(key: str) -> ExporterFn
+list_importers() -> list[str]
+list_exporters() -> list[str]
+```
 
 Use this when you want to plug custom import/export handlers into Shelfshift's registry.
 
@@ -92,8 +94,15 @@ Use this when you want to plug custom import/export handlers into Shelfshift's r
 
 Modules:
 
-- `shelfshift.core.detect.csv.detect_csv_platform(csv_bytes: bytes) -> str`
-- `shelfshift.core.detect.url.detect_product_url(url: str) -> dict`
+- `shelfshift.core.detect.csv`
+```python
+detect_csv_platform(csv_bytes: bytes) -> str
+```
+
+- `shelfshift.core.detect.url`
+```python
+detect_product_url(url: str) -> dict
+```
 
 Use these when you need raw platform-detection behavior outside the `DetectResult` wrapper.
 
@@ -101,7 +110,9 @@ Use these when you need raw platform-detection behavior outside the `DetectResul
 
 Module: `shelfshift.core.validate.rules`
 
-- `validate_product(product: Product) -> ValidationReport`
+```python
+validate_product(product: Product) -> ValidationReport
+```
 
 Use this for custom pipelines that validate one product at a time.
 
@@ -109,8 +120,10 @@ Use this for custom pipelines that validate one product at a time.
 
 Module: `shelfshift.core.importers.url`
 
-- `normalize_product_url(product_url: str) -> str`
-- `import_products_from_urls(urls: list[str]) -> tuple[list[Product], list[dict[str, str]]]`
+```python
+normalize_product_url(product_url: str) -> str
+import_products_from_urls(urls: list[str]) -> tuple[list[Product], list[dict[str, str]]]
+```
 
 Use these when you need explicit URL normalization or batch partial-failure tuples directly.
 
@@ -118,15 +131,17 @@ Use these when you need explicit URL normalization or batch partial-failure tupl
 
 Module: `shelfshift.core.canonical.helpers`
 
-- `parse_decimal_money(value: Any) -> Decimal | None`
-- `normalize_currency(value: Any) -> str | None`
-- `format_decimal(value: Decimal | None) -> str`
-- `resolve_option_defs(product: Product) -> list[OptionDef]`
-- `resolve_variant_option_values(product: Product, variant: Variant) -> list[OptionValue]`
-- `resolve_taxonomy_paths(product: Product) -> list[list[str]]`
-- `resolve_current_money(product: Product, variant: Variant | None = None) -> Money | None`
-- `resolve_primary_image_url(product: Product, variant: Variant | None = None) -> str | None`
-- `resolve_all_image_urls(product: Product) -> list[str]`
+```python
+parse_decimal_money(value: Any) -> Decimal | None
+normalize_currency(value: Any) -> str | None
+format_decimal(value: Decimal | None) -> str
+resolve_option_defs(product: Product) -> list[OptionDef]
+resolve_variant_option_values(product: Product, variant: Variant) -> list[OptionValue]
+resolve_taxonomy_paths(product: Product) -> list[list[str]]
+resolve_current_money(product: Product, variant: Variant | None = None) -> Money | None
+resolve_primary_image_url(product: Product, variant: Variant | None = None) -> str | None
+resolve_all_image_urls(product: Product) -> list[str]
+```
 
 Use these when you need deterministic canonical normalization/derivation helpers in custom integrations.
 
