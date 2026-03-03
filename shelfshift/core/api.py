@@ -7,7 +7,6 @@ from typing import Any
 
 from .canonical.entities import Product
 from .canonical.io import json_to_product, json_to_products
-from .config import CoreConfig, config_from_env
 from .detect import detect_csv_platform as _detect_csv_platform
 from .detect import detect_product_url as _detect_product_url
 from .importers.csv import import_products_from_csv
@@ -59,10 +58,7 @@ def import_url(
     urls: str | list[str],
     *,
     strict: bool = False,
-    debug: bool = False,
 ) -> ImportResult:
-    config = config_from_env(strict=strict, debug=debug)
-
     if isinstance(urls, str):
         product = import_product_from_url(urls)
         return ImportResult(products=[product], errors=[])
@@ -70,7 +66,7 @@ def import_url(
     products, errors = import_products_from_urls(
         list(urls),
     )
-    if config.strict and errors:
+    if strict and errors:
         raise ValueError(f"Strict mode failed with {len(errors)} URL import error(s).")
     return ImportResult(products=products, errors=errors)
 
@@ -226,11 +222,9 @@ def _coerce_bytes(value: bytes | str | Path) -> bytes:
 
 
 __all__ = [
-    "CoreConfig",
     "DetectResult",
     "ExportResult",
     "ImportResult",
-    "config_from_env",
     "convert_csv",
     "detect_csv",
     "detect_url",
