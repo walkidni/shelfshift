@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import pytest
 from types import SimpleNamespace
+
+import pytest
 
 from shelfshift.cli import main as cli_main
 

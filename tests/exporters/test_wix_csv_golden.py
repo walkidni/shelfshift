@@ -1,13 +1,13 @@
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 
 import pandas as pd
+from tests.helpers._csv_helpers import read_fixture_frame, read_frame
+from tests.helpers._model_builders import Product, Variant
 
+from shelfshift.core.canonical import Inventory, Media, Money, OptionDef, OptionValue, Price
 from shelfshift.core.exporters import product_to_wix_csv
 from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
-from shelfshift.core.canonical import Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests.helpers._model_builders import Product, Variant
-from tests.helpers._csv_helpers import read_fixture_frame, read_frame
 
 _FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "exporter" / "wix"
 

@@ -33,7 +33,7 @@ SQUARESPACE_COLUMNS: list[str] = [
 
 
 def _empty_row() -> dict[str, str]:
-    return {column: "" for column in SQUARESPACE_COLUMNS}
+    return dict.fromkeys(SQUARESPACE_COLUMNS, "")
 
 
 def _format_bool(value: bool) -> str:

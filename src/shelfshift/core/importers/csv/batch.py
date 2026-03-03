@@ -4,7 +4,6 @@ import io
 
 from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
-
 from .bigcommerce import parse_bigcommerce_csv
 from .common import (
     add_csv_provenance,
@@ -26,7 +25,6 @@ from .common import (
 from .squarespace import parse_squarespace_csv
 from .wix import parse_wix_csv
 from .woocommerce import parse_woocommerce_csv
-
 
 _SHOPIFY_REQUIRED_HEADERS = ("Handle", "Title", "Body (HTML)", "Variant SKU", "Variant Price")
 

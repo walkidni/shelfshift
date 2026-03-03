@@ -1,6 +1,5 @@
 from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
-
 from .common import (
     add_csv_provenance,
     apply_extra_product_fields,
@@ -17,7 +16,6 @@ from .common import (
     taxonomy_from_primary,
     weight_object,
 )
-
 
 _REQUIRED_HEADERS = ("Handle", "Title", "Body (HTML)", "Variant SKU", "Variant Price")
 

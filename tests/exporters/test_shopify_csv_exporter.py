@@ -1,10 +1,19 @@
 from decimal import Decimal
 
+from tests.helpers._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+
+from shelfshift.core.canonical import (
+    CategorySet,
+    Inventory,
+    Media,
+    Money,
+    OptionDef,
+    OptionValue,
+    Price,
+)
 from shelfshift.core.exporters import product_to_shopify_csv
 from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS, SHOPIFY_DEFAULT_IMAGE_URL
-from shelfshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests.helpers._model_builders import Product, Variant
-from tests.helpers._csv_helpers import read_frame
 
 
 def test_single_variant_uses_default_title_option() -> None:

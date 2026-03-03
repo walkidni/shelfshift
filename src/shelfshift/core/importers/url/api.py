@@ -1,9 +1,9 @@
-from .common import ProductClient
-from .platforms.squarespace import SquarespaceClient
-from .platforms.shopify import ShopifyClient
-from .platforms.woocommerce import WooCommerceClient
-from ...detect.url import detect_product_url
 from ...canonical import Product
+from ...detect.url import detect_product_url
+from .common import ProductClient
+from .platforms.shopify import ShopifyClient
+from .platforms.squarespace import SquarespaceClient
+from .platforms.woocommerce import WooCommerceClient
 
 
 class ProductClientFactory:

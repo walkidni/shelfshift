@@ -33,7 +33,7 @@ _MAX_WIX_PLAIN_DESCRIPTION_LEN = 16000
 
 
 def _empty_row() -> dict[str, str]:
-    return {column: "" for column in WIX_COLUMNS}
+    return dict.fromkeys(WIX_COLUMNS, "")
 
 
 def _format_bool(value: bool) -> str:

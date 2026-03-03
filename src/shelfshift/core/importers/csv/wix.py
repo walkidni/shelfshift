@@ -1,6 +1,5 @@
 from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.wix import WIX_COLUMNS
-
 from .common import (
     add_csv_provenance,
     apply_extra_product_fields,
@@ -16,7 +15,6 @@ from .common import (
     weight_object,
     weight_to_grams,
 )
-
 
 _REQUIRED_HEADERS = ("handle", "fieldType", "name", "price", "sku")
 

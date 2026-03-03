@@ -1,7 +1,5 @@
 
 from ...canonical import Product
-
-from . import utils
 from ..platforms.bigcommerce import (
     BIGCOMMERCE_COLUMNS,
     BIGCOMMERCE_LEGACY_COLUMNS,
@@ -12,6 +10,7 @@ from ..platforms.shopify import SHOPIFY_COLUMNS, product_to_shopify_rows
 from ..platforms.squarespace import SQUARESPACE_COLUMNS, product_to_squarespace_rows
 from ..platforms.wix import WIX_COLUMNS, product_to_wix_rows
 from ..platforms.woocommerce import WOOCOMMERCE_COLUMNS, product_to_woocommerce_rows
+from . import utils
 
 
 def _require_non_empty_products(products: list[Product], *, label: str) -> None:

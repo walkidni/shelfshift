@@ -1,5 +1,6 @@
 import re
 from typing import Literal
+
 from slugify import slugify
 
 from ...canonical import Product, Variant
@@ -117,11 +118,11 @@ _SWATCH_VALUE_DATA_RE = re.compile(r"\[#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\]$")
 
 
 def _empty_row() -> dict[str, str]:
-    return {column: "" for column in BIGCOMMERCE_COLUMNS}
+    return dict.fromkeys(BIGCOMMERCE_COLUMNS, "")
 
 
 def _empty_legacy_row() -> dict[str, str]:
-    return {column: "" for column in BIGCOMMERCE_LEGACY_COLUMNS}
+    return dict.fromkeys(BIGCOMMERCE_LEGACY_COLUMNS, "")
 
 
 def _format_price(value: float | None) -> str:

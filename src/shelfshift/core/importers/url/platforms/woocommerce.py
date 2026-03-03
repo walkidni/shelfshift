@@ -16,14 +16,11 @@ from ....canonical import (
     SourceRef,
     Variant,
 )
-
 from ....detect.url import detect_product_url, extract_woocommerce_store_api_product_token
 from ..common import (
     ProductClient,
     append_default_variant_if_empty,
     dedupe,
-    extract_image_urls as _extract_image_urls,
-    extract_names as _extract_names,
     extract_product_json_ld_nodes,
     finalize_product_typed_fields,
     http_session,
@@ -33,10 +30,19 @@ from ..common import (
     normalize_url,
     parse_money_to_float,
     pick_name,
-    slug_token as _slug_token,
     to_bool,
     to_int,
 )
+from ..common import (
+    extract_image_urls as _extract_image_urls,
+)
+from ..common import (
+    extract_names as _extract_names,
+)
+from ..common import (
+    slug_token as _slug_token,
+)
+
 
 def _minor_unit(value: Any) -> int:
     parsed = to_int(value)

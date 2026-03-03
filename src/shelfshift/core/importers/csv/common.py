@@ -1,8 +1,9 @@
 import csv
 import io
 import re
+from collections.abc import Iterable
 from decimal import Decimal
-from typing import Any, Iterable
+from typing import Any
 
 from ...canonical import (
     CategorySet,
@@ -18,7 +19,6 @@ from ...canonical import (
     Weight,
 )
 from ...canonical.helpers import parse_decimal_money
-
 
 _HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 

@@ -15,7 +15,6 @@ from ....canonical import (
     SourceRef,
     Variant,
 )
-
 from ....detect.url import detect_product_url
 from ..common import (
     ProductClient,
@@ -32,11 +31,12 @@ from ..common import (
     normalize_url,
     parse_money_to_float,
     pick_name,
-    slug_token as _slug_token,
     to_bool,
     to_int,
 )
-
+from ..common import (
+    slug_token as _slug_token,
+)
 
 _SQUARESPACE_IMAGE_DICT_KEYS = ("assetUrl", "originalSizeUrl", "imageUrl", "src", "url")
 

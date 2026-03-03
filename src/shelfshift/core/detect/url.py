@@ -3,7 +3,6 @@
 import re
 from urllib.parse import parse_qs, unquote, urlparse
 
-
 _AMAZON_ASIN_RE = re.compile(r"/(?:gp/product|dp)/([A-Z0-9]{10})(?:[/?#]|$)", re.I)
 _ALIEXPRESS_ITEM_RE = re.compile(r"/(?:item|i)/(\d+)\.html(?:[/?#]|$)", re.I)
 _ALIEXPRESS_X_OBJECT_RE = re.compile(

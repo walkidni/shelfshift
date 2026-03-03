@@ -1,10 +1,19 @@
 from decimal import Decimal
 
+from tests.helpers._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+
+from shelfshift.core.canonical import (
+    CategorySet,
+    Inventory,
+    Media,
+    Money,
+    OptionDef,
+    OptionValue,
+    Price,
+)
 from shelfshift.core.exporters import product_to_woocommerce_csv
 from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
-from shelfshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests.helpers._model_builders import Product, Variant
-from tests.helpers._csv_helpers import read_frame
 
 
 def test_simple_product_maps_qty_stock() -> None:

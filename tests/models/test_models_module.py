@@ -1,7 +1,11 @@
 from decimal import Decimal
 
 from shelfshift.core.canonical import Media, Money, Price, Weight
-from shelfshift.core.canonical.helpers import format_decimal, normalize_currency, parse_decimal_money
+from shelfshift.core.canonical.helpers import (
+    format_decimal,
+    normalize_currency,
+    parse_decimal_money,
+)
 
 
 def test_models_module_exports_shared_types_and_formatting_helpers() -> None:

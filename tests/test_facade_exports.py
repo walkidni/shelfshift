@@ -3,7 +3,6 @@ from __future__ import annotations
 import shelfshift
 import shelfshift.core as core
 
-
 _CONVENIENCE_EXPORTS = (
     "detect_url",
     "detect_csv",

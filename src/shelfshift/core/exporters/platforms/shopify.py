@@ -48,7 +48,7 @@ SHOPIFY_DEFAULT_IMAGE_URL = (
 
 
 def _empty_row() -> dict[str, str]:
-    return {column: "" for column in SHOPIFY_COLUMNS}
+    return dict.fromkeys(SHOPIFY_COLUMNS, "")
 
 
 def _format_bool(value: bool) -> str:

@@ -1,7 +1,8 @@
-from decimal import Decimal, InvalidOperation
 import math
 import re
-from typing import Any, Iterable
+from collections.abc import Iterable
+from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from .entities import Media, Money, OptionDef, OptionValue, Product, Variant
 

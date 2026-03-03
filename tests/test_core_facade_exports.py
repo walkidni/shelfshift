@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import shelfshift.core as core
 
-
 _EXPECTED_CORE_FACADE_EXPORTS = {
     "convert_csv",
     "detect_csv",

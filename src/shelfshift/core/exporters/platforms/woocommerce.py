@@ -1,5 +1,5 @@
 import re
-from typing import Iterable
+from collections.abc import Iterable
 
 from slugify import slugify
 
@@ -51,7 +51,7 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
 def _empty_row() -> dict[str, str]:
-    return {column: "" for column in WOOCOMMERCE_COLUMNS}
+    return dict.fromkeys(WOOCOMMERCE_COLUMNS, "")
 
 
 def _slug(value: str | None) -> str:

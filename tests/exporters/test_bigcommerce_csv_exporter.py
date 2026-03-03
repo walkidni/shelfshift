@@ -1,10 +1,22 @@
 from decimal import Decimal
 
-from shelfshift.core.exporters import product_to_bigcommerce_csv
-from shelfshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
-from shelfshift.core.canonical import CategorySet, Inventory, Media, Money, OptionDef, OptionValue, Price
-from tests.helpers._model_builders import Product, Variant
 from tests.helpers._csv_helpers import read_frame
+from tests.helpers._model_builders import Product, Variant
+
+from shelfshift.core.canonical import (
+    CategorySet,
+    Inventory,
+    Media,
+    Money,
+    OptionDef,
+    OptionValue,
+    Price,
+)
+from shelfshift.core.exporters import product_to_bigcommerce_csv
+from shelfshift.core.exporters.platforms.bigcommerce import (
+    BIGCOMMERCE_COLUMNS,
+    BIGCOMMERCE_LEGACY_COLUMNS,
+)
 
 
 def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None:

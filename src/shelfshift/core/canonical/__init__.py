@@ -19,8 +19,8 @@ from .entities import (
 from .io import json_to_product, json_to_products
 
 __all__ = [
-    "Currency",
     "CategorySet",
+    "Currency",
     "Identifiers",
     "Inventory",
     "Media",

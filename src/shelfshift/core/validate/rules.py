@@ -2,7 +2,6 @@
 
 
 from ..canonical.entities import Product
-
 from .report import ValidationIssue, ValidationReport
 
 

@@ -5,7 +5,6 @@ import pytest
 from shelfshift.core import api as core_api
 from shelfshift.core.importers import url as url_importers
 
-
 _AMAZON_URL = "https://www.amazon.com/dp/B0C1234567"
 _ALIEXPRESS_URL = "https://www.aliexpress.com/item/1005008518647948.html"
 

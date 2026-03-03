@@ -2,7 +2,6 @@ import re
 
 from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
-
 from .common import (
     add_csv_provenance,
     apply_extra_product_fields,
@@ -19,7 +18,6 @@ from .common import (
     weight_object,
     weight_to_grams,
 )
-
 
 _MODERN_REQUIRED_HEADERS = ("Item", "Name", "Type", "SKU", "Price")
 _LEGACY_REQUIRED_HEADERS = ("Product Type", "Code", "Name", "Calculated Price")

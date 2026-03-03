@@ -1,8 +1,8 @@
 import csv
 import io
-from datetime import datetime, timezone
 import re
-from typing import Iterable
+from collections.abc import Iterable
+from datetime import datetime, timezone
 
 from ...canonical import (
     OptionDef,
@@ -11,10 +11,20 @@ from ...canonical import (
 )
 from ...canonical.helpers import (
     resolve_all_image_urls as model_resolve_all_image_urls,
+)
+from ...canonical.helpers import (
     resolve_current_money as model_resolve_current_money,
+)
+from ...canonical.helpers import (
     resolve_option_defs as model_resolve_option_defs,
+)
+from ...canonical.helpers import (
     resolve_primary_image_url as model_resolve_primary_image_url,
+)
+from ...canonical.helpers import (
     resolve_taxonomy_paths as model_resolve_taxonomy_paths,
+)
+from ...canonical.helpers import (
     resolve_variant_option_values as model_resolve_variant_option_values,
 )
 

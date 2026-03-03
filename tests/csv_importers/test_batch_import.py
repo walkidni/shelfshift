@@ -2,7 +2,6 @@ import pytest
 
 from shelfshift.core.importers.csv.batch import import_products_from_csv
 
-
 # ---------------------------------------------------------------------------
 # Validation edge-case tests
 # ---------------------------------------------------------------------------

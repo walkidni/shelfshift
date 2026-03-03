@@ -6,9 +6,13 @@ from shelfshift.core.canonical import (
     Inventory,
     Media,
     OptionValue,
-    Product as CanonicalProduct,
     Seo,
     SourceRef,
+)
+from shelfshift.core.canonical import (
+    Product as CanonicalProduct,
+)
+from shelfshift.core.canonical import (
     Variant as CanonicalVariant,
 )
 

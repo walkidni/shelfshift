@@ -13,7 +13,6 @@ from ....canonical import (
     SourceRef,
     Variant,
 )
-
 from ....detect.url import extract_shopify_slug_from_path
 from ..common import (
     ProductClient,
@@ -327,10 +326,7 @@ class ShopifyClient(ProductClient):
         requires_shipping = True
         track_quantity = True
         is_digital = False
-        if category and "digital" in category.lower():
-            is_digital = True
-            requires_shipping = False
-        elif any("digital" in tag.lower() for tag in tags):
+        if (category and "digital" in category.lower()) or any("digital" in tag.lower() for tag in tags):
             is_digital = True
             requires_shipping = False
 

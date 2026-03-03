@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import shelfshift.core.canonical as canonical
 
-
 _EXPECTED_CANONICAL_FACADE_EXPORTS = {
     "Currency",
     "CategorySet",
