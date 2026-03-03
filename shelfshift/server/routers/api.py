@@ -6,7 +6,8 @@ from typing import Any
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
 
-from ...core.api import detect_csv, detect_url, export_csv, import_csv, parse_product_payload
+from ...core.api import detect_csv, detect_url, export_csv, import_csv
+from ...core.canonical.io import json_to_product, json_to_products
 from ..schemas import (
 	ExportBigCommerceCsvRequest,
 	ExportFromProductCsvRequest,
@@ -16,9 +17,9 @@ from ..schemas import (
 	ExportWooCommerceCsvRequest,
 	ImportRequest,
 )
-from ...core.canonical.serialization import serialize_product_for_api
 from ..config import get_app_settings
 from ..helpers import importing as _importing_helpers
+from ..helpers.serialization import serialize_product_for_api
 
 router = APIRouter()
 
@@ -130,7 +131,7 @@ def _export_response_from_products(
 
 @router.post("/api/v1/export/from-product.csv")
 def export_from_product_csv(payload: ExportFromProductCsvRequest) -> Response:
-	products = parse_product_payload(payload.product)
+	products = json_to_products(payload.product) if isinstance(payload.product, list) else json_to_product(payload.product)
 	return _export_response_from_products(
 		products,
 		target_platform=payload.target_platform,
@@ -144,7 +145,7 @@ def export_from_product_csv(payload: ExportFromProductCsvRequest) -> Response:
 
 @router.post("/api/v1/export/shopify.csv")
 def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
-	product = parse_product_payload(payload.product)
+	product = json_to_product(payload.product)
 	return _export_response_from_products(
 		product,
 		target_platform="shopify",
@@ -155,7 +156,7 @@ def export_shopify_csv_from_body(payload: ExportShopifyCsvRequest) -> Response:
 
 @router.post("/api/v1/export/bigcommerce.csv")
 def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Response:
-	product = parse_product_payload(payload.product)
+	product = json_to_product(payload.product)
 	return _export_response_from_products(
 		product,
 		target_platform="bigcommerce",
@@ -167,7 +168,7 @@ def export_bigcommerce_csv_from_body(payload: ExportBigCommerceCsvRequest) -> Re
 
 @router.post("/api/v1/export/wix.csv")
 def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
-	product = parse_product_payload(payload.product)
+	product = json_to_product(payload.product)
 	return _export_response_from_products(
 		product,
 		target_platform="wix",
@@ -178,7 +179,7 @@ def export_wix_csv_from_body(payload: ExportWixCsvRequest) -> Response:
 
 @router.post("/api/v1/export/squarespace.csv")
 def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Response:
-	product = parse_product_payload(payload.product)
+	product = json_to_product(payload.product)
 	return _export_response_from_products(
 		product,
 		target_platform="squarespace",
@@ -191,7 +192,7 @@ def export_squarespace_csv_from_body(payload: ExportSquarespaceCsvRequest) -> Re
 
 @router.post("/api/v1/export/woocommerce.csv")
 def export_woocommerce_csv_from_body(payload: ExportWooCommerceCsvRequest) -> Response:
-	product = parse_product_payload(payload.product)
+	product = json_to_product(payload.product)
 	return _export_response_from_products(
 		product,
 		target_platform="woocommerce",

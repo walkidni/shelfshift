@@ -1,25 +1,11 @@
-from .platforms import (
-    AliExpressClient,
-    AmazonRapidApiClient,
-    ApiConfig,
-    ProductClient,
-    SquarespaceClient,
-    ShopifyClient,
-    WooCommerceClient,
-    _parse_aliexpress_result,
-)
+from .common import ApiConfig, ProductClient
+from .platforms.aliexpress import AliExpressClient
+from .platforms.amazon import AmazonRapidApiClient
+from .platforms.squarespace import SquarespaceClient
+from .platforms.shopify import ShopifyClient
+from .platforms.woocommerce import WooCommerceClient
 from ...detect.url import detect_product_url
-from ...canonical import (
-    Media,
-    Money,
-    Price,
-    Product,
-    Variant,
-    Weight,
-    format_decimal,
-    normalize_currency,
-    parse_decimal_money,
-)
+from ...canonical import Product
 
 
 class ProductClientFactory:
@@ -68,26 +54,9 @@ def import_product(url: str, cfg: ApiConfig, include_raw: bool = False) -> dict:
 
 
 __all__ = [
-    "AliExpressClient",
-    "AmazonRapidApiClient",
     "ApiConfig",
-    "ProductClient",
     "ProductClientFactory",
-    "Product",
-    "SquarespaceClient",
-    "ShopifyClient",
-    "Variant",
-    "WooCommerceClient",
-    "_parse_aliexpress_result",
-    "detect_product_url",
     "fetch_product_details",
-    "format_decimal",
     "import_product",
-    "Media",
-    "Money",
-    "normalize_currency",
-    "parse_decimal_money",
-    "Price",
     "requires_rapidapi",
-    "Weight",
 ]

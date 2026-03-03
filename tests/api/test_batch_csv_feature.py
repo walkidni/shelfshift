@@ -5,8 +5,9 @@ import pandas as pd
 from fastapi.testclient import TestClient
 
 from shelfshift.server.main import app
-from shelfshift.core.canonical import Product, Variant, serialize_product_for_api
+from shelfshift.core.canonical import Product, Variant
 from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
+from shelfshift.server.helpers.serialization import serialize_product_for_api
 
 
 client = TestClient(app)

@@ -30,7 +30,7 @@ def test_import_product_from_url_prefers_explicit_rapidapi_key(monkeypatch) -> N
         captured["rapidapi_key"] = cfg.rapidapi_key
         return _sample_product()
 
-    monkeypatch.setattr(url_importers, "fetch_product_details", fake_fetch)
+    monkeypatch.setattr(url_importers, "_fetch_product_details", fake_fetch)
 
     result = url_importers.import_product_from_url(_AMAZON_URL, rapidapi_key="explicit-key")
     assert result.source.id == "B0C1234567"
@@ -45,7 +45,7 @@ def test_import_product_from_url_uses_env_rapidapi_key_when_explicit_missing(mon
         captured["rapidapi_key"] = cfg.rapidapi_key
         return _sample_product()
 
-    monkeypatch.setattr(url_importers, "fetch_product_details", fake_fetch)
+    monkeypatch.setattr(url_importers, "_fetch_product_details", fake_fetch)
 
     result = url_importers.import_product_from_url(_AMAZON_URL)
     assert result.source.id == "B0C1234567"

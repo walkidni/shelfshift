@@ -8,12 +8,12 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from ...core.api import export_csv
-from ...core.canonical.serialization import serialize_product_for_api
 from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 from ..config import get_app_settings
 from ..helpers import importing as _importing_helpers
 from ..helpers.payload import product_to_json_b64, products_to_json_b64
 from ..helpers.rendering import render_landing_page, render_web_page
+from ..helpers.serialization import serialize_product_for_api
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))

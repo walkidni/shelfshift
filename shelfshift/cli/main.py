@@ -16,9 +16,9 @@ from shelfshift.core import (
     export_csv,
     import_csv,
     import_url,
-    parse_product_payload,
     validate,
 )
+from shelfshift.core.canonical.io import json_to_product, json_to_products
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
@@ -162,7 +162,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _cmd_export_csv(args: argparse.Namespace) -> int:
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
-    products = parse_product_payload(payload)
+    if isinstance(payload, list):
+        products = json_to_products(payload)
+    elif isinstance(payload, dict):
+        products = json_to_product(payload)
+    else:
+        raise ValueError("Canonical product JSON must be an object or array of objects.")
 
     exported = export_csv(
         products,

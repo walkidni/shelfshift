@@ -16,8 +16,8 @@ from ...core.exporters import (
     products_to_squarespace_csv,
     products_to_wix_csv,
     products_to_woocommerce_csv,
-    resolve_weight_unit,
 )
+from ...core.exporters.shared.weight_units import resolve_weight_unit
 from ..config import Settings, get_settings
 from . import importing as _importing
 

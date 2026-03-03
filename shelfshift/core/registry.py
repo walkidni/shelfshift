@@ -71,7 +71,7 @@ def list_exporters() -> list[str]:
 
 
 def _register_defaults() -> None:
-    from .exporters import export_csv_for_target
+    from .exporters.api import export_csv_for_target
     from .importers.csv import import_product_from_csv
     from .importers.url import import_product_from_url
 

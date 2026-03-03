@@ -9,9 +9,9 @@ from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
 from shelfshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
 from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
 from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
-from shelfshift.core.canonical import serialize_product_for_api
 from tests.helpers._model_builders import Product, Variant
 from tests.helpers._app_helpers import patch_run_import_product
+from shelfshift.server.helpers.serialization import serialize_product_for_api
 
 
 client = TestClient(app)

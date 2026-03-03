@@ -7,8 +7,8 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from ...core.api import export_csv, import_csv, parse_product_payload
-from ...core.canonical.serialization import serialize_product_for_api
+from ...core.api import export_csv, import_csv
+from ...core.canonical.io import json_to_product, json_to_products
 from ...core.exporters.shared.weight_units import DEFAULT_WEIGHT_UNIT_BY_TARGET
 from ..helpers.payload import (
 	decode_product_json_b64,
@@ -17,6 +17,7 @@ from ..helpers.payload import (
 	products_to_json_b64,
 )
 from ..helpers.rendering import render_web_page
+from ..helpers.serialization import serialize_product_for_api
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "web" / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
@@ -114,7 +115,7 @@ def export_from_product_csv_web(
 	squarespace_product_url: str = Form(default=""),
 ) -> Response:
 	payload = decode_product_json_b64(product_json_b64)
-	products = parse_product_payload(payload)
+	products = json_to_products(payload) if isinstance(payload, list) else json_to_product(payload)
 
 	exported = export_csv(
 		products,

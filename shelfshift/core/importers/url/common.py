@@ -14,9 +14,8 @@ from ...canonical import (
     Product,
     SourceRef,
     Variant,
-    normalize_currency,
-    parse_decimal_money,
 )
+from ...canonical.helpers import normalize_currency, parse_decimal_money
 
 
 def http_session(timeout: int = 20) -> requests.Session:

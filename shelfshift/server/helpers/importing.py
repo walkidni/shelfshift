@@ -8,8 +8,11 @@ from fastapi import HTTPException
 import requests
 
 from ...core.canonical.entities import Product
+from ...core.detect import detect_product_url
 from ...core.importers.csv import import_product_from_csv, import_products_from_csv
-from ...core.importers.url import ApiConfig, detect_product_url, fetch_product_details, requires_rapidapi
+from ...core.importers.url import requires_rapidapi
+from ...core.importers.url.api import fetch_product_details
+from ...core.importers.url.common import ApiConfig
 from ..config import Settings
 from ..logging import product_result_to_loggable
 

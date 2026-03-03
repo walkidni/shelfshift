@@ -14,8 +14,8 @@ from shelfshift.core.canonical import (
     SourceRef,
     Variant,
     Weight,
-    serialize_product_for_api,
 )
+from shelfshift.server.helpers.serialization import serialize_product_for_api
 
 
 def _assert_no_v2_keys(value) -> None:

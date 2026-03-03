@@ -6,9 +6,9 @@ import json
 
 from fastapi import HTTPException
 
-from ...core.api import parse_product_payload
+from ...core.canonical.io import json_to_product
 from ...core.canonical.entities import Product
-from ...core.canonical.serialization import serialize_product_for_api
+from .serialization import serialize_product_for_api
 
 
 def decode_product_json_b64(encoded: str) -> dict | list[dict]:
@@ -38,9 +38,6 @@ def products_to_json_b64(products: list[Product]) -> str:
 
 def product_from_payload_dict(payload: dict) -> Product:
     try:
-        parsed = parse_product_payload(payload)
-        if isinstance(parsed, list):
-            raise ValueError("Expected one product object.")
-        return parsed
+        return json_to_product(payload)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Invalid product payload: {exc}") from exc

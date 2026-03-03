@@ -8,6 +8,8 @@ from ...canonical import (
     OptionDef,
     Product,
     Variant,
+)
+from ...canonical.helpers import (
     resolve_all_image_urls as model_resolve_all_image_urls,
     resolve_current_money as model_resolve_current_money,
     resolve_option_defs as model_resolve_option_defs,

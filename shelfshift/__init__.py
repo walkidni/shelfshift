@@ -8,14 +8,14 @@ from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
-    "Product": ("shelfshift.core", "Product"),
-    "app": ("shelfshift.server.main", "app"),
-    "create_app": ("shelfshift.server.main", "create_app"),
-    "detect_csv_platform": ("shelfshift.core", "detect_csv_platform"),
-    "detect_product_url": ("shelfshift.core", "detect_product_url"),
-    "export_csv_for_target": ("shelfshift.core", "export_csv_for_target"),
-    "import_product_from_csv": ("shelfshift.core", "import_product_from_csv"),
-    "import_product_from_url": ("shelfshift.core", "import_product_from_url"),
+    "convert_csv": ("shelfshift.core", "convert_csv"),
+    "detect_csv": ("shelfshift.core", "detect_csv"),
+    "detect_url": ("shelfshift.core", "detect_url"),
+    "export_csv": ("shelfshift.core", "export_csv"),
+    "import_csv": ("shelfshift.core", "import_csv"),
+    "import_json": ("shelfshift.core", "import_json"),
+    "import_url": ("shelfshift.core", "import_url"),
+    "validate": ("shelfshift.core", "validate"),
 }
 
 try:
@@ -24,15 +24,15 @@ except PackageNotFoundError:
     __version__ = "0.0.0"
 
 __all__ = [
-    "Product",
     "__version__",
-    "app",
-    "create_app",
-    "detect_csv_platform",
-    "detect_product_url",
-    "export_csv_for_target",
-    "import_product_from_csv",
-    "import_product_from_url",
+    "convert_csv",
+    "detect_csv",
+    "detect_url",
+    "export_csv",
+    "import_csv",
+    "import_json",
+    "import_url",
+    "validate",
 ]
 
 

@@ -6,14 +6,15 @@ from pathlib import Path
 from typing import Any
 
 from .canonical.entities import Product
+from .canonical.io import json_to_product, json_to_products
 from .config import CoreConfig, config_from_env, resolve_rapidapi_key
 from .detect import detect_csv_platform as _detect_csv_platform
 from .detect import detect_product_url as _detect_product_url
-from .importers.csv.common import parse_canonical_product_payload
 from .importers.csv import import_product_from_csv, import_products_from_csv
 from .importers.url import import_product_from_url, import_products_from_urls
 from .registry import get_exporter
-from .validate import ValidationReport, validate_product
+from .validate.report import ValidationReport
+from .validate.rules import validate_product
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,29 @@ def import_csv(
     if strict and not products:
         raise ValueError("Strict mode failed: no products imported from CSV.")
     return ImportResult(products=products, errors=[])
+
+
+def import_json(
+    payload: dict[str, Any] | list[dict[str, Any]] | str | bytes | Path,
+    *,
+    from_file: bool = False,
+) -> ImportResult:
+    if from_file:
+        try:
+            return ImportResult(products=[json_to_product(payload, from_file=True)], errors=[])
+        except ValueError:
+            return ImportResult(products=json_to_products(payload, from_file=True), errors=[])
+
+    if isinstance(payload, list):
+        return ImportResult(products=json_to_products(payload), errors=[])
+    if isinstance(payload, dict):
+        return ImportResult(products=[json_to_product(payload)], errors=[])
+    if isinstance(payload, (str, bytes, Path)):
+        try:
+            return ImportResult(products=[json_to_product(payload)], errors=[])
+        except ValueError:
+            return ImportResult(products=json_to_products(payload), errors=[])
+    raise ValueError("import_json expects a JSON object or JSON array payload.")
 
 
 def export_csv(
@@ -197,12 +221,6 @@ def validate(products: Product | list[Product]) -> list[ValidationReport]:
     return [validate_product(products)]
 
 
-def parse_product_payload(payload: dict[str, Any] | list[dict[str, Any]]) -> Product | list[Product]:
-    if isinstance(payload, list):
-        return [parse_canonical_product_payload(item) for item in payload]
-    return parse_canonical_product_payload(payload)
-
-
 def _coerce_bytes(value: bytes | str | Path) -> bytes:
     if isinstance(value, bytes):
         return value
@@ -221,7 +239,9 @@ __all__ = [
     "detect_url",
     "export_csv",
     "import_csv",
+    "import_json",
     "import_url",
-    "parse_product_payload",
+    "json_to_product",
+    "json_to_products",
     "validate",
 ]

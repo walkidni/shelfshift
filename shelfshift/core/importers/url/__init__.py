@@ -2,29 +2,10 @@
 
 from ...canonical import Product
 from ...config import resolve_rapidapi_key
-from .api import (
-    AliExpressClient,
-    AmazonRapidApiClient,
-    ApiConfig,
-    Media,
-    Money,
-    Price,
-    ProductClient,
-    ProductClientFactory,
-    SquarespaceClient,
-    ShopifyClient,
-    Variant,
-    Weight,
-    WooCommerceClient,
-    _parse_aliexpress_result,
-    detect_product_url,
-    fetch_product_details,
-    format_decimal,
-    import_product,
-    normalize_currency,
-    parse_decimal_money,
-    requires_rapidapi,
-)
+from ...detect.url import detect_product_url as _detect_product_url
+from .api import fetch_product_details as _fetch_product_details
+from .api import requires_rapidapi as _requires_rapidapi
+from .common import ApiConfig as _ApiConfig
 
 
 def normalize_product_url(product_url: str) -> str:
@@ -34,7 +15,7 @@ def normalize_product_url(product_url: str) -> str:
     if not normalized.startswith(("http://", "https://")):
         normalized = f"https://{normalized}"
 
-    info = detect_product_url(normalized)
+    info = _detect_product_url(normalized)
     if not info.get("platform"):
         raise ValueError(
             "Unsupported URL. Supported import sources: Shopify, WooCommerce, Squarespace, Amazon, AliExpress."
@@ -53,9 +34,9 @@ def import_product_from_url(
     if requires_rapidapi(normalized_url) and not resolved_rapidapi_key:
         raise ValueError("RAPIDAPI_KEY is required for Amazon and AliExpress imports.")
 
-    return fetch_product_details(
+    return _fetch_product_details(
         normalized_url,
-        ApiConfig(rapidapi_key=resolved_rapidapi_key),
+        _ApiConfig(rapidapi_key=resolved_rapidapi_key),
     )
 
 
@@ -76,30 +57,13 @@ def import_products_from_urls(
     return products, errors
 
 
+def requires_rapidapi(url: str) -> bool:
+    return _requires_rapidapi(url)
+
+
 __all__ = [
-    "AliExpressClient",
-    "AmazonRapidApiClient",
-    "ApiConfig",
-    "Media",
-    "Money",
-    "Price",
-    "Product",
-    "ProductClient",
-    "ProductClientFactory",
-    "SquarespaceClient",
-    "ShopifyClient",
-    "Variant",
-    "Weight",
-    "WooCommerceClient",
-    "_parse_aliexpress_result",
-    "detect_product_url",
-    "fetch_product_details",
-    "format_decimal",
-    "import_product",
     "import_product_from_url",
     "import_products_from_urls",
-    "normalize_currency",
     "normalize_product_url",
-    "parse_decimal_money",
     "requires_rapidapi",
 ]

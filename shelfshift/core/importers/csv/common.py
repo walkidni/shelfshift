@@ -16,8 +16,8 @@ from ...canonical import (
     SourceRef,
     Variant,
     Weight,
-    parse_decimal_money,
 )
+from ...canonical.helpers import parse_decimal_money
 
 
 MAX_CSV_UPLOAD_BYTES = 5 * 1024 * 1024
@@ -283,19 +283,6 @@ def apply_extra_variant_fields(variant: Variant, row: dict[str, str], *, known_h
             variant.price = price_from_amount(amount)
             continue
         _set_identifier(variant.identifiers, key=f"csv:{token}", value=value)
-
-
-def parse_canonical_product_payload(payload: dict[str, Any]) -> Product:
-    variants_payload = payload.get("variants")
-    variants: list[Variant] = []
-    if isinstance(variants_payload, list):
-        for item in variants_payload:
-            if isinstance(item, dict):
-                variants.append(Variant(**item))
-
-    product_payload = dict(payload)
-    product_payload["variants"] = variants
-    return Product(**product_payload)
 
 
 def add_csv_provenance(
