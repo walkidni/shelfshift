@@ -108,7 +108,9 @@ def parse_shopify_csv(csv_text: str) -> Product:
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=not requires_shipping,
         media=media_from_urls(product_images),
-        identifiers=Identifiers(values={"source_product_id": selected_handle, "handle": selected_handle}),
+        identifiers=Identifiers(
+            values={"source_product_id": selected_handle, "handle": selected_handle}
+        ),
     )
     apply_extra_product_fields(product, product_row, known_headers=known_headers)
     add_csv_provenance(

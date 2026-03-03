@@ -92,6 +92,7 @@ def _parse_price_components(prices: Any) -> tuple[float | None, str, float | Non
         current = regular if regular is not None else sale
     return current, currency, regular, sale
 
+
 class WooCommerceClient(ProductClient):
     platform = "woocommerce"
 
@@ -113,7 +114,9 @@ class WooCommerceClient(ProductClient):
                     return item
         raise ValueError("WooCommerce Store API returned no usable product data.")
 
-    def _api_get(self, url: str, *, params: dict[str, Any] | None = None) -> tuple[dict[str, Any], Any]:
+    def _api_get(
+        self, url: str, *, params: dict[str, Any] | None = None
+    ) -> tuple[dict[str, Any], Any]:
         response = self._http.get(
             url,
             params=params,
@@ -126,7 +129,9 @@ class WooCommerceClient(ProductClient):
     def _store_api_base(self, host: str) -> str:
         return f"https://{host}/wp-json/wc/store/v1/products"
 
-    def _fetch_from_storefront_url(self, storefront_url: str, info: dict[str, Any]) -> tuple[dict[str, Any], Any]:
+    def _fetch_from_storefront_url(
+        self, storefront_url: str, info: dict[str, Any]
+    ) -> tuple[dict[str, Any], Any]:
         parsed = urlparse(storefront_url)
         base_url = self._store_api_base(parsed.netloc)
         product_id = info.get("product_id")
@@ -152,7 +157,9 @@ class WooCommerceClient(ProductClient):
                 if isinstance(raw_image, str):
                     normalized = normalize_url(raw_image)
                 elif isinstance(raw_image, dict):
-                    normalized = normalize_url(raw_image.get("src")) or normalize_url(raw_image.get("thumbnail"))
+                    normalized = normalize_url(raw_image.get("src")) or normalize_url(
+                        raw_image.get("thumbnail")
+                    )
                 else:
                     normalized = None
                 if normalized:
@@ -204,7 +211,11 @@ class WooCommerceClient(ProductClient):
         for raw_option in raw_options:
             if not isinstance(raw_option, dict):
                 continue
-            name = pick_name(raw_option.get("name")) or pick_name(raw_option.get("attribute")) or "Option"
+            name = (
+                pick_name(raw_option.get("name"))
+                or pick_name(raw_option.get("attribute"))
+                or "Option"
+            )
             value = (
                 pick_name(raw_option.get("option"))
                 or pick_name(raw_option.get("value"))
@@ -259,8 +270,8 @@ class WooCommerceClient(ProductClient):
                 if options:
                     has_signal = True
 
-                variant_price, variant_currency, regular_price, _sale_price = _parse_price_components(
-                    raw_variant.get("prices")
+                variant_price, variant_currency, regular_price, _sale_price = (
+                    _parse_price_components(raw_variant.get("prices"))
                 )
                 if variant_price is None:
                     variant_price = parse_money_to_float(raw_variant.get("price"))
@@ -334,7 +345,9 @@ class WooCommerceClient(ProductClient):
                         if image
                         else []
                     ),
-                    option_values=[OptionValue(name=name, value=value) for name, value in options.items()],
+                    option_values=[
+                        OptionValue(name=name, value=value) for name, value in options.items()
+                    ],
                     inventory=Inventory(
                         track_quantity=track_quantity,
                         quantity=inventory_quantity,
@@ -351,13 +364,17 @@ class WooCommerceClient(ProductClient):
                     variant.option_values = [
                         OptionValue(
                             name="Option",
-                            value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                            value=str(
+                                variant.title or variant.sku or variant.id or f"Variant {index}"
+                            ),
                         )
                     ]
 
         return parsed
 
-    def _parse_store_api_product(self, data: dict[str, Any], payload: Any, *, source_url: str) -> Product:
+    def _parse_store_api_product(
+        self, data: dict[str, Any], payload: Any, *, source_url: str
+    ) -> Product:
         title = pick_name(data.get("name")) or ""
         description = (
             pick_name(data.get("description"))
@@ -412,7 +429,9 @@ class WooCommerceClient(ProductClient):
         slug = pick_name(data.get("slug"))
         if not slug:
             parsed_permalink = urlparse(pick_name(data.get("permalink")) or "")
-            info = detect_product_url(parsed_permalink.geturl()) if parsed_permalink.geturl() else {}
+            info = (
+                detect_product_url(parsed_permalink.geturl()) if parsed_permalink.geturl() else {}
+            )
             slug = info.get("slug") if isinstance(info, dict) else None
 
         product_id = str(data.get("id")) if data.get("id") is not None else None
@@ -471,7 +490,9 @@ class WooCommerceClient(ProductClient):
                 slug=slug,
                 url=source_url,
             ),
-            taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
+            taxonomy=CategorySet(
+                paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)
+            ),
         )
 
     def _parse_html_offer(self, raw_offer: Any) -> Variant | None:
@@ -549,7 +570,9 @@ class WooCommerceClient(ProductClient):
         else:
             offer_items = [raw_offers]
 
-        variants = [variant for variant in (self._parse_html_offer(item) for item in offer_items) if variant]
+        variants = [
+            variant for variant in (self._parse_html_offer(item) for item in offer_items) if variant
+        ]
         default_price = None
         default_currency = "USD"
         for variant in variants:
@@ -573,7 +596,9 @@ class WooCommerceClient(ProductClient):
                     variant.option_values = [
                         OptionValue(
                             name="Option",
-                            value=str(variant.title or variant.sku or variant.id or f"Variant {index}"),
+                            value=str(
+                                variant.title or variant.sku or variant.id or f"Variant {index}"
+                            ),
                         )
                     ]
 
@@ -637,10 +662,14 @@ class WooCommerceClient(ProductClient):
                 slug=info.get("slug"),
                 url=url,
             ),
-            taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
+            taxonomy=CategorySet(
+                paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)
+            ),
         )
 
-    def _fallback_storefront_urls(self, url: str, info: dict[str, Any], *, is_api_url: bool) -> list[str]:
+    def _fallback_storefront_urls(
+        self, url: str, info: dict[str, Any], *, is_api_url: bool
+    ) -> list[str]:
         if not is_api_url:
             return [url]
 
@@ -680,7 +709,12 @@ class WooCommerceClient(ProductClient):
                 product, payload = self._fetch_from_storefront_url(url, info)
             parsed_product = self._parse_store_api_product(product, payload, source_url=url)
             return finalize_product_typed_fields(parsed_product, source_url=url)
-        except (requests.HTTPError, ValueError, requests.RequestException, json.JSONDecodeError) as exc:
+        except (
+            requests.HTTPError,
+            ValueError,
+            requests.RequestException,
+            json.JSONDecodeError,
+        ) as exc:
             errors.append(exc)
 
         for fallback_url in self._fallback_storefront_urls(url, info, is_api_url=is_api_url):

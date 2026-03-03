@@ -73,7 +73,9 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     variant_rows = [
         row for row in selected_rows if str(row.get("Item") or "").strip().lower() == "variant"
     ]
-    image_rows = [row for row in selected_rows if str(row.get("Item") or "").strip().lower() == "image"]
+    image_rows = [
+        row for row in selected_rows if str(row.get("Item") or "").strip().lower() == "image"
+    ]
 
     option_maps: list[dict[str, str]] = []
     variants: list[Variant] = []
@@ -93,7 +95,9 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
                 quantity=quantity,
                 available=(quantity > 0 if quantity is not None else True),
             ),
-            media=media_from_urls([str(row.get("Variant Image URL") or "").strip()], variant_sku=sku),
+            media=media_from_urls(
+                [str(row.get("Variant Image URL") or "").strip()], variant_sku=sku
+            ),
             identifiers=Identifiers(values={"source_variant_id": str(index), "sku": sku}),
         )
         apply_extra_variant_fields(variant, row, known_headers=known_headers)
@@ -112,13 +116,17 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         ]
 
     image_urls = [str(row.get("Image URL (Import)") or "").strip() for row in image_rows]
-    weight = weight_object(weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit))
+    weight = weight_object(
+        weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit)
+    )
     type_value = str(product_row.get("Type") or "").strip().lower()
     is_digital = type_value == "digital"
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
-            id=str(product_row.get("ID") or "").strip() or str(product_row.get("SKU") or "").strip() or None,
+            id=str(product_row.get("ID") or "").strip()
+            or str(product_row.get("SKU") or "").strip()
+            or None,
             slug=str(product_row.get("Product URL") or "").strip().strip("/") or None,
             url=None,
         ),
@@ -138,14 +146,19 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
         media=media_from_urls(image_urls),
-        identifiers=Identifiers(values={"source_product_id": str(product_row.get("ID") or "").strip() or variants[0].sku}),
+        identifiers=Identifiers(
+            values={
+                "source_product_id": str(product_row.get("ID") or "").strip() or variants[0].sku
+            }
+        ),
     )
     apply_extra_product_fields(product, product_row, known_headers=known_headers)
     add_csv_provenance(
         product,
         source_platform="bigcommerce",
         detected_product_count=len(product_indices),
-        selected_product_key=str(product_row.get("SKU") or "").strip() or str(product_row.get("Name") or "").strip(),
+        selected_product_key=str(product_row.get("SKU") or "").strip()
+        or str(product_row.get("Name") or "").strip(),
     )
     return product
 
@@ -158,7 +171,9 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
 
     sku = str(product_row.get("Code") or "").strip() or "BC:legacy"
     quantity = parse_int(product_row.get("Stock Level"))
-    weight = weight_object(weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit))
+    weight = weight_object(
+        weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit)
+    )
     variant = Variant(
         id="1",
         sku=sku,
@@ -193,7 +208,9 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         brand=str(product_row.get("Brand") or "").strip() or None,
         vendor=str(product_row.get("Brand") or "").strip() or None,
         tags=split_tokens(product_row.get("META Keywords"), sep=","),
-        taxonomy=taxonomy_from_primary(str(product_row.get("Category Details") or "").strip() or None),
+        taxonomy=taxonomy_from_primary(
+            str(product_row.get("Category Details") or "").strip() or None
+        ),
         variants=[variant],
         price=variant.price,
         weight=weight,
@@ -201,7 +218,9 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         track_quantity=(quantity is not None),
         is_digital=False,
         media=media_from_urls(_parse_legacy_images(str(product_row.get("Images") or ""))),
-        identifiers=Identifiers(values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}),
+        identifiers=Identifiers(
+            values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
+        ),
     )
     apply_extra_product_fields(product, product_row, known_headers=known_headers)
     add_csv_provenance(
@@ -221,4 +240,3 @@ def parse_bigcommerce_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     if {"Product Type", "Code", "Name"}.issubset(header_set):
         return _parse_legacy(csv_text, source_weight_unit=source_weight_unit)
     raise ValueError("Unable to detect BigCommerce CSV format from headers.")
-

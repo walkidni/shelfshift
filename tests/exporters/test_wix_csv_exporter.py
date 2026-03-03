@@ -128,7 +128,9 @@ def test_wix_export_supports_lb_weight_unit() -> None:
         description="Soft cotton tee",
         price={"amount": 19.99, "currency": "USD"},
         images=["https://cdn.example.com/tee-1.jpg"],
-        variants=[Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4, weight=333)],
+        variants=[
+            Variant(id="v1", sku="TEE-1", price_amount=19.99, inventory_quantity=4, weight=333)
+        ],
     )
 
     csv_text, _ = product_to_wix_csv(product, publish=True, weight_unit="lb")

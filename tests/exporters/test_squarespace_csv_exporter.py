@@ -58,7 +58,10 @@ def test_single_variant_maps_visible_and_hosted_images() -> None:
     assert frame.loc[0, "Stock"] == "0"
     assert frame.loc[0, "Weight"] == "0.25"
     assert frame.loc[0, "Visible"] == "No"
-    assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
+    assert (
+        frame.loc[0, "Hosted Image URLs"]
+        == "https://cdn.example.com/mug-front.jpg\nhttps://cdn.example.com/mug-side.jpg"
+    )
 
 
 def test_multi_variant_uses_first_row_for_product_fields() -> None:
@@ -245,4 +248,7 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
     assert frame.loc[0, "Price"] == "12.34"
     assert frame.loc[0, "Stock"] == "7"
     assert frame.loc[0, "Categories"] == ""
-    assert frame.loc[0, "Hosted Image URLs"] == "https://cdn.example.com/typed-main.jpg\nhttps://cdn.example.com/typed-gallery.jpg"
+    assert (
+        frame.loc[0, "Hosted Image URLs"]
+        == "https://cdn.example.com/typed-main.jpg\nhttps://cdn.example.com/typed-gallery.jpg"
+    )

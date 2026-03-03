@@ -1,6 +1,5 @@
 """Baseline canonical validation rules."""
 
-
 from ..canonical.entities import Product
 from .report import ValidationIssue, ValidationReport
 

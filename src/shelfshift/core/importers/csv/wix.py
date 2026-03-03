@@ -50,10 +50,16 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         raise ValueError("Wix CSV must include at least one row with handle.")
 
     selected_rows = [row for row in rows if str(row.get("handle") or "").strip() == selected_handle]
-    product_rows = [row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "PRODUCT"]
+    product_rows = [
+        row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "PRODUCT"
+    ]
     product_row = product_rows[0] if product_rows else selected_rows[0]
-    variant_rows = [row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "VARIANT"]
-    media_rows = [row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "MEDIA"]
+    variant_rows = [
+        row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "VARIANT"
+    ]
+    media_rows = [
+        row for row in selected_rows if str(row.get("fieldType") or "").strip().upper() == "MEDIA"
+    ]
 
     option_maps: list[dict[str, str]] = []
     variants: list[Variant] = []

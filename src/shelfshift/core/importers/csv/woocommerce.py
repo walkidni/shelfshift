@@ -50,9 +50,13 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
     require_headers(headers, _REQUIRED_HEADERS)
     known_headers = set(WOOCOMMERCE_COLUMNS)
 
-    product_rows = [row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}]
+    product_rows = [
+        row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
+    ]
     if not product_rows:
-        raise ValueError("WooCommerce CSV must include at least one simple or variable product row.")
+        raise ValueError(
+            "WooCommerce CSV must include at least one simple or variable product row."
+        )
 
     product_row = product_rows[0]
     detected_product_count = len(product_rows)
@@ -68,7 +72,9 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             and str(row.get("Parent") or "").strip() == parent_sku
         )
 
-    variant_rows = [row for row in selected_rows if str(row.get("Type") or "").strip().lower() == "variation"]
+    variant_rows = [
+        row for row in selected_rows if str(row.get("Type") or "").strip().lower() == "variation"
+    ]
     if not variant_rows:
         variant_rows = [product_row]
 
@@ -124,7 +130,9 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
         media=media_from_urls(product_images),
-        identifiers=Identifiers(values={"source_product_id": parent_sku or slug or "woocommerce-product"}),
+        identifiers=Identifiers(
+            values={"source_product_id": parent_sku or slug or "woocommerce-product"}
+        ),
     )
     apply_extra_product_fields(product, product_row, known_headers=known_headers)
     add_csv_provenance(
@@ -134,4 +142,3 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         selected_product_key=parent_sku or slug or "woocommerce-product",
     )
     return product
-

@@ -1,6 +1,5 @@
 """Auto-detect the source e-commerce platform from CSV headers."""
 
-
 from .common import csv_rows, decode_csv_bytes
 
 # Header fingerprints for auto-detection.
@@ -8,8 +7,8 @@ from .common import csv_rows, decode_csv_bytes
 _PLATFORM_HEADER_SIGNATURES: list[tuple[str, set[str]]] = [
     ("squarespace", {"Title", "SKU", "Price", "Product Type [Non Editable]", "Visible"}),
     ("wix", {"handle", "fieldType", "name", "price", "sku"}),
-    ("bigcommerce", {"Item", "SKU", "Name"}),              # modern format
-    ("bigcommerce", {"Product Type", "Code", "Name"}),      # legacy format
+    ("bigcommerce", {"Item", "SKU", "Name"}),  # modern format
+    ("bigcommerce", {"Product Type", "Code", "Name"}),  # legacy format
     ("woocommerce", {"Type", "SKU", "Name", "Regular price"}),
     ("shopify", {"Handle", "Title", "Variant SKU", "Variant Price"}),
 ]
@@ -29,8 +28,7 @@ def detect_csv_platform(csv_bytes: bytes) -> str:
         if signature.issubset(header_set):
             return platform
     raise ValueError(
-        "Unable to detect CSV platform from headers. "
-        "Please select the source platform manually."
+        "Unable to detect CSV platform from headers. Please select the source platform manually."
     )
 
 

@@ -68,8 +68,12 @@ def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
     product.variants[1].option_values = [OptionValue(name="Size", value="M")]
     product.variants[0].inventory = Inventory(track_quantity=True, quantity=10, available=True)
     product.variants[1].inventory = Inventory(track_quantity=True, quantity=8, available=True)
-    product.variants[0].media = [Media(url="https://cdn.example.com/v-neck-tee-size-s.jpg", is_primary=True)]
-    product.variants[1].media = [Media(url="https://cdn.example.com/v-neck-tee-size-m.jpg", is_primary=True)]
+    product.variants[0].media = [
+        Media(url="https://cdn.example.com/v-neck-tee-size-s.jpg", is_primary=True)
+    ]
+    product.variants[1].media = [
+        Media(url="https://cdn.example.com/v-neck-tee-size-m.jpg", is_primary=True)
+    ]
 
     csv_text, filename = product_to_woocommerce_csv(product, publish=True)
     assert filename == "woocommerce-20260208T000000Z.csv"

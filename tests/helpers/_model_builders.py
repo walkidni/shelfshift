@@ -1,4 +1,3 @@
-
 from typing import Any
 
 from shelfshift.core.canonical import (
@@ -132,7 +131,11 @@ def Variant(**kwargs: Any) -> CanonicalVariant:
         if isinstance(available, bool) and "available" not in inventory:
             inventory["available"] = available
         normalized["inventory"] = inventory
-    elif isinstance(inventory, Inventory) and isinstance(available, bool) and inventory.available is None:
+    elif (
+        isinstance(inventory, Inventory)
+        and isinstance(available, bool)
+        and inventory.available is None
+    ):
         inventory.available = available
         normalized["inventory"] = inventory
 

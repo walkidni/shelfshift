@@ -189,7 +189,9 @@ def _set_identifier(target: Identifiers, *, key: str, value: str) -> None:
     target.values[key] = value
 
 
-def apply_extra_product_fields(product: Product, row: dict[str, str], *, known_headers: set[str]) -> None:
+def apply_extra_product_fields(
+    product: Product, row: dict[str, str], *, known_headers: set[str]
+) -> None:
     ensure_product_defaults(product)
     for header, raw in row.items():
         if header in known_headers:
@@ -246,7 +248,9 @@ def apply_extra_product_fields(product: Product, row: dict[str, str], *, known_h
         _set_identifier(product.identifiers, key=f"csv:{token}", value=value)
 
 
-def apply_extra_variant_fields(variant: Variant, row: dict[str, str], *, known_headers: set[str]) -> None:
+def apply_extra_variant_fields(
+    variant: Variant, row: dict[str, str], *, known_headers: set[str]
+) -> None:
     if variant.identifiers is None:
         variant.identifiers = Identifiers()
     for header, raw in row.items():

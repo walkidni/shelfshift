@@ -62,7 +62,9 @@ def parse_money_to_float(x: Any) -> float | None:
         return None
 
 
-def append_default_variant_if_empty(variants: list[Variant], default_variant: Variant | None) -> None:
+def append_default_variant_if_empty(
+    variants: list[Variant], default_variant: Variant | None
+) -> None:
     if variants or default_variant is None:
         return
     variants.append(default_variant)
@@ -156,7 +158,11 @@ def extract_names(items: Any, *, split_commas: bool = False) -> list[str]:
                 continue
             if not isinstance(item, dict):
                 continue
-            candidate = pick_name(item.get("value")) or pick_name(item.get("name")) or pick_name(item.get("title"))
+            candidate = (
+                pick_name(item.get("value"))
+                or pick_name(item.get("name"))
+                or pick_name(item.get("title"))
+            )
             if candidate:
                 names.append(candidate)
     return dedupe(names)

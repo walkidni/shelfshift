@@ -17,7 +17,9 @@ class _FakeResponse:
         return self._payload
 
 
-def test_squarespace_import_prefers_page_json_when_product_structured_content_exists(monkeypatch) -> None:
+def test_squarespace_import_prefers_page_json_when_product_structured_content_exists(
+    monkeypatch,
+) -> None:
     client = SquarespaceClient()
     source_url = "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"
     page_json_url = f"{source_url}?format=json"
@@ -93,16 +95,24 @@ def test_squarespace_import_prefers_page_json_when_product_structured_content_ex
     assert parsed["taxonomy"]["primary"] == ["Tops"]
     assert len(parsed["variants"]) == 2
     assert parsed["variants"][0]["id"] == "v1"
-    assert parsed["variants"][0]["option_values"] == [{"name": "Color", "value": "Blue"}, {"name": "Size", "value": "S"}]
+    assert parsed["variants"][0]["option_values"] == [
+        {"name": "Color", "value": "Blue"},
+        {"name": "Size", "value": "S"},
+    ]
     assert parsed["variants"][0]["price"]["current"] == {"amount": "120", "currency": "USD"}
     assert parsed["variants"][0]["inventory"]["quantity"] == 4
     assert parsed["variants"][1]["id"] == "v2"
-    assert parsed["variants"][1]["option_values"] == [{"name": "Color", "value": "Red"}, {"name": "Size", "value": "M"}]
+    assert parsed["variants"][1]["option_values"] == [
+        {"name": "Color", "value": "Red"},
+        {"name": "Size", "value": "M"},
+    ]
     assert parsed["variants"][1]["price"]["current"] == {"amount": "130", "currency": "USD"}
     assert parsed["variants"][1]["inventory"]["available"] is False
 
 
-def test_squarespace_import_falls_back_to_html_json_ld_when_page_json_has_no_product(monkeypatch) -> None:
+def test_squarespace_import_falls_back_to_html_json_ld_when_page_json_has_no_product(
+    monkeypatch,
+) -> None:
     client = SquarespaceClient()
     source_url = "https://st-p-sews.squarespace.com/shop/p/custom-patchwork-shirt-snzgy"
     page_json_url = f"{source_url}?format=json"

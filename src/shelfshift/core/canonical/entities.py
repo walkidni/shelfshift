@@ -118,8 +118,7 @@ class Variant:
             "sku": self.sku,
             "title": self.title,
             "option_values": [
-                {"name": option.name, "value": option.value}
-                for option in self.option_values
+                {"name": option.name, "value": option.value} for option in self.option_values
             ],
             "price": _price_to_dict(self.price),
             "inventory": {
@@ -224,8 +223,7 @@ class Product:
             },
             "tags": list(self.tags),
             "options": [
-                {"name": option.name, "values": list(option.values)}
-                for option in self.options
+                {"name": option.name, "values": list(option.values)} for option in self.options
             ],
             "variants": [variant.to_dict() for variant in self.variants],
             "price": _price_to_dict(self.price),
@@ -325,10 +323,7 @@ def _normalize_option_values(
     values: list[OptionValue] | list[dict[str, str]] | dict[str, str] | None,
 ) -> list[OptionValue]:
     if isinstance(values, dict):
-        values = [
-            {"name": str(name), "value": str(value)}
-            for name, value in values.items()
-        ]
+        values = [{"name": str(name), "value": str(value)} for name, value in values.items()]
 
     out: list[OptionValue] = []
     for item in values or []:
@@ -350,10 +345,7 @@ def _normalize_option_defs(
     values: list[OptionDef] | list[dict[str, Any]] | dict[str, list[str]] | None,
 ) -> list[OptionDef]:
     if isinstance(values, dict):
-        values = [
-            {"name": str(name), "values": raw_values}
-            for name, raw_values in values.items()
-        ]
+        values = [{"name": str(name), "values": raw_values} for name, raw_values in values.items()]
 
     out: list[OptionDef] = []
     for item in values or []:
@@ -407,9 +399,14 @@ def _normalize_media_list(values: list[Media] | list[dict[str, Any]] | None) -> 
                 Media(
                     url=normalized_url,
                     type=media_type,
-                    alt=(str(item.get("alt")).strip() if item.get("alt") is not None else None) or None,
-                    position=item.get("position") if isinstance(item.get("position"), int) else None,
-                    is_primary=item.get("is_primary") if isinstance(item.get("is_primary"), bool) else None,
+                    alt=(str(item.get("alt")).strip() if item.get("alt") is not None else None)
+                    or None,
+                    position=item.get("position")
+                    if isinstance(item.get("position"), int)
+                    else None,
+                    is_primary=item.get("is_primary")
+                    if isinstance(item.get("is_primary"), bool)
+                    else None,
                     variant_skus=[
                         str(sku)
                         for sku in item.get("variant_skus", [])
@@ -555,10 +552,14 @@ def _inventory_from_payload(payload: Any) -> Inventory:
         except (TypeError, ValueError):
             quantity = None
     return Inventory(
-        track_quantity=payload.get("track_quantity") if isinstance(payload.get("track_quantity"), bool) else None,
+        track_quantity=payload.get("track_quantity")
+        if isinstance(payload.get("track_quantity"), bool)
+        else None,
         quantity=quantity,
         available=payload.get("available") if isinstance(payload.get("available"), bool) else None,
-        allow_backorder=payload.get("allow_backorder") if isinstance(payload.get("allow_backorder"), bool) else None,
+        allow_backorder=payload.get("allow_backorder")
+        if isinstance(payload.get("allow_backorder"), bool)
+        else None,
     )
 
 
@@ -583,7 +584,13 @@ def _price_to_dict(price: Price | None) -> dict[str, Any] | None:
     cost = _money_to_dict(price.cost)
     min_price = _money_to_dict(price.min_price)
     max_price = _money_to_dict(price.max_price)
-    if current is None and compare_at is None and cost is None and min_price is None and max_price is None:
+    if (
+        current is None
+        and compare_at is None
+        and cost is None
+        and min_price is None
+        and max_price is None
+    ):
         return None
     return {
         "current": current,

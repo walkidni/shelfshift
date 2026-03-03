@@ -25,6 +25,8 @@ def test_resolve_weight_grams_falls_back_to_product_weight() -> None:
 
 
 def test_resolve_variant_available_prefers_inventory_available() -> None:
-    variant = Variant(id="v-1", inventory={"track_quantity": True, "quantity": 3, "available": True})
+    variant = Variant(
+        id="v-1", inventory={"track_quantity": True, "quantity": 3, "available": True}
+    )
 
     assert utils.resolve_variant_available(variant) is True

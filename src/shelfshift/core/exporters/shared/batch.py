@@ -1,4 +1,3 @@
-
 from ...canonical import Product
 from ..platforms.bigcommerce import (
     BIGCOMMERCE_COLUMNS,
@@ -127,7 +126,9 @@ def products_to_squarespace_csv(
             )
         )
     # Squarespace's `product_page`/`product_url` are intentionally left blank in batch flows for now.
-    return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename("squarespace")
+    return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename(
+        "squarespace"
+    )
 
 
 def products_to_woocommerce_csv(
@@ -140,7 +141,9 @@ def products_to_woocommerce_csv(
     rows: list[dict[str, str]] = []
     parent_skus: list[str] = []
     for product in products:
-        product_rows = product_to_woocommerce_rows(product, publish=publish, weight_unit=weight_unit)
+        product_rows = product_to_woocommerce_rows(
+            product, publish=publish, weight_unit=weight_unit
+        )
         parent_row = next(
             (row for row in product_rows if row.get("Parent") in {"", None} and row.get("SKU")),
             None,
@@ -150,7 +153,9 @@ def products_to_woocommerce_csv(
         rows.extend(product_rows)
 
     _require_unique(parent_skus, label="WooCommerce parent SKU")
-    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename("woocommerce")
+    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename(
+        "woocommerce"
+    )
 
 
 __all__ = [
@@ -160,4 +165,3 @@ __all__ = [
     "products_to_wix_csv",
     "products_to_woocommerce_csv",
 ]
-

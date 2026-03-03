@@ -1,6 +1,5 @@
 """Stable public API facade for the Shelfshift core engine."""
 
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -145,7 +144,9 @@ def export_csv(
         )
 
         if normalized_target == "shopify":
-            csv_text, filename = products_to_shopify_csv(products, publish=publish, weight_unit=weight_unit)
+            csv_text, filename = products_to_shopify_csv(
+                products, publish=publish, weight_unit=weight_unit
+            )
         elif normalized_target == "bigcommerce":
             csv_text, filename = products_to_bigcommerce_csv(
                 products,
@@ -154,7 +155,9 @@ def export_csv(
                 weight_unit=weight_unit,
             )
         elif normalized_target == "wix":
-            csv_text, filename = products_to_wix_csv(products, publish=publish, weight_unit=weight_unit)
+            csv_text, filename = products_to_wix_csv(
+                products, publish=publish, weight_unit=weight_unit
+            )
         elif normalized_target == "squarespace":
             csv_text, filename = products_to_squarespace_csv(
                 products,
@@ -164,7 +167,9 @@ def export_csv(
                 weight_unit=weight_unit,
             )
         elif normalized_target == "woocommerce":
-            csv_text, filename = products_to_woocommerce_csv(products, publish=publish, weight_unit=weight_unit)
+            csv_text, filename = products_to_woocommerce_csv(
+                products, publish=publish, weight_unit=weight_unit
+            )
         else:
             raise ValueError(f"Unsupported target platform: {normalized_target}")
         return ExportResult(csv_bytes=csv_text.encode("utf-8"), filename=filename)

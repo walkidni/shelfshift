@@ -41,7 +41,9 @@ class ShopifyClient(ProductClient):
             raise ValueError("Not a Shopify product path.")
         return parsed.netloc, handle
 
-    def _product_media_from_images(self, raw_images: list[dict], sku_by_variant_id: dict[str, str]) -> list[Media]:
+    def _product_media_from_images(
+        self, raw_images: list[dict], sku_by_variant_id: dict[str, str]
+    ) -> list[Media]:
         media: list[Media] = []
         for raw_image in raw_images:
             if not isinstance(raw_image, dict):
@@ -61,7 +63,11 @@ class ShopifyClient(ProductClient):
                     url=image_url,
                     type="image",
                     alt=(raw_image.get("alt") or None),
-                    position=(raw_image.get("position") if isinstance(raw_image.get("position"), int) else None),
+                    position=(
+                        raw_image.get("position")
+                        if isinstance(raw_image.get("position"), int)
+                        else None
+                    ),
                     is_primary=(raw_image.get("position") == 1),
                     variant_skus=variant_skus,
                 )
@@ -172,7 +178,10 @@ class ShopifyClient(ProductClient):
                 url=url,
             ),
             taxonomy=(
-                CategorySet(paths=[[str(product_ld.get("category"))]], primary=[str(product_ld.get("category"))])
+                CategorySet(
+                    paths=[[str(product_ld.get("category"))]],
+                    primary=[str(product_ld.get("category"))],
+                )
                 if product_ld.get("category")
                 else CategorySet()
             ),
@@ -202,7 +211,7 @@ class ShopifyClient(ProductClient):
         if variants_list:
             first_variant = variants_list[0]
             price_amount = parse_money_to_float(first_variant.get("price"))
-            currency = (first_variant.get("price_currency") or currency)
+            currency = first_variant.get("price_currency") or currency
         images = []
         if data.get("images"):
             images = [img.get("src") for img in data["images"] if img.get("src")]
@@ -228,7 +237,7 @@ class ShopifyClient(ProductClient):
                 sku_by_variant_id[str(raw_variant_id)] = raw_sku
 
         image_by_id: dict[str, dict] = {}
-        for raw_image in (data.get("images") or []):
+        for raw_image in data.get("images") or []:
             if isinstance(raw_image, dict) and raw_image.get("id") is not None:
                 image_by_id[str(raw_image.get("id"))] = raw_image
 
@@ -244,15 +253,21 @@ class ShopifyClient(ProductClient):
 
                 inventory_quantity = variant.get("inventory_quantity")
                 inventory_quantity = (
-                    inventory_quantity if isinstance(inventory_quantity, int) and inventory_quantity >= 0 else 0
+                    inventory_quantity
+                    if isinstance(inventory_quantity, int) and inventory_quantity >= 0
+                    else 0
                 )
                 variant_id = str(variant.get("id", ""))
                 raw_sku = (variant.get("sku") or "").strip()
                 compare_at_amount = parse_money_to_float(variant.get("compare_at_price"))
-                inventory_management = str(variant.get("inventory_management") or "").strip().lower()
+                inventory_management = (
+                    str(variant.get("inventory_management") or "").strip().lower()
+                )
                 track_inventory = bool(inventory_management and inventory_management != "null")
                 inventory_policy = str(variant.get("inventory_policy") or "").strip().lower()
-                allow_backorder = True if inventory_policy == "continue" else False if inventory_policy else None
+                allow_backorder = (
+                    True if inventory_policy == "continue" else False if inventory_policy else None
+                )
                 variant_image_raw = image_by_id.get(str(variant.get("image_id")))
                 variant_media: list[Media] = []
                 if isinstance(variant_image_raw, dict):
@@ -288,7 +303,10 @@ class ShopifyClient(ProductClient):
                             compare_at=compare_at_amount,
                         ),
                         media=variant_media,
-                        option_values=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                        option_values=[
+                            OptionValue(name=name, value=value)
+                            for name, value in variant_options.items()
+                        ],
                         inventory=Inventory(
                             track_quantity=track_inventory,
                             quantity=inventory_quantity,
@@ -326,7 +344,9 @@ class ShopifyClient(ProductClient):
         requires_shipping = True
         track_quantity = True
         is_digital = False
-        if (category and "digital" in category.lower()) or any("digital" in tag.lower() for tag in tags):
+        if (category and "digital" in category.lower()) or any(
+            "digital" in tag.lower() for tag in tags
+        ):
             is_digital = True
             requires_shipping = False
 
@@ -339,7 +359,11 @@ class ShopifyClient(ProductClient):
                         url=image_url,
                         type="image",
                         alt=(data["image"].get("alt") or None),
-                        position=(data["image"].get("position") if isinstance(data["image"].get("position"), int) else 1),
+                        position=(
+                            data["image"].get("position")
+                            if isinstance(data["image"].get("position"), int)
+                            else 1
+                        ),
                         is_primary=True,
                     )
                 ]
@@ -365,7 +389,9 @@ class ShopifyClient(ProductClient):
             price=make_price(
                 amount=price_amount,
                 currency=currency,
-                compare_at=parse_money_to_float(variants_list[0].get("compare_at_price")) if variants_list else None,
+                compare_at=parse_money_to_float(variants_list[0].get("compare_at_price"))
+                if variants_list
+                else None,
             ),
             media=product_media,
             identifiers=product_identifiers,
@@ -380,6 +406,8 @@ class ShopifyClient(ProductClient):
                 slug=handle,
                 url=url,
             ),
-            taxonomy=CategorySet(paths=[[category]], primary=[category]) if category else CategorySet(),
+            taxonomy=CategorySet(paths=[[category]], primary=[category])
+            if category
+            else CategorySet(),
         )
         return finalize_product_typed_fields(product, source_url=url)

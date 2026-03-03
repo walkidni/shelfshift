@@ -78,13 +78,19 @@ def test_bigcommerce_export_emits_modern_v3_product_variant_image_rows() -> None
 
     assert frame.loc[1, "Item"] == "Variant"
     assert frame.loc[1, "SKU"] == "TEE-BLK-M"
-    assert frame.loc[1, "Options"] == "Type=Rectangle|Name=Color|Value=BlackType=Rectangle|Name=Size|Value=M"
+    assert (
+        frame.loc[1, "Options"]
+        == "Type=Rectangle|Name=Color|Value=BlackType=Rectangle|Name=Size|Value=M"
+    )
     assert frame.loc[1, "Current Stock"] == "4"
     assert frame.loc[1, "Variant Image URL"] == "https://cdn.example.com/tee-black-m.jpg"
 
     assert frame.loc[2, "Item"] == "Variant"
     assert frame.loc[2, "SKU"] == "TEE-WHT-L"
-    assert frame.loc[2, "Options"] == "Type=Rectangle|Name=Color|Value=WhiteType=Rectangle|Name=Size|Value=L"
+    assert (
+        frame.loc[2, "Options"]
+        == "Type=Rectangle|Name=Color|Value=WhiteType=Rectangle|Name=Size|Value=L"
+    )
     assert frame.loc[2, "Current Stock"] == "2"
     assert frame.loc[2, "Variant Image URL"] == "https://cdn.example.com/tee-white-l.jpg"
 
@@ -107,7 +113,11 @@ def test_bigcommerce_export_simple_product_uses_product_and_image_rows() -> None
         description="Demo description",
         price={"amount": 12.0, "currency": "USD"},
         images=["https://cdn.example.com/mug.jpg"],
-        variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, image="//cdn.example.com/mug-variant.jpg")],
+        variants=[
+            Variant(
+                id="v1", sku="MUG-001", price_amount=12.0, image="//cdn.example.com/mug-variant.jpg"
+            )
+        ],
     )
 
     csv_text, _ = product_to_bigcommerce_csv(product, publish=True)
@@ -156,7 +166,10 @@ def test_bigcommerce_export_uses_swatch_only_when_value_data_is_present() -> Non
 
     assert frame.loc[0, "Item"] == "Product"
     assert frame.loc[1, "Item"] == "Variant"
-    assert frame.loc[1, "Options"] == "Type=Swatch|Name=Color|Value=Black[#000000]Type=Rectangle|Name=Size|Value=M"
+    assert (
+        frame.loc[1, "Options"]
+        == "Type=Swatch|Name=Color|Value=Black[#000000]Type=Rectangle|Name=Size|Value=M"
+    )
 
 
 def test_bigcommerce_export_uses_product_weight_when_variant_weight_missing() -> None:
@@ -216,7 +229,9 @@ def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
         description="Demo description",
         price={"amount": 12.0, "currency": "USD"},
         images=["https://cdn.example.com/mug-front.jpg", "https://cdn.example.com/mug-side.jpg"],
-        variants=[Variant(id="v1", sku="MUG-001", price_amount=12.0, inventory_quantity=5, weight=250)],
+        variants=[
+            Variant(id="v1", sku="MUG-001", price_amount=12.0, inventory_quantity=5, weight=250)
+        ],
         category="Mugs",
         slug="demo-mug",
     )
@@ -233,7 +248,10 @@ def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
     assert frame.loc[0, "Calculated Price"] == "12"
     assert frame.loc[0, "Product Visible"] == "Y"
     assert frame.loc[0, "Product URL"] == "/demo-mug/"
-    assert frame.loc[0, "Images"] == "Product Image URL: https://cdn.example.com/mug-front.jpg|Product Image URL: https://cdn.example.com/mug-side.jpg"
+    assert (
+        frame.loc[0, "Images"]
+        == "Product Image URL: https://cdn.example.com/mug-front.jpg|Product Image URL: https://cdn.example.com/mug-side.jpg"
+    )
 
 
 def test_bigcommerce_export_uses_modern_format_by_default() -> None:

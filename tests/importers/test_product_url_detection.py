@@ -50,7 +50,9 @@ def test_detect_woocommerce_product_urls() -> None:
     assert api_product_id["is_product"] is True
     assert api_product_id["product_id"] == "123"
 
-    api_product_slug = detect_product_url("https://demo-store.com/wp-json/wc/store/v1/products/brake-disc-rotor")
+    api_product_slug = detect_product_url(
+        "https://demo-store.com/wp-json/wc/store/v1/products/brake-disc-rotor"
+    )
     assert api_product_slug["platform"] == "woocommerce"
     assert api_product_slug["is_product"] is True
     assert api_product_slug["slug"] == "brake-disc-rotor"
@@ -72,7 +74,9 @@ def test_detect_squarespace_product_urls() -> None:
     assert with_p_segment["is_product"] is True
     assert with_p_segment["slug"] == "custom-patchwork-shirt-snzgy"
 
-    store_path = detect_product_url("https://st-p-sews.squarespace.com/store/custom-patchwork-shirt-snzgy")
+    store_path = detect_product_url(
+        "https://st-p-sews.squarespace.com/store/custom-patchwork-shirt-snzgy"
+    )
     assert store_path["platform"] == "squarespace"
     assert store_path["is_product"] is True
     assert store_path["slug"] == "custom-patchwork-shirt-snzgy"

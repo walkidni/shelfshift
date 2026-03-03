@@ -202,8 +202,10 @@ def _parse_variant_options(raw_variant: dict[str, Any], option_names: list[str])
                 or pick_name(raw_value.get("label"))
                 or fallback_name
             )
-            value = pick_name(raw_value.get("value")) or pick_name(raw_value.get("name")) or pick_name(
-                raw_value.get("title")
+            value = (
+                pick_name(raw_value.get("value"))
+                or pick_name(raw_value.get("name"))
+                or pick_name(raw_value.get("title"))
             )
             if name and value:
                 out[name] = value
@@ -289,14 +291,20 @@ def _page_json_media(candidate: dict[str, Any], structured_content: dict[str, An
 
     _append(candidate.get("assetUrl"), alt=pick_name(candidate.get("title")))
 
-    for raw_block in (structured_content.get("images"), structured_content.get("image"), structured_content.get("items")):
+    for raw_block in (
+        structured_content.get("images"),
+        structured_content.get("image"),
+        structured_content.get("items"),
+    ):
         for image_url in _extract_image_urls(raw_block):
             _append(image_url)
 
     return media
 
 
-def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slug: str | None) -> Product:
+def _parse_json_ld_product(
+    product_data: dict[str, Any], *, source_url: str, slug: str | None
+) -> Product:
     title = pick_name(product_data.get("name")) or ""
     description = pick_name(product_data.get("description")) or ""
 
@@ -311,7 +319,9 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
 
     raw_offers = product_data.get("offers")
     offer_items = _offers_to_list(raw_offers)
-    variants = [variant for variant in (_parse_offer_variant(item) for item in offer_items) if variant]
+    variants = [
+        variant for variant in (_parse_offer_variant(item) for item in offer_items) if variant
+    ]
 
     default_price = None
     default_currency = "USD"
@@ -426,7 +436,9 @@ def _parse_json_ld_product(product_data: dict[str, Any], *, source_url: str, slu
             slug=inferred_slug,
             url=source_url,
         ),
-        taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
+        taxonomy=CategorySet(
+            paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)
+        ),
     )
 
 
@@ -543,14 +555,18 @@ def _parse_page_json_product(
 
             if isinstance(raw_variant, dict):
                 variant_id = pick_name(raw_variant.get("id"))
-                title_value = pick_name(raw_variant.get("title")) or pick_name(raw_variant.get("name"))
+                title_value = pick_name(raw_variant.get("title")) or pick_name(
+                    raw_variant.get("name")
+                )
                 sku = pick_name(raw_variant.get("sku"))
                 variant_options = _parse_variant_options(raw_variant, option_names)
 
                 amount, currency = _parse_money(raw_variant.get("priceMoney"))
                 if amount is None:
                     amount, currency = _parse_money(raw_variant.get("price"))
-                compare_at_amount, _compare_currency = _parse_money(raw_variant.get("salePriceMoney"))
+                compare_at_amount, _compare_currency = _parse_money(
+                    raw_variant.get("salePriceMoney")
+                )
                 if compare_at_amount == 0:
                     compare_at_amount = None
 
@@ -594,7 +610,10 @@ def _parse_page_json_product(
                 continue
 
             variant_key = _slug_token(variant_id or title_value or str(index)) or str(index)
-            resolved_sku = sku or f"SQ:{_slug_token(slug or title or candidate.get('id') or 'item')}:{variant_key}"
+            resolved_sku = (
+                sku
+                or f"SQ:{_slug_token(slug or title or candidate.get('id') or 'item')}:{variant_key}"
+            )
             variant_identifiers = make_identifiers(
                 {
                     "source_variant_id": variant_id,
@@ -624,7 +643,10 @@ def _parse_page_json_product(
                         if image
                         else []
                     ),
-                    option_values=[OptionValue(name=name, value=value) for name, value in variant_options.items()],
+                    option_values=[
+                        OptionValue(name=name, value=value)
+                        for name, value in variant_options.items()
+                    ],
                     inventory=Inventory(
                         track_quantity=track_quantity,
                         quantity=inventory_quantity,
@@ -645,7 +667,9 @@ def _parse_page_json_product(
             break
 
     if default_price is None:
-        default_price, default_currency_candidate = _parse_money(structured_content.get("priceMoney"))
+        default_price, default_currency_candidate = _parse_money(
+            structured_content.get("priceMoney")
+        )
         if default_currency_candidate:
             default_currency = default_currency_candidate
 
@@ -667,7 +691,9 @@ def _parse_page_json_product(
         if variant_image_url and variant_image_url not in images:
             images.append(variant_image_url)
 
-    inferred_slug = slug or pick_name(candidate.get("urlId")) or pick_name(structured_content.get("urlSlug"))
+    inferred_slug = (
+        slug or pick_name(candidate.get("urlId")) or pick_name(structured_content.get("urlSlug"))
+    )
     if not inferred_slug:
         info = detect_product_url(source_url)
         inferred_slug = pick_name(info.get("slug")) if isinstance(info, dict) else None
@@ -679,7 +705,9 @@ def _parse_page_json_product(
     )
     append_default_variant_if_empty(variants, default_variant)
 
-    tags = dedupe(_extract_names(candidate.get("tags")) + _extract_names(structured_content.get("tags")))
+    tags = dedupe(
+        _extract_names(candidate.get("tags")) + _extract_names(structured_content.get("tags"))
+    )
 
     categories = _extract_names(candidate.get("categories"))
     if not categories:
@@ -736,7 +764,9 @@ def _parse_page_json_product(
             slug=inferred_slug,
             url=source_url,
         ),
-        taxonomy=CategorySet(paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)),
+        taxonomy=CategorySet(
+            paths=taxonomy_paths, primary=(taxonomy_paths[0] if taxonomy_paths else None)
+        ),
     )
 
 
@@ -767,7 +797,9 @@ class SquarespaceClient(ProductClient):
         payload = response.json()
         candidate = _find_page_json_product(payload, slug=slug)
         if not candidate:
-            raise ValueError("Squarespace page JSON contains no product item with structured content.")
+            raise ValueError(
+                "Squarespace page JSON contains no product item with structured content."
+            )
 
         return _parse_page_json_product(candidate, payload, source_url=url, slug=slug)
 
@@ -810,7 +842,12 @@ class SquarespaceClient(ProductClient):
         try:
             product = self._fetch_from_page_json(url, slug=slug)
             return finalize_product_typed_fields(product, source_url=url)
-        except (requests.HTTPError, ValueError, requests.RequestException, json.JSONDecodeError) as exc:
+        except (
+            requests.HTTPError,
+            ValueError,
+            requests.RequestException,
+            json.JSONDecodeError,
+        ) as exc:
             errors.append(exc)
 
         try:

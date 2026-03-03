@@ -234,7 +234,9 @@ def product_to_wix_rows(
         for option in utils.resolve_option_defs(product)
         if option.name and option.name in option_names
     }
-    variant_option_maps = [utils.resolve_variant_option_map(product, variant) for variant in variants]
+    variant_option_maps = [
+        utils.resolve_variant_option_map(product, variant) for variant in variants
+    ]
 
     rows: list[dict[str, str]] = []
 
@@ -248,8 +250,12 @@ def product_to_wix_rows(
     product_row["brand"] = product.vendor or product.brand or ""
     product_row["price"] = _resolve_price(product, first_variant)
     product_row["inventory"] = _resolve_product_inventory(product, variants)
-    product_row["sku"] = str((first_variant.sku if first_variant else None) or product.source.id or "")
-    product_row["weight"] = _resolve_weight(product, first_variant, weight_unit=resolved_weight_unit)
+    product_row["sku"] = str(
+        (first_variant.sku if first_variant else None) or product.source.id or ""
+    )
+    product_row["weight"] = _resolve_weight(
+        product, first_variant, weight_unit=resolved_weight_unit
+    )
     if images:
         product_row["media"] = images[0]
         product_row["mediaAltText"] = (product.title or "").strip()

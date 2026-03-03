@@ -52,7 +52,9 @@ def test_woocommerce_storefront_url_uses_store_api_slug_and_parses_product(monke
     product = client.fetch_product("https://demo-store.com/product/adjustable-wrench-set/")
     parsed = product.to_dict()
 
-    assert calls == [("https://demo-store.com/wp-json/wc/store/v1/products", {"slug": "adjustable-wrench-set"})]
+    assert calls == [
+        ("https://demo-store.com/wp-json/wc/store/v1/products", {"slug": "adjustable-wrench-set"})
+    ]
     assert parsed["source"]["platform"] == "woocommerce"
     assert parsed["source"]["id"] == "101"
     assert parsed["source"]["slug"] == "adjustable-wrench-set"
@@ -118,7 +120,9 @@ def test_woocommerce_store_api_url_imports_directly_without_normalizing(monkeypa
     assert parsed["variants"][0]["inventory"]["quantity"] == 7
 
 
-def test_woocommerce_import_falls_back_to_default_variant_for_broken_variations(monkeypatch) -> None:
+def test_woocommerce_import_falls_back_to_default_variant_for_broken_variations(
+    monkeypatch,
+) -> None:
     client = WooCommerceClient()
     api_payload = {
         "id": 778,

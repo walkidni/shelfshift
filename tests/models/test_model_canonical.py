@@ -45,7 +45,12 @@ def test_weight_is_typed_and_serialized_as_object() -> None:
 def test_variant_inventory_serialization_includes_available() -> None:
     variant = Variant(
         id="v-1",
-        inventory={"track_quantity": True, "quantity": 4, "available": True, "allow_backorder": False},
+        inventory={
+            "track_quantity": True,
+            "quantity": 4,
+            "available": True,
+            "allow_backorder": False,
+        },
     )
 
     payload = variant.to_dict()

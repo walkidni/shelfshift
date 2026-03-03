@@ -82,7 +82,9 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     is_digital = product_type == "DIGITAL"
     media_urls = split_image_lines(product_row.get("Hosted Image URLs"))
     product = Product(
-        source=SourceRef(platform="squarespace", id=slug or variants[0].sku, slug=slug, url=product_url or None),
+        source=SourceRef(
+            platform="squarespace", id=slug or variants[0].sku, slug=slug, url=product_url or None
+        ),
         title=str(product_row.get("Title") or "").strip() or None,
         description=str(product_row.get("Description") or "").strip() or None,
         seo=Seo(

@@ -234,7 +234,9 @@ def product_to_woocommerce_rows(
         for option in utils.resolve_option_defs(product)
         if option.name and option.name in option_names
     }
-    variant_option_maps = [utils.resolve_variant_option_map(product, variant) for variant in variants]
+    variant_option_maps = [
+        utils.resolve_variant_option_map(product, variant) for variant in variants
+    ]
     parent_attribute_values = _resolve_parent_attribute_values(
         variants,
         option_names,
@@ -329,4 +331,6 @@ def product_to_woocommerce_csv(
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     rows = product_to_woocommerce_rows(product, publish=publish, weight_unit=weight_unit)
-    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename("woocommerce")
+    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename(
+        "woocommerce"
+    )

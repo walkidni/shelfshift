@@ -1,6 +1,5 @@
 """Validation report types for canonical product checks."""
 
-
 from dataclasses import dataclass, field
 
 

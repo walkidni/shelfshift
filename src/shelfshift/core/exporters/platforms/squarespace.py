@@ -163,4 +163,6 @@ def product_to_squarespace_csv(
         product_url=product_url,
         weight_unit=weight_unit,
     )
-    return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename("squarespace")
+    return utils.dict_rows_to_csv(rows, SQUARESPACE_COLUMNS), utils.make_export_filename(
+        "squarespace"
+    )

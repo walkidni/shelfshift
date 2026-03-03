@@ -47,6 +47,27 @@ source .venv/bin/activate
 pytest -q
 ```
 
+## Pre-commit Hooks
+
+Install hooks once per clone:
+
+```bash
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
+```
+
+Configured hooks:
+
+- `pre-commit`: `ruff check --fix` and `ruff format`
+- `pre-push`: `pytest -q`
+
+Run hooks manually:
+
+```bash
+uv run pre-commit run --all-files
+uv run pre-commit run --all-files --hook-stage pre-push
+```
+
 ## Repository Layout
 
 ```text

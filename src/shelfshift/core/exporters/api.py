@@ -42,7 +42,9 @@ def export_csv_for_target(
             weight_unit=resolved_weight_unit,
         )
     if target == "woocommerce":
-        return product_to_woocommerce_csv(product, publish=publish, weight_unit=resolved_weight_unit)
+        return product_to_woocommerce_csv(
+            product, publish=publish, weight_unit=resolved_weight_unit
+        )
     raise ValueError(
         "target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce"
     )

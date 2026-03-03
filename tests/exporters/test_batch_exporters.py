@@ -100,7 +100,9 @@ def test_products_to_bigcommerce_csv_rejects_duplicate_skus_modern() -> None:
     )
 
     with pytest.raises(ValueError, match="Duplicate BigCommerce SKU"):
-        products_to_bigcommerce_csv([alpha, duplicate], publish=False, csv_format="modern", weight_unit="kg")
+        products_to_bigcommerce_csv(
+            [alpha, duplicate], publish=False, csv_format="modern", weight_unit="kg"
+        )
 
 
 def test_products_to_bigcommerce_csv_rejects_duplicate_codes_legacy() -> None:
@@ -116,7 +118,9 @@ def test_products_to_bigcommerce_csv_rejects_duplicate_codes_legacy() -> None:
     )
 
     with pytest.raises(ValueError, match="Duplicate BigCommerce Code"):
-        products_to_bigcommerce_csv([alpha, duplicate], publish=False, csv_format="legacy", weight_unit="kg")
+        products_to_bigcommerce_csv(
+            [alpha, duplicate], publish=False, csv_format="legacy", weight_unit="kg"
+        )
 
 
 def test_products_to_wix_csv_combines_multiple_products() -> None:
@@ -208,7 +212,9 @@ def test_products_to_squarespace_csv_leaves_product_page_and_url_blank() -> None
         images=[],
     )
 
-    csv_text, _ = products_to_squarespace_csv([alpha, beta], publish=False, product_page="", product_url="", weight_unit="kg")
+    csv_text, _ = products_to_squarespace_csv(
+        [alpha, beta], publish=False, product_page="", product_url="", weight_unit="kg"
+    )
 
     frame = pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == SQUARESPACE_COLUMNS

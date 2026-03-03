@@ -231,7 +231,9 @@ def resolve_variant_allow_backorder(variant: Variant) -> bool | None:
     return None
 
 
-def resolve_identifier_values(product: Product, *, variant: Variant | None = None) -> dict[str, str]:
+def resolve_identifier_values(
+    product: Product, *, variant: Variant | None = None
+) -> dict[str, str]:
     if variant:
         return _clean_identifier_map(variant.identifiers.values)
 

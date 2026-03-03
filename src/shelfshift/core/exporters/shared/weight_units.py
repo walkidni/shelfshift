@@ -23,7 +23,9 @@ def resolve_weight_unit(target_platform: str, requested_weight_unit: str | None)
     target = (target_platform or "").strip().lower()
     allowlist = WEIGHT_UNIT_ALLOWLIST_BY_TARGET.get(target)
     if allowlist is None:
-        raise ValueError("target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce")
+        raise ValueError(
+            "target_platform must be one of: shopify, bigcommerce, wix, squarespace, woocommerce"
+        )
 
     requested = (requested_weight_unit or "").strip().lower()
     if not requested:

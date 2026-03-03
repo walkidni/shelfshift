@@ -17,7 +17,9 @@ def test_cli_import_url_passes_strict_only(monkeypatch) -> None:
     monkeypatch.setattr(cli_main, "import_url", fake_import_url)
     monkeypatch.setattr(cli_main, "_json_dump", lambda _data: None)
 
-    exit_code = cli_main.main(["import-url", "https://demo.myshopify.com/products/demo", "--strict"])
+    exit_code = cli_main.main(
+        ["import-url", "https://demo.myshopify.com/products/demo", "--strict"]
+    )
     assert exit_code == 0
     assert captured["strict"] is True
 

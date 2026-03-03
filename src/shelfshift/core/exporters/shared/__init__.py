@@ -1,2 +1,1 @@
 """Shared exporter helper package."""
-

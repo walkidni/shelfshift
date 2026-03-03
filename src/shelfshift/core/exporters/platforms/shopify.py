@@ -157,7 +157,9 @@ def product_to_shopify_rows(
         row["Variant Price"] = _resolve_price(product, variant)
         row["Variant Inventory Policy"] = "deny"
         row["Variant Fulfillment Service"] = "manual"
-        row["Variant Requires Shipping"] = _format_bool(bool(product.requires_shipping and not product.is_digital))
+        row["Variant Requires Shipping"] = _format_bool(
+            bool(product.requires_shipping and not product.is_digital)
+        )
         row["Variant Taxable"] = _format_bool(not product.is_digital)
         row["Variant Image"] = _resolve_shopify_image_url(utils.resolve_variant_image_url(variant))
 

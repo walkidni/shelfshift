@@ -1,4 +1,3 @@
-
 import csv
 import io
 
@@ -42,6 +41,7 @@ def _patch_batch_provenance(
         csv_import["selection_policy"] = "batch_all"
         provenance["csv_import"] = csv_import
         product.provenance = provenance
+
 
 _WEIGHT_UNIT_REQUIRED_PLATFORMS = {"bigcommerce", "wix", "squarespace"}
 _WEIGHT_UNIT_ALLOWLIST = {"g", "kg", "lb", "oz"}
@@ -162,7 +162,9 @@ def parse_shopify_csv_batch(csv_text: str, *, source_platform: str = "shopify") 
         requires_shipping_value = parse_bool(product_row.get("Variant Requires Shipping"))
         requires_shipping = True if requires_shipping_value is None else requires_shipping_value
         product = Product(
-            source=SourceRef(platform="shopify", id=selected_handle, slug=selected_handle, url=None),
+            source=SourceRef(
+                platform="shopify", id=selected_handle, slug=selected_handle, url=None
+            ),
             title=str(product_row.get("Title") or "").strip() or None,
             description=str(product_row.get("Body (HTML)") or "").strip() or None,
             seo=Seo(
@@ -181,7 +183,9 @@ def parse_shopify_csv_batch(csv_text: str, *, source_platform: str = "shopify") 
             track_quantity=any(variant.inventory.track_quantity for variant in variants),
             is_digital=not requires_shipping,
             media=media_from_urls(product_images),
-            identifiers=Identifiers(values={"source_product_id": selected_handle, "handle": selected_handle}),
+            identifiers=Identifiers(
+                values={"source_product_id": selected_handle, "handle": selected_handle}
+            ),
         )
         apply_extra_product_fields(product, product_row, known_headers=known_headers)
         add_csv_provenance(
@@ -239,12 +243,12 @@ def parse_squarespace_csv_batch(csv_text: str, *, source_weight_unit: str) -> li
 def parse_woocommerce_csv_batch(csv_text: str) -> list[Product]:
     headers, rows = csv_rows(csv_text)
     product_rows: list[dict[str, str]] = [
-        row
-        for row in rows
-        if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
+        row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
     ]
     if not product_rows:
-        raise ValueError("WooCommerce CSV must include at least one simple or variable product row.")
+        raise ValueError(
+            "WooCommerce CSV must include at least one simple or variable product row."
+        )
 
     products: list[Product] = []
     for product_row in product_rows:
@@ -279,7 +283,9 @@ def parse_bigcommerce_csv_batch(csv_text: str, *, source_weight_unit: str) -> li
         for idx, start in enumerate(product_indices):
             end = product_indices[idx + 1] if idx + 1 < len(product_indices) else len(rows)
             segment_csv = _rows_to_csv_text(headers, rows[start:end])
-            products.append(parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit))
+            products.append(
+                parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit)
+            )
         _patch_batch_provenance(products, detected_product_count=len(product_indices))
         return products
 
@@ -288,7 +294,9 @@ def parse_bigcommerce_csv_batch(csv_text: str, *, source_weight_unit: str) -> li
         products: list[Product] = []
         for row in rows:
             segment_csv = _rows_to_csv_text(headers, [row])
-            products.append(parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit))
+            products.append(
+                parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit)
+            )
         _patch_batch_provenance(products, detected_product_count=len(rows))
         return products
 

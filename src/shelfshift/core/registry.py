@@ -1,6 +1,5 @@
 """Minimal registry for core importer/exporter extension points."""
 
-
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
