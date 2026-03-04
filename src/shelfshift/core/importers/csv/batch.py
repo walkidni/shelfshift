@@ -1,7 +1,7 @@
 import csv
 import io
 
-from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
+from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
 from .bigcommerce import parse_bigcommerce_csv
 from .common import (
@@ -10,6 +10,7 @@ from .common import (
     apply_extra_variant_fields,
     csv_rows,
     decode_csv_bytes,
+    make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
     parse_bool,
@@ -216,7 +217,7 @@ def parse_shopify_csv_batch(csv_text: str, *, source_platform: str = "shopify") 
                 ),
                 weight=weight_object(weight_grams),
                 media=media_from_urls([variant_image], variant_sku=sku),
-                identifiers=Identifiers(values={"source_variant_id": str(index), "sku": sku}),
+                identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
             )
             apply_extra_variant_fields(variant, row, known_headers=known_headers)
             variants.append(variant)
@@ -254,7 +255,7 @@ def parse_shopify_csv_batch(csv_text: str, *, source_platform: str = "shopify") 
             track_quantity=any(variant.inventory.track_quantity for variant in variants),
             is_digital=not requires_shipping,
             media=media_from_urls(product_images),
-            identifiers=Identifiers(
+            identifiers=make_identifiers(
                 values={"source_product_id": selected_handle, "handle": selected_handle}
             ),
         )

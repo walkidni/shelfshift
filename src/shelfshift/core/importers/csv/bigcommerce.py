@@ -1,12 +1,13 @@
 import re
 
-from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
+from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
 from .common import (
     add_csv_provenance,
     apply_extra_product_fields,
     apply_extra_variant_fields,
     csv_rows,
+    make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
     parse_float,
@@ -98,7 +99,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
             media=media_from_urls(
                 [str(row.get("Variant Image URL") or "").strip()], variant_sku=sku
             ),
-            identifiers=Identifiers(values={"source_variant_id": str(index), "sku": sku}),
+            identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
         apply_extra_variant_fields(variant, row, known_headers=known_headers)
         variants.append(variant)
@@ -111,7 +112,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
                 sku=fallback_sku,
                 price=price_from_amount(parse_float(product_row.get("Price"))),
                 inventory=Inventory(track_quantity=False, quantity=None, available=True),
-                identifiers=Identifiers(values={"source_variant_id": "1", "sku": fallback_sku}),
+                identifiers=make_identifiers({"source_variant_id": "1", "sku": fallback_sku}),
             )
         ]
 
@@ -146,7 +147,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
         media=media_from_urls(image_urls),
-        identifiers=Identifiers(
+        identifiers=make_identifiers(
             values={
                 "source_product_id": str(product_row.get("ID") or "").strip() or variants[0].sku
             }
@@ -188,7 +189,7 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
             available=(quantity > 0 if quantity is not None else True),
         ),
         weight=weight,
-        identifiers=Identifiers(values={"source_variant_id": "1", "sku": sku}),
+        identifiers=make_identifiers({"source_variant_id": "1", "sku": sku}),
     )
     apply_extra_variant_fields(variant, product_row, known_headers=known_headers)
 
@@ -218,7 +219,7 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         track_quantity=(quantity is not None),
         is_digital=False,
         media=media_from_urls(_parse_legacy_images(str(product_row.get("Images") or ""))),
-        identifiers=Identifiers(
+        identifiers=make_identifiers(
             values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
         ),
     )

@@ -16,6 +16,7 @@ from ...canonical import (
     Variant,
 )
 from ...canonical.helpers import normalize_currency, parse_decimal_money
+from ..identifiers import make_identifiers as _make_identifiers
 
 
 def http_session(timeout: int = 20) -> requests.Session:
@@ -236,17 +237,6 @@ def extract_product_json_ld_nodes(html: str) -> list[dict[str, Any]]:
     return products
 
 
-def _clean_identifier_values(values: dict[str, Any]) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for key, value in values.items():
-        key_str = str(key or "").strip()
-        value_str = str(value or "").strip()
-        if not key_str or not value_str:
-            continue
-        out[key_str] = value_str
-    return out
-
-
 def make_money(amount: Any, currency: Any) -> Money | None:
     parsed_amount = parse_decimal_money(amount)
     parsed_currency = normalize_currency(currency)
@@ -278,8 +268,7 @@ def make_price(
 
 
 def make_identifiers(values: dict[str, Any]) -> Identifiers:
-    cleaned = _clean_identifier_values(values)
-    return Identifiers(values=cleaned)
+    return _make_identifiers(values)
 
 
 def finalize_product_typed_fields(product: Product, *, source_url: str) -> Product:

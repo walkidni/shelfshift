@@ -1,10 +1,11 @@
-from ...canonical import Identifiers, Inventory, Product, Seo, SourceRef, Variant
+from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.squarespace import SQUARESPACE_COLUMNS
 from .common import (
     add_csv_provenance,
     apply_extra_product_fields,
     apply_extra_variant_fields,
     csv_rows,
+    make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
     parse_float,
@@ -68,7 +69,7 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
                 available=(quantity > 0 if quantity is not None else True),
             ),
             weight=weight_object(weight_grams),
-            identifiers=Identifiers(values={"source_variant_id": str(index), "sku": sku}),
+            identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
         apply_extra_variant_fields(variant, row, known_headers=known_headers)
         variants.append(variant)
@@ -101,7 +102,7 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
         media=media_from_urls(media_urls),
-        identifiers=Identifiers(values={"source_product_id": slug or variants[0].sku}),
+        identifiers=make_identifiers({"source_product_id": slug or variants[0].sku}),
     )
     apply_extra_product_fields(product, product_row, known_headers=known_headers)
     add_csv_provenance(

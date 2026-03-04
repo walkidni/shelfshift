@@ -7,7 +7,6 @@ from typing import Any
 
 from ...canonical import (
     CategorySet,
-    Identifiers,
     Media,
     Money,
     OptionDef,
@@ -19,6 +18,7 @@ from ...canonical import (
     Weight,
 )
 from ...canonical.helpers import parse_decimal_money
+from ..identifiers import make_identifiers, merge_identifier_values, set_identifier
 
 _HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 
@@ -173,20 +173,12 @@ def ensure_product_defaults(product: Product) -> Product:
     if product.taxonomy is None:
         product.taxonomy = CategorySet()
     if product.identifiers is None:
-        product.identifiers = Identifiers()
+        product.identifiers = make_identifiers()
     return product
 
 
 def header_token(header: str) -> str:
     return _HEADER_TOKEN_RE.sub("_", str(header or "").strip().lower()).strip("_")
-
-
-def _set_identifier(target: Identifiers, *, key: str, value: str) -> None:
-    if not key or not value:
-        return
-    if key in target.values:
-        return
-    target.values[key] = value
 
 
 def apply_extra_product_fields(
@@ -245,14 +237,18 @@ def apply_extra_product_fields(
             if parsed is not None:
                 product.is_digital = parsed
                 continue
-        _set_identifier(product.identifiers, key=f"csv:{token}", value=value)
+        merge_identifier_values(
+            product.identifiers,
+            {token: value},
+            namespace="csv",
+        )
 
 
 def apply_extra_variant_fields(
     variant: Variant, row: dict[str, str], *, known_headers: set[str]
 ) -> None:
     if variant.identifiers is None:
-        variant.identifiers = Identifiers()
+        variant.identifiers = make_identifiers()
     for header, raw in row.items():
         if header in known_headers:
             continue
@@ -285,7 +281,7 @@ def apply_extra_variant_fields(
             amount = parse_float(value)
             variant.price = price_from_amount(amount)
             continue
-        _set_identifier(variant.identifiers, key=f"csv:{token}", value=value)
+        set_identifier(variant.identifiers, key=f"csv:{token}", value=value)
 
 
 def add_csv_provenance(
