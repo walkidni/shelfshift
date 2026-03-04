@@ -18,13 +18,8 @@ from ...canonical import (
     Weight,
 )
 from ...canonical.helpers import parse_decimal_money
-from ..identifiers import (
-    make_identifiers,
-    merge_identifier_values,
-    set_identifier,
-    source_identifier_key,
-    source_identifier_namespace,
-)
+from ..identifiers import make_identifiers
+from ..unmapped_fields import merge_unmapped_fields, platform_unmapped_key, set_unmapped_field
 
 _HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 
@@ -180,6 +175,8 @@ def ensure_product_defaults(product: Product) -> Product:
         product.taxonomy = CategorySet()
     if product.identifiers is None:
         product.identifiers = make_identifiers()
+    if product.unmapped_fields is None:
+        product.unmapped_fields = {}
     return product
 
 
@@ -195,7 +192,6 @@ def apply_extra_product_fields(
     source_platform: str,
 ) -> None:
     ensure_product_defaults(product)
-    source_namespace = source_identifier_namespace("csv", source_platform)
     for header, raw in row.items():
         if header in known_headers:
             continue
@@ -248,10 +244,10 @@ def apply_extra_product_fields(
             if parsed is not None:
                 product.is_digital = parsed
                 continue
-        merge_identifier_values(
-            product.identifiers,
+        merge_unmapped_fields(
+            product.unmapped_fields,
             {token: value},
-            namespace=source_namespace,
+            platform=source_platform,
         )
 
 
@@ -262,8 +258,8 @@ def apply_extra_variant_fields(
     known_headers: set[str],
     source_platform: str,
 ) -> None:
-    if variant.identifiers is None:
-        variant.identifiers = make_identifiers()
+    if variant.unmapped_fields is None:
+        variant.unmapped_fields = {}
     for header, raw in row.items():
         if header in known_headers:
             continue
@@ -296,9 +292,9 @@ def apply_extra_variant_fields(
             amount = parse_float(value)
             variant.price = price_from_amount(amount)
             continue
-        set_identifier(
-            variant.identifiers,
-            key=source_identifier_key("csv", source_platform, token),
+        set_unmapped_field(
+            variant.unmapped_fields,
+            key=platform_unmapped_key(source_platform, token),
             value=value,
         )
 

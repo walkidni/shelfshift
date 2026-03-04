@@ -253,6 +253,26 @@ def resolve_identifier_value(
     return values.get(cleaned_key)
 
 
+def resolve_unmapped_fields(product: Product, *, variant: Variant | None = None) -> dict[str, str]:
+    if variant:
+        return _clean_identifier_map(variant.unmapped_fields)
+
+    return _clean_identifier_map(product.unmapped_fields)
+
+
+def resolve_unmapped_field(
+    product: Product,
+    key: str,
+    *,
+    variant: Variant | None = None,
+) -> str | None:
+    cleaned_key = _clean_text(key)
+    if not cleaned_key:
+        return None
+    values = resolve_unmapped_fields(product, variant=variant)
+    return values.get(cleaned_key)
+
+
 def resolve_variants(product: Product) -> list[Variant]:
     variants = list(product.variants or [])
     if variants:

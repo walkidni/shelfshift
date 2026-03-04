@@ -84,10 +84,8 @@ def test_import_products_from_csv_shopify_parses_multiple_products() -> None:
     assert products[0].source.platform == "shopify"
     assert products[0].source.slug == "alpha"
     assert products[0].title == "Alpha Product"
-    assert products[0].identifiers.values["csv:shopify:handle"] == "alpha"
     assert products[1].source.slug == "beta"
     assert products[1].title == "Beta Product"
-    assert products[1].identifiers.values["csv:shopify:handle"] == "beta"
 
 
 def test_import_products_from_csv_shopify_new_template_parses_multiple_products() -> None:
@@ -112,10 +110,12 @@ def test_import_products_from_csv_shopify_new_template_parses_multiple_products(
     assert products[0].variants[0].inventory.quantity == 3
     assert str(products[0].variants[0].weight.value) == "200.0"
     assert products[0].taxonomy.primary == ["Apparel & Accessories", "Clothing", "Shirts"]
+    assert products[0].unmapped_fields["shopify:type"] == "Graphic shirt"
     assert products[1].source.slug == "beta"
     assert products[1].title == "Beta Product"
     assert products[1].variants[0].sku == "BETA-1"
     assert products[1].taxonomy.primary == ["Home & Garden", "Kitchenware"]
+    assert products[1].unmapped_fields["shopify:type"] == "Mug"
 
 
 def test_import_products_from_csv_shopify_does_not_infer_taxonomy_from_type() -> None:
@@ -135,6 +135,7 @@ def test_import_products_from_csv_shopify_does_not_infer_taxonomy_from_type() ->
     assert products[0].title == "Alpha Product"
     assert products[0].taxonomy.primary is None
     assert products[0].taxonomy.paths == []
+    assert products[0].unmapped_fields["shopify:type"] == "Graphic shirt"
 
 
 def test_shopify_batch_multi_variant_product() -> None:
@@ -196,7 +197,7 @@ def test_shopify_batch_provenance() -> None:
         assert prov["source_platform"] == "shopify"
 
 
-def test_shopify_batch_unknown_fields_use_platform_namespaced_identifiers() -> None:
+def test_shopify_batch_unknown_fields_use_platform_namespaced_unmapped_fields() -> None:
     csv_text = "\n".join(
         [
             "Handle,Title,Body (HTML),Variant SKU,Variant Price,Custom Product,Custom Variant",
@@ -212,10 +213,10 @@ def test_shopify_batch_unknown_fields_use_platform_namespaced_identifiers() -> N
     assert len(products) == 1
     product = products[0]
     variant = product.variants[0]
-    assert product.identifiers.values["csv:shopify:custom_product"] == "P-1"
-    assert product.identifiers.values["csv:shopify:custom_variant"] == "V-1"
-    assert variant.identifiers.values["csv:shopify:custom_product"] == "P-1"
-    assert variant.identifiers.values["csv:shopify:custom_variant"] == "V-1"
+    assert product.unmapped_fields["shopify:custom_product"] == "P-1"
+    assert product.unmapped_fields["shopify:custom_variant"] == "V-1"
+    assert variant.unmapped_fields["shopify:custom_product"] == "P-1"
+    assert variant.unmapped_fields["shopify:custom_variant"] == "V-1"
 
 
 # ---------------------------------------------------------------------------

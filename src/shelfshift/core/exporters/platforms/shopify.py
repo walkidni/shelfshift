@@ -134,6 +134,13 @@ def _resolve_tags(product: Product) -> str:
     return ",".join(tags)
 
 
+def _resolve_type(product: Product) -> str:
+    passthrough = utils.resolve_unmapped_field(product, "shopify:type")
+    if passthrough:
+        return passthrough
+    return utils.resolve_primary_category(product)
+
+
 def _resolve_price(product: Product, variant: Variant) -> str:
     amount = utils.resolve_price_amount(product, variant)
     return utils.format_number(amount, decimals=2) if amount is not None else ""
@@ -219,7 +226,7 @@ def product_to_shopify_rows(
             row["Description"] = product.description or ""
             row["Vendor"] = product.vendor or product.brand or ""
             row["Product category"] = utils.resolve_primary_category(product)
-            row["Type"] = utils.resolve_primary_category(product)
+            row["Type"] = _resolve_type(product)
             row["Tags"] = _resolve_tags(product)
             row["Published on online store"] = _format_bool(publish)
             row["Status"] = "Active" if publish else "Draft"

@@ -14,7 +14,7 @@ from ....canonical import (
     Variant,
 )
 from ....detect.url import extract_shopify_slug_from_path
-from ...identifiers import source_identifier_key
+from ...unmapped_fields import platform_unmapped_key, set_unmapped_field
 from ..common import (
     ProductClient,
     append_default_variant_if_empty,
@@ -188,6 +188,11 @@ class ShopifyClient(ProductClient):
             ),
         )
         product.identifiers = make_identifiers({})
+        set_unmapped_field(
+            product.unmapped_fields,
+            key=platform_unmapped_key(self.platform, "type"),
+            value=product_ld.get("category"),
+        )
         return product
 
     def fetch_product(self, url: str) -> Product:
@@ -372,7 +377,6 @@ class ShopifyClient(ProductClient):
         product_identifiers = make_identifiers(
             {
                 "source_product_id": data.get("id"),
-                source_identifier_key("url", self.platform, "handle"): handle,
             }
         )
 
@@ -410,5 +414,10 @@ class ShopifyClient(ProductClient):
             taxonomy=CategorySet(paths=[[category]], primary=[category])
             if category
             else CategorySet(),
+        )
+        set_unmapped_field(
+            product.unmapped_fields,
+            key=platform_unmapped_key(self.platform, "type"),
+            value=category,
         )
         return finalize_product_typed_fields(product, source_url=url)

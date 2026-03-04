@@ -202,9 +202,11 @@
   ],
   "identifiers": {
     "values": {
-      "source_product_id": "101",
-      "url:shopify:handle": "classic-tee"
+      "source_product_id": "101"
     }
+  },
+  "unmapped_fields": {
+    "shopify:type": "Shirts"
   },
   "provenance": {}
 }

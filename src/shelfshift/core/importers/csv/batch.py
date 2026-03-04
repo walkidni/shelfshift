@@ -3,7 +3,7 @@ import io
 
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
-from ..identifiers import source_identifier_key
+from ..unmapped_fields import platform_unmapped_key, set_unmapped_field
 from .bigcommerce import parse_bigcommerce_csv
 from .common import (
     add_csv_provenance,
@@ -261,12 +261,12 @@ def parse_shopify_csv_batch(csv_text: str, *, source_platform: str = "shopify") 
             track_quantity=any(variant.inventory.track_quantity for variant in variants),
             is_digital=not requires_shipping,
             media=media_from_urls(product_images),
-            identifiers=make_identifiers(
-                values={
-                    "source_product_id": selected_handle,
-                    source_identifier_key("csv", source_platform, "handle"): selected_handle,
-                }
-            ),
+            identifiers=make_identifiers(values={"source_product_id": selected_handle}),
+        )
+        set_unmapped_field(
+            product.unmapped_fields,
+            key=platform_unmapped_key(source_platform, "type"),
+            value=_first_non_empty(product_row, "Type"),
         )
         apply_extra_product_fields(
             product,

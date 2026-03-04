@@ -94,6 +94,7 @@ class Variant:
     weight: Weight | None = None
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
+    unmapped_fields: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.option_values = _normalize_option_values(self.option_values)
@@ -111,6 +112,9 @@ class Variant:
 
         if isinstance(self.identifiers, dict):
             self.identifiers = Identifiers(values=_clean_identifier_values(self.identifiers))
+        self.unmapped_fields = _clean_key_value_map(
+            _extract_string_map_payload(self.unmapped_fields)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         data = {
@@ -131,6 +135,8 @@ class Variant:
             "media": [_media_to_dict(item) for item in self.media],
             "identifiers": {"values": dict(self.identifiers.values)},
         }
+        if self.unmapped_fields:
+            data["unmapped_fields"] = dict(self.unmapped_fields)
         return data
 
 
@@ -153,6 +159,7 @@ class Product:
     is_digital: bool = False
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
+    unmapped_fields: dict[str, str] = field(default_factory=dict)
     provenance: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -194,6 +201,9 @@ class Product:
 
         if isinstance(self.identifiers, dict):
             self.identifiers = Identifiers(values=_clean_identifier_values(self.identifiers))
+        self.unmapped_fields = _clean_key_value_map(
+            _extract_string_map_payload(self.unmapped_fields)
+        )
 
         cleaned_source_platform = _clean_text(self.source.platform)
         self.source.platform = cleaned_source_platform or "unknown"
@@ -235,6 +245,8 @@ class Product:
             "identifiers": {"values": dict(self.identifiers.values)},
             "provenance": dict(self.provenance),
         }
+        if self.unmapped_fields:
+            data["unmapped_fields"] = dict(self.unmapped_fields)
         return data
 
 
@@ -309,6 +321,10 @@ def _format_decimal(value: Decimal | None) -> str | None:
 
 
 def _clean_identifier_values(values: dict[str, Any] | None) -> dict[str, str]:
+    return _clean_key_value_map(values)
+
+
+def _clean_key_value_map(values: dict[str, Any] | None) -> dict[str, str]:
     out: dict[str, str] = {}
     for key, value in (values or {}).items():
         key_str = _clean_text(key)
@@ -317,6 +333,15 @@ def _clean_identifier_values(values: dict[str, Any] | None) -> dict[str, str]:
             continue
         out[key_str] = value_str
     return out
+
+
+def _extract_string_map_payload(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        raw_values = value.get("values")
+        if len(value) == 1 and isinstance(raw_values, dict):
+            return raw_values
+        return value
+    return None
 
 
 def _normalize_option_values(

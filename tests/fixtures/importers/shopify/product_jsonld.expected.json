@@ -113,5 +113,8 @@
   "identifiers": {
     "values": {}
   },
+  "unmapped_fields": {
+    "shopify:type": "Home"
+  },
   "provenance": {}
 }
