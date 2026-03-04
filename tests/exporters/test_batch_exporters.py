@@ -41,7 +41,7 @@ def test_products_to_shopify_csv_combines_multiple_products() -> None:
     assert filename.endswith(".csv")
     frame = pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
     assert list(frame.columns) == SHOPIFY_COLUMNS
-    assert list(frame["Handle"])[:2] == ["alpha", "beta"]
+    assert list(frame["URL handle"])[:2] == ["alpha", "beta"]
 
 
 def test_products_to_shopify_csv_rejects_duplicate_handles() -> None:

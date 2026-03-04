@@ -88,6 +88,53 @@ def test_import_products_from_csv_shopify_parses_multiple_products() -> None:
     assert products[1].title == "Beta Product"
 
 
+def test_import_products_from_csv_shopify_new_template_parses_multiple_products() -> None:
+    csv_text = "\n".join(
+        [
+            "Title,URL handle,Description,Vendor,Product category,Type,Tags,SKU,Option1 name,Option1 value,Price,Inventory quantity,Weight value (grams),Requires shipping,Product image URL,Variant image URL",
+            'Alpha Product,alpha,Alpha description,Acme,Apparel & Accessories > Clothing > Shirts,Graphic shirt,"alpha,shirt",ALPHA-1,Size,S,10.00,3,200,TRUE,https://cdn.example.com/alpha.jpg,https://cdn.example.com/alpha-v.jpg',
+            'Beta Product,beta,Beta description,Acme,Home & Garden > Kitchenware,Mug,"beta,mug",BETA-1,Size,One Size,12.00,5,250,TRUE,https://cdn.example.com/beta.jpg,https://cdn.example.com/beta-v.jpg',
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="shopify",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 2
+    assert products[0].source.platform == "shopify"
+    assert products[0].source.slug == "alpha"
+    assert products[0].title == "Alpha Product"
+    assert products[0].variants[0].sku == "ALPHA-1"
+    assert products[0].variants[0].inventory.quantity == 3
+    assert str(products[0].variants[0].weight.value) == "200.0"
+    assert products[0].taxonomy.primary == ["Apparel & Accessories", "Clothing", "Shirts"]
+    assert products[1].source.slug == "beta"
+    assert products[1].title == "Beta Product"
+    assert products[1].variants[0].sku == "BETA-1"
+    assert products[1].taxonomy.primary == ["Home & Garden", "Kitchenware"]
+
+
+def test_import_products_from_csv_shopify_does_not_infer_taxonomy_from_type() -> None:
+    csv_text = "\n".join(
+        [
+            "Title,URL handle,Description,Vendor,Type,Tags,SKU,Price",
+            'Alpha Product,alpha,Alpha description,Acme,Graphic shirt,"alpha,shirt",ALPHA-1,10.00',
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="shopify",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 1
+    assert products[0].title == "Alpha Product"
+    assert products[0].taxonomy.primary is None
+    assert products[0].taxonomy.paths == []
+
+
 def test_shopify_batch_multi_variant_product() -> None:
     csv_text = "\n".join(
         [

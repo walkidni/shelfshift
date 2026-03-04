@@ -32,11 +32,53 @@ def test_single_variant_uses_default_title_option() -> None:
     assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 1
-    assert frame.loc[0, "Option1 Name"] == "Title"
-    assert frame.loc[0, "Option1 Value"] == "Default Title"
-    assert frame.loc[0, "Published"] == "FALSE"
-    assert frame.loc[0, "Status"] == "draft"
-    assert frame.loc[0, "Variant Image"] == ""
+    assert frame.loc[0, "Option1 name"] == "Title"
+    assert frame.loc[0, "Option1 value"] == "Default Title"
+    assert frame.loc[0, "Published on online store"] == "FALSE"
+    assert frame.loc[0, "Status"] == "Draft"
+    assert frame.loc[0, "Variant image URL"] == ""
+
+
+def test_export_uses_new_shopify_template_headers_and_core_fields() -> None:
+    product = Product(
+        platform="amazon",
+        id="B000111",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=["https://cdn.example.com/mug.jpg"],
+        variants=[
+            Variant(
+                id="v1",
+                sku="AMZ-MUG-001",
+                price_amount=12.0,
+                inventory_quantity=4,
+                weight=250,
+                image="https://cdn.example.com/mug-v.jpg",
+            )
+        ],
+    )
+
+    csv_text, _ = product_to_shopify_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert "URL handle" in frame.columns
+    assert "Description" in frame.columns
+    assert "SKU" in frame.columns
+    assert "Price" in frame.columns
+    assert "Product image URL" in frame.columns
+    assert "Variant image URL" in frame.columns
+    assert "Handle" not in frame.columns
+    assert "Body (HTML)" not in frame.columns
+    assert "Variant SKU" not in frame.columns
+    assert "Variant Price" not in frame.columns
+
+    assert frame.loc[0, "URL handle"] == "demo-mug"
+    assert frame.loc[0, "Description"] == "Demo description"
+    assert frame.loc[0, "SKU"] == "AMZ-MUG-001"
+    assert frame.loc[0, "Price"] == "12"
+    assert frame.loc[0, "Product image URL"] == "https://cdn.example.com/mug.jpg"
+    assert frame.loc[0, "Variant image URL"] == "https://cdn.example.com/mug-v.jpg"
 
 
 def test_multi_variant_maps_two_options() -> None:
@@ -75,21 +117,21 @@ def test_multi_variant_maps_two_options() -> None:
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 2
-    assert frame.loc[0, "Option1 Name"] == "Color"
-    assert frame.loc[0, "Option1 Value"] == "Black"
-    assert frame.loc[0, "Option2 Name"] == "Size"
-    assert frame.loc[0, "Option2 Value"] == "M"
-    assert frame.loc[1, "Option1 Value"] == "White"
-    assert frame.loc[1, "Option2 Value"] == "L"
-    assert frame.loc[0, "Variant Inventory Tracker"] == "shopify"
-    assert frame.loc[0, "Variant Inventory Qty"] == "4"
-    assert frame.loc[0, "Variant Inventory Policy"] == "deny"
-    assert frame.loc[1, "Variant Inventory Policy"] == "deny"
+    assert frame.loc[0, "Option1 name"] == "Color"
+    assert frame.loc[0, "Option1 value"] == "Black"
+    assert frame.loc[0, "Option2 name"] == "Size"
+    assert frame.loc[0, "Option2 value"] == "M"
+    assert frame.loc[1, "Option1 value"] == "White"
+    assert frame.loc[1, "Option2 value"] == "L"
+    assert frame.loc[0, "Inventory tracker"] == "shopify"
+    assert frame.loc[0, "Inventory quantity"] == "4"
+    assert frame.loc[0, "Continue selling when out of stock"] == "FALSE"
+    assert frame.loc[1, "Continue selling when out of stock"] == "FALSE"
     assert frame.loc[1, "Title"] == ""
-    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/tee-black-m.jpg"
-    assert frame.loc[1, "Variant Image"] == "https://cdn.example.com/tee-white-l.jpg"
-    assert frame.loc[0, "Published"] == "TRUE"
-    assert frame.loc[0, "Status"] == "active"
+    assert frame.loc[0, "Variant image URL"] == "https://cdn.example.com/tee-black-m.jpg"
+    assert frame.loc[1, "Variant image URL"] == "https://cdn.example.com/tee-white-l.jpg"
+    assert frame.loc[0, "Published on online store"] == "TRUE"
+    assert frame.loc[0, "Status"] == "Active"
 
 
 def test_multiple_images_create_extra_rows() -> None:
@@ -119,18 +161,18 @@ def test_multiple_images_create_extra_rows() -> None:
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 3
-    assert frame.loc[0, "Image Src"] == "https://cdn.example.com/poster-1.jpg"
-    assert frame.loc[0, "Image Position"] == "1"
-    assert frame.loc[1, "Image Src"] == "https://cdn.example.com/poster-2.jpg"
-    assert frame.loc[1, "Image Position"] == "2"
+    assert frame.loc[0, "Product image URL"] == "https://cdn.example.com/poster-1.jpg"
+    assert frame.loc[0, "Image position"] == "1"
+    assert frame.loc[1, "Product image URL"] == "https://cdn.example.com/poster-2.jpg"
+    assert frame.loc[1, "Image position"] == "2"
     assert frame.loc[1, "Title"] == ""
-    assert frame.loc[2, "Image Src"] == "https://cdn.example.com/poster-3.jpg"
-    assert frame.loc[2, "Image Position"] == "3"
-    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/poster-variant.jpg"
-    assert frame.loc[1, "Variant Image"] == ""
-    assert frame.loc[2, "Variant Image"] == ""
-    assert frame.loc[1, "Variant SKU"] == ""
-    assert frame.loc[2, "Variant SKU"] == ""
+    assert frame.loc[2, "Product image URL"] == "https://cdn.example.com/poster-3.jpg"
+    assert frame.loc[2, "Image position"] == "3"
+    assert frame.loc[0, "Variant image URL"] == "https://cdn.example.com/poster-variant.jpg"
+    assert frame.loc[1, "Variant image URL"] == ""
+    assert frame.loc[2, "Variant image URL"] == ""
+    assert frame.loc[1, "SKU"] == ""
+    assert frame.loc[2, "SKU"] == ""
 
 
 def test_body_html_round_trips_quotes_commas_newlines() -> None:
@@ -148,7 +190,7 @@ def test_body_html_round_trips_quotes_commas_newlines() -> None:
     frame = read_frame(csv_text)
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
-    assert frame.loc[0, "Body (HTML)"] == body
+    assert frame.loc[0, "Description"] == body
 
 
 def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
@@ -167,11 +209,11 @@ def test_non_shopify_source_generates_handle_and_blank_inventory() -> None:
 
     assert filename == "shopify-20260208T000000Z.csv"
     assert list(frame.columns) == SHOPIFY_COLUMNS
-    assert frame.loc[0, "Handle"] == "fancy-lamp-2-0"
-    assert frame.loc[0, "Variant Image"] == ""
-    assert frame.loc[0, "Variant Inventory Tracker"] == ""
-    assert frame.loc[0, "Variant Inventory Qty"] == ""
-    assert frame.loc[0, "Variant Inventory Policy"] == "deny"
+    assert frame.loc[0, "URL handle"] == "fancy-lamp-2-0"
+    assert frame.loc[0, "Variant image URL"] == ""
+    assert frame.loc[0, "Inventory tracker"] == ""
+    assert frame.loc[0, "Inventory quantity"] == ""
+    assert frame.loc[0, "Continue selling when out of stock"] == "FALSE"
 
 
 def test_shopify_export_allows_weight_unit_override_without_changing_grams() -> None:
@@ -195,8 +237,8 @@ def test_shopify_export_allows_weight_unit_override_without_changing_grams() -> 
     csv_text, _ = product_to_shopify_csv(product, publish=True, weight_unit="lb")
     frame = read_frame(csv_text)
 
-    assert frame.loc[0, "Variant Grams"] == "250"
-    assert frame.loc[0, "Variant Weight Unit"] == "lb"
+    assert frame.loc[0, "Weight value (grams)"] == "250"
+    assert frame.loc[0, "Weight unit for display"] == "lb"
 
 
 def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
@@ -220,8 +262,8 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
     csv_text, _ = product_to_shopify_csv(product, publish=False)
     frame = read_frame(csv_text)
 
-    assert frame.loc[0, "Variant SKU"] == "AE:1005008518647948:12000055918704599"
-    assert frame.loc[0, "Variant Image"] == ""
+    assert frame.loc[0, "SKU"] == "AE:1005008518647948:12000055918704599"
+    assert frame.loc[0, "Variant image URL"] == ""
 
 
 def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
@@ -252,9 +294,9 @@ def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 2
-    assert frame.loc[0, "Image Src"] == SHOPIFY_DEFAULT_IMAGE_URL
-    assert frame.loc[1, "Image Src"] == "https://cdn.example.com/large-boxy-pouch.jpg"
-    assert frame.loc[0, "Variant Image"] == SHOPIFY_DEFAULT_IMAGE_URL
+    assert frame.loc[0, "Product image URL"] == SHOPIFY_DEFAULT_IMAGE_URL
+    assert frame.loc[1, "Product image URL"] == "https://cdn.example.com/large-boxy-pouch.jpg"
+    assert frame.loc[0, "Variant image URL"] == SHOPIFY_DEFAULT_IMAGE_URL
 
 
 def test_typed_fields_override_legacy_values_when_present() -> None:
@@ -297,12 +339,12 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
 
     assert list(frame.columns) == SHOPIFY_COLUMNS
     assert len(frame) == 2
-    assert frame.loc[0, "Option1 Name"] == "Color"
-    assert frame.loc[0, "Option1 Value"] == "Blue"
+    assert frame.loc[0, "Option1 name"] == "Color"
+    assert frame.loc[0, "Option1 value"] == "Blue"
     assert frame.loc[0, "Type"] == "Men > Outerwear"
-    assert frame.loc[0, "Variant Price"] == "12.34"
-    assert frame.loc[0, "Variant Inventory Tracker"] == "shopify"
-    assert frame.loc[0, "Variant Inventory Qty"] == "7"
-    assert frame.loc[0, "Image Src"] == "https://cdn.example.com/typed-main.jpg"
-    assert frame.loc[1, "Image Src"] == "https://cdn.example.com/typed-gallery.jpg"
-    assert frame.loc[0, "Variant Image"] == "https://cdn.example.com/typed-variant.jpg"
+    assert frame.loc[0, "Price"] == "12.34"
+    assert frame.loc[0, "Inventory tracker"] == "shopify"
+    assert frame.loc[0, "Inventory quantity"] == "7"
+    assert frame.loc[0, "Product image URL"] == "https://cdn.example.com/typed-main.jpg"
+    assert frame.loc[1, "Product image URL"] == "https://cdn.example.com/typed-gallery.jpg"
+    assert frame.loc[0, "Variant image URL"] == "https://cdn.example.com/typed-variant.jpg"
