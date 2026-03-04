@@ -203,7 +203,7 @@
   "identifiers": {
     "values": {
       "source_product_id": "101",
-      "handle": "classic-tee"
+      "url:shopify:handle": "classic-tee"
     }
   },
   "provenance": {}

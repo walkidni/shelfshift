@@ -84,8 +84,10 @@ def test_import_products_from_csv_shopify_parses_multiple_products() -> None:
     assert products[0].source.platform == "shopify"
     assert products[0].source.slug == "alpha"
     assert products[0].title == "Alpha Product"
+    assert products[0].identifiers.values["csv:shopify:handle"] == "alpha"
     assert products[1].source.slug == "beta"
     assert products[1].title == "Beta Product"
+    assert products[1].identifiers.values["csv:shopify:handle"] == "beta"
 
 
 def test_import_products_from_csv_shopify_new_template_parses_multiple_products() -> None:
@@ -192,6 +194,28 @@ def test_shopify_batch_provenance() -> None:
         assert prov["detected_product_count"] == 3
         assert prov["selection_policy"] == "batch_all"
         assert prov["source_platform"] == "shopify"
+
+
+def test_shopify_batch_unknown_fields_use_platform_namespaced_identifiers() -> None:
+    csv_text = "\n".join(
+        [
+            "Handle,Title,Body (HTML),Variant SKU,Variant Price,Custom Product,Custom Variant",
+            "alpha,Alpha,desc,A1,10,P-1,V-1",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="shopify",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 1
+    product = products[0]
+    variant = product.variants[0]
+    assert product.identifiers.values["csv:shopify:custom_product"] == "P-1"
+    assert product.identifiers.values["csv:shopify:custom_variant"] == "V-1"
+    assert variant.identifiers.values["csv:shopify:custom_product"] == "P-1"
+    assert variant.identifiers.values["csv:shopify:custom_variant"] == "V-1"
 
 
 # ---------------------------------------------------------------------------

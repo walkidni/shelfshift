@@ -18,7 +18,13 @@ from ...canonical import (
     Weight,
 )
 from ...canonical.helpers import parse_decimal_money
-from ..identifiers import make_identifiers, merge_identifier_values, set_identifier
+from ..identifiers import (
+    make_identifiers,
+    merge_identifier_values,
+    set_identifier,
+    source_identifier_key,
+    source_identifier_namespace,
+)
 
 _HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 
@@ -182,9 +188,14 @@ def header_token(header: str) -> str:
 
 
 def apply_extra_product_fields(
-    product: Product, row: dict[str, str], *, known_headers: set[str]
+    product: Product,
+    row: dict[str, str],
+    *,
+    known_headers: set[str],
+    source_platform: str,
 ) -> None:
     ensure_product_defaults(product)
+    source_namespace = source_identifier_namespace("csv", source_platform)
     for header, raw in row.items():
         if header in known_headers:
             continue
@@ -240,12 +251,16 @@ def apply_extra_product_fields(
         merge_identifier_values(
             product.identifiers,
             {token: value},
-            namespace="csv",
+            namespace=source_namespace,
         )
 
 
 def apply_extra_variant_fields(
-    variant: Variant, row: dict[str, str], *, known_headers: set[str]
+    variant: Variant,
+    row: dict[str, str],
+    *,
+    known_headers: set[str],
+    source_platform: str,
 ) -> None:
     if variant.identifiers is None:
         variant.identifiers = make_identifiers()
@@ -281,7 +296,11 @@ def apply_extra_variant_fields(
             amount = parse_float(value)
             variant.price = price_from_amount(amount)
             continue
-        set_identifier(variant.identifiers, key=f"csv:{token}", value=value)
+        set_identifier(
+            variant.identifiers,
+            key=source_identifier_key("csv", source_platform, token),
+            value=value,
+        )
 
 
 def add_csv_provenance(

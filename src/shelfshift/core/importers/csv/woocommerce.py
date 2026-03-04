@@ -105,7 +105,12 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             media=media_from_urls(image_urls, variant_sku=sku),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(variant, row, known_headers=known_headers)
+        apply_extra_variant_fields(
+            variant,
+            row,
+            known_headers=known_headers,
+            source_platform="woocommerce",
+        )
         variants.append(variant)
 
     product_name = str(product_row.get("Name") or "").strip()
@@ -135,7 +140,12 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             values={"source_product_id": parent_sku or slug or "woocommerce-product"}
         ),
     )
-    apply_extra_product_fields(product, product_row, known_headers=known_headers)
+    apply_extra_product_fields(
+        product,
+        product_row,
+        known_headers=known_headers,
+        source_platform="woocommerce",
+    )
     add_csv_provenance(
         product,
         source_platform="woocommerce",

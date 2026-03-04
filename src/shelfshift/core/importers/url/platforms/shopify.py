@@ -14,6 +14,7 @@ from ....canonical import (
     Variant,
 )
 from ....detect.url import extract_shopify_slug_from_path
+from ...identifiers import source_identifier_key
 from ..common import (
     ProductClient,
     append_default_variant_if_empty,
@@ -371,7 +372,7 @@ class ShopifyClient(ProductClient):
         product_identifiers = make_identifiers(
             {
                 "source_product_id": data.get("id"),
-                "handle": handle,
+                source_identifier_key("url", self.platform, "handle"): handle,
             }
         )
 

@@ -16,6 +16,7 @@ from ....canonical import (
     Variant,
 )
 from ....detect.url import detect_product_url
+from ...identifiers import source_identifier_key
 from ..common import (
     ProductClient,
     append_default_variant_if_empty,
@@ -394,7 +395,7 @@ def _parse_json_ld_product(
                 or inferred_slug
             ),
             "sku": pick_name(product_data.get("sku")),
-            "mpn": pick_name(product_data.get("mpn")),
+            source_identifier_key("url", "squarespace", "mpn"): pick_name(product_data.get("mpn")),
         }
     )
 

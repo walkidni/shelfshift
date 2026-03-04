@@ -30,6 +30,27 @@ def make_identifiers(values: Mapping[str, Any] | None = None) -> Identifiers:
     return Identifiers(values=clean_identifier_values(values))
 
 
+def source_identifier_namespace(source: str, platform: str) -> str:
+    source_token = str(source or "").strip().lower()
+    platform_token = str(platform or "").strip().lower()
+    if not source_token:
+        source_token = "source"
+    if not platform_token:
+        platform_token = "unknown"
+    return f"{source_token}:{platform_token}"
+
+
+def source_identifier_key(source: str, platform: str, key: str) -> str:
+    key_token = str(key or "").strip()
+    if not key_token:
+        return ""
+    namespace = source_identifier_namespace(source, platform)
+    prefix = f"{namespace}:"
+    if key_token.startswith(prefix):
+        return key_token
+    return f"{prefix}{key_token}"
+
+
 def set_identifier(
     target: Identifiers,
     *,
@@ -71,4 +92,6 @@ __all__ = [
     "make_identifiers",
     "merge_identifier_values",
     "set_identifier",
+    "source_identifier_key",
+    "source_identifier_namespace",
 ]

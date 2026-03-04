@@ -3,6 +3,8 @@ from shelfshift.core.importers.identifiers import (
     make_identifiers,
     merge_identifier_values,
     set_identifier,
+    source_identifier_key,
+    source_identifier_namespace,
 )
 
 
@@ -53,3 +55,8 @@ def test_reserved_identifier_keys_contract() -> None:
         "sku",
         "barcode",
     } == RESERVED_IDENTIFIER_KEYS
+
+
+def test_source_identifier_namespace_and_key() -> None:
+    assert source_identifier_namespace("csv", "Shopify") == "csv:shopify"
+    assert source_identifier_key("url", "squarespace", "mpn") == "url:squarespace:mpn"

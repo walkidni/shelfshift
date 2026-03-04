@@ -101,7 +101,12 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
             ),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(variant, row, known_headers=known_headers)
+        apply_extra_variant_fields(
+            variant,
+            row,
+            known_headers=known_headers,
+            source_platform="bigcommerce",
+        )
         variants.append(variant)
 
     if not variants:
@@ -153,7 +158,12 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
             }
         ),
     )
-    apply_extra_product_fields(product, product_row, known_headers=known_headers)
+    apply_extra_product_fields(
+        product,
+        product_row,
+        known_headers=known_headers,
+        source_platform="bigcommerce",
+    )
     add_csv_provenance(
         product,
         source_platform="bigcommerce",
@@ -191,7 +201,12 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         weight=weight,
         identifiers=make_identifiers({"source_variant_id": "1", "sku": sku}),
     )
-    apply_extra_variant_fields(variant, product_row, known_headers=known_headers)
+    apply_extra_variant_fields(
+        variant,
+        product_row,
+        known_headers=known_headers,
+        source_platform="bigcommerce",
+    )
 
     product = Product(
         source=SourceRef(
@@ -223,7 +238,12 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
             values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
         ),
     )
-    apply_extra_product_fields(product, product_row, known_headers=known_headers)
+    apply_extra_product_fields(
+        product,
+        product_row,
+        known_headers=known_headers,
+        source_platform="bigcommerce",
+    )
     add_csv_provenance(
         product,
         source_platform="bigcommerce",

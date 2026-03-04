@@ -88,7 +88,12 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
             media=media_from_urls([str(row.get("media") or "").strip()], variant_sku=sku),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(variant, row, known_headers=known_headers)
+        apply_extra_variant_fields(
+            variant,
+            row,
+            known_headers=known_headers,
+            source_platform="wix",
+        )
         variants.append(variant)
 
     media_urls: list[str] = []
@@ -120,7 +125,12 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": selected_handle}),
     )
-    apply_extra_product_fields(product, product_row, known_headers=known_headers)
+    apply_extra_product_fields(
+        product,
+        product_row,
+        known_headers=known_headers,
+        source_platform="wix",
+    )
     add_csv_provenance(
         product,
         source_platform="wix",

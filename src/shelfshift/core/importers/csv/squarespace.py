@@ -71,7 +71,12 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
             weight=weight_object(weight_grams),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(variant, row, known_headers=known_headers)
+        apply_extra_variant_fields(
+            variant,
+            row,
+            known_headers=known_headers,
+            source_platform="squarespace",
+        )
         variants.append(variant)
 
     if not variants:
@@ -104,7 +109,12 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": slug or variants[0].sku}),
     )
-    apply_extra_product_fields(product, product_row, known_headers=known_headers)
+    apply_extra_product_fields(
+        product,
+        product_row,
+        known_headers=known_headers,
+        source_platform="squarespace",
+    )
     add_csv_provenance(
         product,
         source_platform="squarespace",
