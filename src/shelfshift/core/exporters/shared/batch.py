@@ -44,7 +44,7 @@ def products_to_shopify_csv(
     for product in products:
         product_rows = product_to_shopify_rows(product, publish=publish, weight_unit=weight_unit)
         if product_rows:
-            handles.append(str(product_rows[0].get("Handle") or "").strip())
+            handles.append(str(product_rows[0].get("URL handle") or "").strip())
         rows.extend(product_rows)
 
     _require_unique(handles, label="Shopify Handle")

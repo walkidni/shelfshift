@@ -10,6 +10,7 @@ _PLATFORM_HEADER_SIGNATURES: list[tuple[str, set[str]]] = [
     ("bigcommerce", {"Item", "SKU", "Name"}),  # modern format
     ("bigcommerce", {"Product Type", "Code", "Name"}),  # legacy format
     ("woocommerce", {"Type", "SKU", "Name", "Regular price"}),
+    ("shopify", {"URL handle", "Title", "SKU", "Price"}),  # new template format
     ("shopify", {"Handle", "Title", "Variant SKU", "Variant Price"}),
 ]
 

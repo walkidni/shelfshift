@@ -8,34 +8,63 @@ from ..shared import utils
 from ..shared.weight_units import resolve_weight_unit
 
 SHOPIFY_COLUMNS: list[str] = [
-    "Handle",
     "Title",
-    "Body (HTML)",
+    "URL handle",
+    "Description",
     "Vendor",
+    "Product category",
     "Type",
     "Tags",
-    "Published",
+    "Published on online store",
     "Status",
-    "Option1 Name",
-    "Option1 Value",
-    "Option2 Name",
-    "Option2 Value",
-    "Option3 Name",
-    "Option3 Value",
-    "Variant SKU",
-    "Variant Grams",
-    "Variant Inventory Tracker",
-    "Variant Inventory Qty",
-    "Variant Inventory Policy",
-    "Variant Fulfillment Service",
-    "Variant Price",
-    "Variant Requires Shipping",
-    "Variant Taxable",
-    "Image Src",
-    "Image Position",
-    "Image Alt Text",
-    "Variant Image",
-    "Variant Weight Unit",
+    "SKU",
+    "Barcode",
+    "Option1 name",
+    "Option1 value",
+    "Option1 Linked To",
+    "Option2 name",
+    "Option2 value",
+    "Option2 Linked To",
+    "Option3 name",
+    "Option3 value",
+    "Option3 Linked To",
+    "Price",
+    "Compare-at price",
+    "Cost per item",
+    "Charge tax",
+    "Tax code",
+    "Unit price total measure",
+    "Unit price total measure unit",
+    "Unit price base measure",
+    "Unit price base measure unit",
+    "Inventory tracker",
+    "Inventory quantity",
+    "Continue selling when out of stock",
+    "Weight value (grams)",
+    "Weight unit for display",
+    "Requires shipping",
+    "Fulfillment service",
+    "Product image URL",
+    "Image position",
+    "Image alt text",
+    "Variant image URL",
+    "Gift card",
+    "SEO title",
+    "SEO description",
+    "Color (product.metafields.shopify.color-pattern)",
+    "Google Shopping / Google product category",
+    "Google Shopping / Gender",
+    "Google Shopping / Age group",
+    "Google Shopping / Manufacturer part number (MPN)",
+    "Google Shopping / Ad group name",
+    "Google Shopping / Ads labels",
+    "Google Shopping / Condition",
+    "Google Shopping / Custom product",
+    "Google Shopping / Custom label 0",
+    "Google Shopping / Custom label 1",
+    "Google Shopping / Custom label 2",
+    "Google Shopping / Custom label 3",
+    "Google Shopping / Custom label 4",
 ]
 
 _HANDLE_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -152,26 +181,29 @@ def product_to_shopify_rows(
     for index, variant in enumerate(variants):
         row = _empty_row()
         variant_option_values = utils.resolve_variant_option_map(product, variant)
-        row["Handle"] = handle
-        row["Variant SKU"] = str(variant.sku or variant.id or "")
-        row["Variant Price"] = _resolve_price(product, variant)
-        row["Variant Inventory Policy"] = "deny"
-        row["Variant Fulfillment Service"] = "manual"
-        row["Variant Requires Shipping"] = _format_bool(
+        row["URL handle"] = handle
+        row["SKU"] = str(variant.sku or variant.id or "")
+        row["Price"] = _resolve_price(product, variant)
+        row["Continue selling when out of stock"] = "FALSE"
+        row["Fulfillment service"] = "manual"
+        row["Requires shipping"] = _format_bool(
             bool(product.requires_shipping and not product.is_digital)
         )
-        row["Variant Taxable"] = _format_bool(not product.is_digital)
-        row["Variant Image"] = _resolve_shopify_image_url(utils.resolve_variant_image_url(variant))
+        row["Charge tax"] = _format_bool(not product.is_digital)
+        row["Variant image URL"] = _resolve_shopify_image_url(
+            utils.resolve_variant_image_url(variant)
+        )
+        row["Gift card"] = "FALSE"
 
         grams = _format_grams(utils.resolve_weight_grams(product, variant))
         if grams:
-            row["Variant Grams"] = grams
-            row["Variant Weight Unit"] = resolved_weight_unit
+            row["Weight value (grams)"] = grams
+            row["Weight unit for display"] = resolved_weight_unit
 
         qty = _format_inventory_qty(utils.resolve_variant_inventory_quantity(variant))
         if qty:
-            row["Variant Inventory Tracker"] = "shopify"
-            row["Variant Inventory Qty"] = qty
+            row["Inventory tracker"] = "shopify"
+            row["Inventory quantity"] = qty
 
         for option_index, option_name in enumerate(option_names, start=1):
             option_value = ""
@@ -179,30 +211,33 @@ def product_to_shopify_rows(
                 option_value = "Default Title"
             else:
                 option_value = str(variant_option_values.get(option_name) or "")
-            row[f"Option{option_index} Name"] = option_name
-            row[f"Option{option_index} Value"] = option_value
+            row[f"Option{option_index} name"] = option_name
+            row[f"Option{option_index} value"] = option_value
 
         if index == 0:
             row["Title"] = product.title or ""
-            row["Body (HTML)"] = product.description or ""
+            row["Description"] = product.description or ""
             row["Vendor"] = product.vendor or product.brand or ""
+            row["Product category"] = utils.resolve_primary_category(product)
             row["Type"] = utils.resolve_primary_category(product)
             row["Tags"] = _resolve_tags(product)
-            row["Published"] = _format_bool(publish)
-            row["Status"] = "active" if publish else "draft"
+            row["Published on online store"] = _format_bool(publish)
+            row["Status"] = "Active" if publish else "Draft"
+            row["SEO title"] = utils.resolve_seo_title(product)
+            row["SEO description"] = utils.resolve_seo_description(product)
             if product_images:
-                row["Image Src"] = product_images[0]
-                row["Image Position"] = "1"
-                row["Image Alt Text"] = image_alt_text
+                row["Product image URL"] = product_images[0]
+                row["Image position"] = "1"
+                row["Image alt text"] = image_alt_text
 
         rows.append(row)
 
     for image_position, image_url in enumerate(product_images[1:], start=2):
         row = _empty_row()
-        row["Handle"] = handle
-        row["Image Src"] = image_url
-        row["Image Position"] = str(image_position)
-        row["Image Alt Text"] = image_alt_text
+        row["URL handle"] = handle
+        row["Product image URL"] = image_url
+        row["Image position"] = str(image_position)
+        row["Image alt text"] = image_alt_text
         rows.append(row)
 
     return rows
