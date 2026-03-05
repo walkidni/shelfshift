@@ -8,7 +8,7 @@ from shelfshift.core.exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS
 from shelfshift.core.exporters.platforms.shopify import SHOPIFY_COLUMNS
 from shelfshift.core.exporters.platforms.squarespace import SQUARESPACE_COLUMNS
 from shelfshift.core.exporters.platforms.wix import WIX_COLUMNS
-from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.woocommerce import woocommerce_columns_for_weight_unit
 from shelfshift.core.exporters.shared.batch import (
     products_to_bigcommerce_csv,
     products_to_shopify_csv,
@@ -178,7 +178,7 @@ def test_products_to_woocommerce_csv_combines_multiple_products() -> None:
     csv_text, _ = products_to_woocommerce_csv([alpha, beta], publish=False, weight_unit="kg")
 
     frame = pd.read_csv(io.StringIO(csv_text), dtype=str, keep_default_na=False)
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 2
 
 

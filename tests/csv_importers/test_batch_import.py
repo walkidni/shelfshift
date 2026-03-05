@@ -597,6 +597,38 @@ def test_woocommerce_batch_uses_in_stock_header_as_boolean_source_of_truth() -> 
     assert products[1].variants[0].inventory.available is True
 
 
+@pytest.mark.parametrize(
+    ("weight_header", "weight_value", "expected_grams"),
+    [
+        ("Weight (kg)", "1", 1000.0),
+        ("Weight (lbs)", "1", 453.59237),
+        ("Weight (g)", "1000", 1000.0),
+        ("Weight (oz)", "16", 453.59237),
+    ],
+)
+def test_woocommerce_batch_detects_weight_unit_from_weight_header(
+    weight_header: str,
+    weight_value: str,
+    expected_grams: float,
+) -> None:
+    csv_text = "\n".join(
+        [
+            f"Type,SKU,Name,Regular price,{weight_header}",
+            f"simple,A1,Alpha,10,{weight_value}",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="woocommerce",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 1
+    weight = products[0].variants[0].weight
+    assert weight is not None
+    assert float(weight.value) == pytest.approx(expected_grams, rel=1e-9, abs=1e-9)
+
+
 # ---------------------------------------------------------------------------
 # BigCommerce batch tests
 # ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ WEIGHT_UNIT_ALLOWLIST_BY_TARGET: dict[str, tuple[WeightUnit, ...]] = {
     "bigcommerce": ("g", "kg", "lb", "oz"),
     "wix": ("kg", "lb"),
     "squarespace": ("kg", "lb"),
-    "woocommerce": ("kg",),
+    "woocommerce": ("g", "kg", "lb", "oz"),
 }
 
 DEFAULT_WEIGHT_UNIT_BY_TARGET: dict[str, WeightUnit] = {

@@ -13,7 +13,7 @@ from shelfshift.core.canonical import (
     Price,
 )
 from shelfshift.core.exporters import product_to_woocommerce_csv
-from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.woocommerce import woocommerce_columns_for_weight_unit
 
 
 def test_simple_product_maps_qty_stock() -> None:
@@ -39,7 +39,7 @@ def test_simple_product_maps_qty_stock() -> None:
     frame = read_frame(csv_text)
 
     assert filename == "woocommerce-20260208T000000Z.csv"
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 1
     assert frame.loc[0, "Type"] == "simple"
     assert frame.loc[0, "SKU"] == "AMZ:b000111"
@@ -85,7 +85,7 @@ def test_variable_product_uses_namespaced_parent_and_variation_skus() -> None:
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
     frame = read_frame(csv_text)
 
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 3
     assert frame.loc[0, "Type"] == "variable"
     assert frame.loc[0, "SKU"] == "AE:1005008518647948"
@@ -126,7 +126,7 @@ def test_available_without_qty_does_not_emit_stock() -> None:
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
     frame = read_frame(csv_text)
 
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 1
     assert frame.loc[0, "Type"] == "simple"
     assert frame.loc[0, "Tax status"] == "none"
@@ -151,7 +151,7 @@ def test_multiple_variants_without_options_synthesizes_option_attribute() -> Non
     csv_text, _ = product_to_woocommerce_csv(product, publish=False)
     frame = read_frame(csv_text)
 
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 3
     assert frame.loc[0, "Attribute 1 name"] == "Option"
     assert frame.loc[0, "Attribute 1 value(s)"] == "Black,White"
@@ -206,7 +206,7 @@ def test_woocommerce_export_prefers_typed_fields_when_present() -> None:
     csv_text, _ = product_to_woocommerce_csv(product, publish=True)
     frame = read_frame(csv_text)
 
-    assert list(frame.columns) == WOOCOMMERCE_COLUMNS
+    assert list(frame.columns) == woocommerce_columns_for_weight_unit("kg")
     assert len(frame) == 3
     assert frame.loc[0, "Type"] == "variable"
     assert frame.loc[0, "Regular price"] == "18.5"
@@ -222,3 +222,29 @@ def test_woocommerce_export_prefers_typed_fields_when_present() -> None:
     assert frame.loc[2, "Stock"] == "2"
     assert frame.loc[2, "Images"] == "https://cdn.example.com/typed-v2.jpg"
     assert frame.loc[2, "Attribute 1 value(s)"] == "White"
+
+
+def test_woocommerce_export_uses_requested_weight_unit_header() -> None:
+    product = Product(
+        platform="amazon",
+        id="B000111",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        images=[],
+        variants=[Variant(id="v1", sku="AMZ-MUG-001", price_amount=12.0, weight=1000)],
+    )
+
+    expectations = {
+        "kg": ("Weight (kg)", "1"),
+        "lb": ("Weight (lbs)", "2.204623"),
+        "g": ("Weight (g)", "1000"),
+        "oz": ("Weight (oz)", "35.273962"),
+    }
+
+    for unit, (header, expected) in expectations.items():
+        csv_text, _ = product_to_woocommerce_csv(product, publish=False, weight_unit=unit)
+        frame = read_frame(csv_text)
+        assert list(frame.columns) == woocommerce_columns_for_weight_unit(unit)
+        assert header in frame.columns
+        assert frame.loc[0, header] == expected

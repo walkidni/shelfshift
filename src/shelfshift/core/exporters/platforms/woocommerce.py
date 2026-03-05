@@ -7,6 +7,17 @@ from ...canonical import Product, Variant
 from ..shared import utils
 from ..shared.weight_units import resolve_weight_unit
 
+WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER = "__WEIGHT_HEADER__"
+WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT: dict[str, str] = {
+    "lb": "Weight (lbs)",
+    "kg": "Weight (kg)",
+    "g": "Weight (g)",
+    "oz": "Weight (oz)",
+}
+WOOCOMMERCE_WEIGHT_UNIT_BY_HEADER: dict[str, str] = {
+    header: unit for unit, header in WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT.items()
+}
+
 WOOCOMMERCE_COLUMNS: list[str] = [
     "ID",
     "Type",
@@ -25,7 +36,7 @@ WOOCOMMERCE_COLUMNS: list[str] = [
     "Stock",
     "Backorders allowed?",
     "Sold individually?",
-    "Weight (lbs)",
+    WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER,
     "Length (in)",
     "Width (in)",
     "Height (in)",
@@ -70,8 +81,17 @@ _PLATFORM_TOKEN = {
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
-def _empty_row() -> dict[str, str]:
-    return dict.fromkeys(WOOCOMMERCE_COLUMNS, "")
+def woocommerce_columns_for_weight_unit(weight_unit: str | None = None) -> list[str]:
+    resolved_weight_unit = resolve_weight_unit("woocommerce", weight_unit)
+    weight_header = WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT[resolved_weight_unit]
+    return [
+        weight_header if column == WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER else column
+        for column in WOOCOMMERCE_COLUMNS
+    ]
+
+
+def _empty_row(columns: list[str]) -> dict[str, str]:
+    return dict.fromkeys(columns, "")
 
 
 def _slug(value: str | None) -> str:
@@ -140,15 +160,12 @@ def _resolve_price(product: Product, variant: Variant | None = None) -> str:
     return utils.format_number(amount, decimals=6) if amount is not None else ""
 
 
-def _resolve_weight_kg(product: Product, variant: Variant | None = None) -> str:
+def _resolve_weight(product: Product, variant: Variant | None = None, *, unit: str) -> str:
     grams = utils.resolve_weight_grams(product, variant)
-    if grams is None:
+    converted = utils.convert_weight_from_grams(grams, unit=unit)
+    if converted is None:
         return ""
-    try:
-        kg = float(grams) / 1000.0
-    except (TypeError, ValueError):
-        return ""
-    return utils.format_number(kg, decimals=6)
+    return utils.format_number(converted, decimals=6)
 
 
 def _resolve_tags(product: Product) -> str:
@@ -244,7 +261,9 @@ def product_to_woocommerce_rows(
     publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
-    resolve_weight_unit("woocommerce", weight_unit)
+    resolved_weight_unit = resolve_weight_unit("woocommerce", weight_unit)
+    resolved_columns = woocommerce_columns_for_weight_unit(resolved_weight_unit)
+    resolved_weight_header = WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT[resolved_weight_unit]
     is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
@@ -268,13 +287,17 @@ def product_to_woocommerce_rows(
 
     if not is_variable:
         variant = variants[0]
-        row = _empty_row()
+        row = _empty_row(resolved_columns)
         _set_common_product_fields(row, product, is_visible=is_visible)
         row["Type"] = "simple"
         row["SKU"] = parent_sku
         row["Name"] = product.title or ""
         row["Regular price"] = _resolve_price(product, variant)
-        row["Weight (kg)"] = _resolve_weight_kg(product, variant)
+        row[resolved_weight_header] = _resolve_weight(
+            product,
+            variant,
+            unit=resolved_weight_unit,
+        )
         row["Images"] = _resolve_images(images or [utils.resolve_variant_image_url(variant) or ""])
         _apply_stock_fields(row, variant)
         variant_option_values = variant_option_maps[0] if variant_option_maps else {}
@@ -288,13 +311,13 @@ def product_to_woocommerce_rows(
         return [row]
 
     rows: list[dict[str, str]] = []
-    parent_row = _empty_row()
+    parent_row = _empty_row(resolved_columns)
     _set_common_product_fields(parent_row, product, is_visible=is_visible)
     parent_row["Type"] = "variable"
     parent_row["SKU"] = parent_sku
     parent_row["Name"] = product.title or ""
     parent_row["Regular price"] = _resolve_price(product)
-    parent_row["Weight (kg)"] = _resolve_weight_kg(product)
+    parent_row[resolved_weight_header] = _resolve_weight(product, unit=resolved_weight_unit)
     parent_row["Images"] = _resolve_images(images)
     parent_row["In stock?"] = "1" if any(_variant_in_stock(v) for v in variants) else "0"
     _set_attributes(
@@ -306,7 +329,7 @@ def product_to_woocommerce_rows(
 
     seen_skus = {parent_sku}
     for index, variant in enumerate(variants, start=1):
-        variant_row = _empty_row()
+        variant_row = _empty_row(resolved_columns)
         _set_common_product_fields(
             variant_row,
             product,
@@ -324,7 +347,11 @@ def product_to_woocommerce_rows(
 
         variant_row["SKU"] = variant_sku
         variant_row["Regular price"] = _resolve_price(product, variant)
-        variant_row["Weight (kg)"] = _resolve_weight_kg(product, variant)
+        variant_row[resolved_weight_header] = _resolve_weight(
+            product,
+            variant,
+            unit=resolved_weight_unit,
+        )
         variant_row["Images"] = utils.resolve_variant_image_url(variant)
         variant_row["Parent"] = parent_sku
         variant_row["Categories"] = ""
@@ -351,7 +378,6 @@ def product_to_woocommerce_csv(
     publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
+    columns = woocommerce_columns_for_weight_unit(weight_unit)
     rows = product_to_woocommerce_rows(product, publish=publish, weight_unit=weight_unit)
-    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename(
-        "woocommerce"
-    )
+    return utils.dict_rows_to_csv(rows, columns), utils.make_export_filename("woocommerce")

@@ -8,7 +8,10 @@ from ..platforms.bigcommerce import (
 from ..platforms.shopify import SHOPIFY_COLUMNS, product_to_shopify_rows
 from ..platforms.squarespace import SQUARESPACE_COLUMNS, product_to_squarespace_rows
 from ..platforms.wix import WIX_COLUMNS, product_to_wix_rows
-from ..platforms.woocommerce import WOOCOMMERCE_COLUMNS, product_to_woocommerce_rows
+from ..platforms.woocommerce import (
+    product_to_woocommerce_rows,
+    woocommerce_columns_for_weight_unit,
+)
 from . import utils
 
 
@@ -138,6 +141,7 @@ def products_to_woocommerce_csv(
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     _require_non_empty_products(products, label="WooCommerce batch export")
+    columns = woocommerce_columns_for_weight_unit(weight_unit)
     rows: list[dict[str, str]] = []
     parent_skus: list[str] = []
     for product in products:
@@ -153,9 +157,7 @@ def products_to_woocommerce_csv(
         rows.extend(product_rows)
 
     _require_unique(parent_skus, label="WooCommerce parent SKU")
-    return utils.dict_rows_to_csv(rows, WOOCOMMERCE_COLUMNS), utils.make_export_filename(
-        "woocommerce"
-    )
+    return utils.dict_rows_to_csv(rows, columns), utils.make_export_filename("woocommerce")
 
 
 __all__ = [

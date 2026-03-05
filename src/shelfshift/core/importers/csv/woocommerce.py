@@ -18,6 +18,12 @@ from .common import (
 )
 
 _REQUIRED_HEADERS = ("Type", "SKU", "Name", "Regular price")
+_WEIGHT_UNIT_BY_HEADER = {
+    "Weight (kg)": "kg",
+    "Weight (lbs)": "lb",
+    "Weight (g)": "g",
+    "Weight (oz)": "oz",
+}
 
 
 def _taxonomy_from_categories(value: str) -> CategorySet:
@@ -47,9 +53,18 @@ def _product_is_published_from_row(row: dict[str, str]) -> bool | None:
     return parse_bool(row.get("Published"))
 
 
+def _detect_weight_header(headers: list[str]) -> tuple[str | None, str | None]:
+    for header in headers:
+        unit = _WEIGHT_UNIT_BY_HEADER.get(header)
+        if unit:
+            return header, unit
+    return None, None
+
+
 def parse_woocommerce_csv(csv_text: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
+    weight_header, source_weight_unit = _detect_weight_header(headers)
     product_rows = [
         row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
     ]
@@ -87,7 +102,12 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         quantity = parse_int(row.get("Stock"))
         in_stock = parse_bool(row.get("In stock?"))
         price = parse_float(row.get("Regular price"))
-        weight_grams = weight_to_grams(row.get("Weight (kg)"), source_weight_unit="kg")
+        weight_raw = row.get(weight_header) if weight_header else None
+        weight_grams = (
+            weight_to_grams(weight_raw, source_weight_unit=source_weight_unit)
+            if weight_header and source_weight_unit
+            else None
+        )
         image_urls = split_tokens(row.get("Images"), sep=",")
         variant = Variant(
             id=str(index),
