@@ -67,6 +67,37 @@ SHOPIFY_COLUMNS: list[str] = [
     "Google Shopping / Custom label 4",
 ]
 
+SHOPIFY_LEGACY_COLUMNS: set[str] = {
+    "Handle",
+    "Title",
+    "Body (HTML)",
+    "Vendor",
+    "Type",
+    "Tags",
+    "Published",
+    "Status",
+    "Option1 Name",
+    "Option1 Value",
+    "Option2 Name",
+    "Option2 Value",
+    "Option3 Name",
+    "Option3 Value",
+    "Variant SKU",
+    "Variant Grams",
+    "Variant Inventory Tracker",
+    "Variant Inventory Qty",
+    "Variant Inventory Policy",
+    "Variant Fulfillment Service",
+    "Variant Price",
+    "Variant Requires Shipping",
+    "Variant Taxable",
+    "Image Src",
+    "Image Position",
+    "Image Alt Text",
+    "Variant Image",
+    "Variant Weight Unit",
+}
+
 _HANDLE_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _SHOPIFY_SUPPORTED_IMAGE_EXTENSIONS = (".gif", ".jpeg", ".jpg", ".png", ".webp", ".heic")
 # Fallback used only when a non-empty source image URL is not Shopify-compatible.

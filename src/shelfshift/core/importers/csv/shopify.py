@@ -24,37 +24,6 @@ SHOPIFY_REQUIRED_HEADERS_OLD = (
 )
 SHOPIFY_REQUIRED_HEADERS_NEW = ("URL handle", "Title", "Description", "SKU", "Price")
 
-SHOPIFY_LEGACY_COLUMNS = {
-    "Handle",
-    "Title",
-    "Body (HTML)",
-    "Vendor",
-    "Type",
-    "Tags",
-    "Published",
-    "Status",
-    "Option1 Name",
-    "Option1 Value",
-    "Option2 Name",
-    "Option2 Value",
-    "Option3 Name",
-    "Option3 Value",
-    "Variant SKU",
-    "Variant Grams",
-    "Variant Inventory Tracker",
-    "Variant Inventory Qty",
-    "Variant Inventory Policy",
-    "Variant Fulfillment Service",
-    "Variant Price",
-    "Variant Requires Shipping",
-    "Variant Taxable",
-    "Image Src",
-    "Image Position",
-    "Image Alt Text",
-    "Variant Image",
-    "Variant Weight Unit",
-}
-
 
 def _first_non_empty(row: dict[str, str], *keys: str) -> str:
     for key in keys:
