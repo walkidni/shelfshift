@@ -2,11 +2,8 @@ import re
 from typing import Literal
 
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
-from ...exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
 from .common import (
     add_csv_provenance,
-    apply_extra_product_fields,
-    apply_extra_variant_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -63,8 +60,6 @@ def _parse_legacy_images(value: str) -> list[str]:
 def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _MODERN_REQUIRED_HEADERS)
-    known_headers = set(BIGCOMMERCE_COLUMNS)
-
     product_indices = [
         index
         for index, row in enumerate(rows)
@@ -106,12 +101,6 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
                 [str(row.get("Variant Image URL") or "").strip()], variant_sku=sku
             ),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
-        )
-        apply_extra_variant_fields(
-            variant,
-            row,
-            known_headers=known_headers,
-            source_platform="bigcommerce",
         )
         variants.append(variant)
 
@@ -164,12 +153,6 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
             }
         ),
     )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform="bigcommerce",
-    )
     add_csv_provenance(
         product,
         source_platform="bigcommerce",
@@ -183,7 +166,6 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
 def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _LEGACY_REQUIRED_HEADERS)
-    known_headers = set(BIGCOMMERCE_LEGACY_COLUMNS)
     product_row = rows[0]
 
     sku = str(product_row.get("Code") or "").strip() or "BC:legacy"
@@ -207,13 +189,6 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         weight=weight,
         identifiers=make_identifiers({"source_variant_id": "1", "sku": sku}),
     )
-    apply_extra_variant_fields(
-        variant,
-        product_row,
-        known_headers=known_headers,
-        source_platform="bigcommerce",
-    )
-
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
@@ -244,12 +219,6 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         identifiers=make_identifiers(
             values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
         ),
-    )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform="bigcommerce",
     )
     add_csv_provenance(
         product,

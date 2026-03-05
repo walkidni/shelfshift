@@ -1,6 +1,5 @@
 import csv
 import io
-import re
 from collections.abc import Iterable
 from decimal import Decimal
 from typing import Any
@@ -14,14 +13,10 @@ from ...canonical import (
     Product,
     Seo,
     SourceRef,
-    Variant,
     Weight,
 )
 from ...canonical.helpers import parse_decimal_money
 from ..identifiers import make_identifiers
-from ..unmapped_fields import merge_unmapped_fields, platform_unmapped_key, set_unmapped_field
-
-_HEADER_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 
 
 def decode_csv_bytes(data: bytes) -> str:
@@ -178,125 +173,6 @@ def ensure_product_defaults(product: Product) -> Product:
     if product.unmapped_fields is None:
         product.unmapped_fields = {}
     return product
-
-
-def header_token(header: str) -> str:
-    return _HEADER_TOKEN_RE.sub("_", str(header or "").strip().lower()).strip("_")
-
-
-def apply_extra_product_fields(
-    product: Product,
-    row: dict[str, str],
-    *,
-    known_headers: set[str],
-    source_platform: str,
-) -> None:
-    ensure_product_defaults(product)
-    for header, raw in row.items():
-        if header in known_headers:
-            continue
-        value = str(raw or "").strip()
-        if not value:
-            continue
-        token = header_token(header)
-        if token == "title":
-            product.title = value
-            continue
-        if token == "description":
-            product.description = value
-            continue
-        if token == "brand":
-            product.brand = value
-            continue
-        if token == "vendor":
-            product.vendor = value
-            continue
-        if token == "tags":
-            product.tags = split_tokens(value)
-            continue
-        if token == "seo_title":
-            product.seo.title = value
-            continue
-        if token == "seo_description":
-            product.seo.description = value
-            continue
-        if token == "source_id":
-            product.source.id = value
-            continue
-        if token == "source_slug":
-            product.source.slug = value
-            continue
-        if token == "source_url":
-            product.source.url = value
-            continue
-        if token == "requires_shipping":
-            parsed = parse_bool(value)
-            if parsed is not None:
-                product.requires_shipping = parsed
-                continue
-        if token == "track_quantity":
-            parsed = parse_bool(value)
-            if parsed is not None:
-                product.track_quantity = parsed
-                continue
-        if token == "is_digital":
-            parsed = parse_bool(value)
-            if parsed is not None:
-                product.is_digital = parsed
-                continue
-        merge_unmapped_fields(
-            product.unmapped_fields,
-            {token: value},
-            platform=source_platform,
-        )
-
-
-def apply_extra_variant_fields(
-    variant: Variant,
-    row: dict[str, str],
-    *,
-    known_headers: set[str],
-    source_platform: str,
-) -> None:
-    if variant.unmapped_fields is None:
-        variant.unmapped_fields = {}
-    for header, raw in row.items():
-        if header in known_headers:
-            continue
-        value = str(raw or "").strip()
-        if not value:
-            continue
-        token = header_token(header)
-        if token in {"variant_sku", "sku"} and not variant.sku:
-            variant.sku = value
-            continue
-        if token in {"variant_title", "title"} and not variant.title:
-            variant.title = value
-            continue
-        if token in {"variant_id", "id"} and not variant.id:
-            variant.id = value
-            continue
-        if token in {"variant_inventory_qty", "inventory_quantity"}:
-            qty = parse_int(value)
-            if qty is not None:
-                variant.inventory.quantity = qty
-                variant.inventory.track_quantity = True
-                variant.inventory.available = qty > 0
-                continue
-        if token in {"variant_available", "available"}:
-            parsed = parse_bool(value)
-            if parsed is not None:
-                variant.inventory.available = parsed
-                continue
-        if token in {"variant_price", "price"} and variant.price is None:
-            amount = parse_float(value)
-            variant.price = price_from_amount(amount)
-            continue
-        set_unmapped_field(
-            variant.unmapped_fields,
-            key=platform_unmapped_key(source_platform, token),
-            value=value,
-        )
 
 
 def add_csv_provenance(

@@ -1,9 +1,6 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
-from ...exporters.platforms.wix import WIX_COLUMNS
 from .common import (
     add_csv_provenance,
-    apply_extra_product_fields,
-    apply_extra_variant_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -36,8 +33,6 @@ def _variant_inventory_from_wix(value: str) -> Inventory:
 def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
-    known_headers = set(WIX_COLUMNS)
-
     handles: list[str] = []
     selected_handle = ""
     for row in rows:
@@ -89,12 +84,6 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
             media=media_from_urls([str(row.get("media") or "").strip()], variant_sku=sku),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(
-            variant,
-            row,
-            known_headers=known_headers,
-            source_platform="wix",
-        )
         variants.append(variant)
 
     media_urls: list[str] = []
@@ -126,12 +115,6 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         is_published=parse_bool(product_row.get("visible")),
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": selected_handle}),
-    )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform="wix",
     )
     add_csv_provenance(
         product,

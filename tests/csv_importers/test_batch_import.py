@@ -201,7 +201,7 @@ def test_shopify_batch_provenance() -> None:
         assert prov["source_platform"] == "shopify"
 
 
-def test_shopify_batch_unknown_fields_use_platform_namespaced_unmapped_fields() -> None:
+def test_shopify_batch_unknown_fields_are_ignored() -> None:
     csv_text = "\n".join(
         [
             "Handle,Title,Body (HTML),Variant SKU,Variant Price,Custom Product,Custom Variant",
@@ -217,10 +217,10 @@ def test_shopify_batch_unknown_fields_use_platform_namespaced_unmapped_fields() 
     assert len(products) == 1
     product = products[0]
     variant = product.variants[0]
-    assert product.unmapped_fields["shopify:custom_product"] == "P-1"
-    assert product.unmapped_fields["shopify:custom_variant"] == "V-1"
-    assert variant.unmapped_fields["shopify:custom_product"] == "P-1"
-    assert variant.unmapped_fields["shopify:custom_variant"] == "V-1"
+    assert "shopify:custom_product" not in product.unmapped_fields
+    assert "shopify:custom_variant" not in product.unmapped_fields
+    assert "shopify:custom_product" not in variant.unmapped_fields
+    assert "shopify:custom_variant" not in variant.unmapped_fields
 
 
 def test_shopify_batch_maps_is_published_from_publish_only() -> None:

@@ -1,11 +1,8 @@
 from slugify import slugify
 
 from ...canonical import CategorySet, Inventory, Product, Seo, SourceRef, Variant
-from ...exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
 from .common import (
     add_csv_provenance,
-    apply_extra_product_fields,
-    apply_extra_variant_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -53,8 +50,6 @@ def _product_is_published_from_row(row: dict[str, str]) -> bool | None:
 def parse_woocommerce_csv(csv_text: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
-    known_headers = set(WOOCOMMERCE_COLUMNS)
-
     product_rows = [
         row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
     ]
@@ -109,12 +104,6 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             media=media_from_urls(image_urls, variant_sku=sku),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
-        apply_extra_variant_fields(
-            variant,
-            row,
-            known_headers=known_headers,
-            source_platform="woocommerce",
-        )
         variants.append(variant)
 
     product_name = str(product_row.get("Name") or "").strip()
@@ -145,12 +134,6 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         identifiers=make_identifiers(
             values={"source_product_id": parent_sku or slug or "woocommerce-product"}
         ),
-    )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform="woocommerce",
     )
     add_csv_provenance(
         product,

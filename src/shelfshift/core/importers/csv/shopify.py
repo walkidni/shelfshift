@@ -1,10 +1,7 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
-from ...exporters.platforms.shopify import SHOPIFY_COLUMNS
 from ..unmapped_fields import platform_unmapped_key, set_unmapped_field
 from .common import (
     add_csv_provenance,
-    apply_extra_product_fields,
-    apply_extra_variant_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -109,8 +106,6 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
     selected_handle = handles[0]
     selected_rows = [row for row in rows if shopify_row_handle(row) == selected_handle]
     product_row = selected_rows[0]
-    known_headers = set(SHOPIFY_COLUMNS) | SHOPIFY_LEGACY_COLUMNS
-
     product_images: list[str] = []
     variants: list[Variant] = []
     option_maps: list[dict[str, str]] = []
@@ -153,12 +148,6 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
             weight=weight_object(weight_grams),
             media=media_from_urls([variant_image], variant_sku=sku),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
-        )
-        apply_extra_variant_fields(
-            variant,
-            row,
-            known_headers=known_headers,
-            source_platform=source_platform,
         )
         variants.append(variant)
 
@@ -205,12 +194,6 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         product.unmapped_fields,
         key=platform_unmapped_key(source_platform, "type"),
         value=_first_non_empty(product_row, "Type"),
-    )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform=source_platform,
     )
     add_csv_provenance(
         product,

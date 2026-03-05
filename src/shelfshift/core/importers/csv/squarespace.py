@@ -1,9 +1,6 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
-from ...exporters.platforms.squarespace import SQUARESPACE_COLUMNS
 from .common import (
     add_csv_provenance,
-    apply_extra_product_fields,
-    apply_extra_variant_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -35,8 +32,6 @@ def _segment_rows(rows: list[dict[str, str]]) -> tuple[list[dict[str, str]], int
 def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
-    known_headers = set(SQUARESPACE_COLUMNS)
-
     selected_rows, detected_product_count = _segment_rows(rows)
     product_row = selected_rows[0]
 
@@ -78,12 +73,6 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
                 }
             ),
         )
-        apply_extra_variant_fields(
-            variant,
-            row,
-            known_headers=known_headers,
-            source_platform="squarespace",
-        )
         variants.append(variant)
 
     if not variants:
@@ -115,12 +104,6 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         is_published=parse_bool(product_row.get("Visible")),
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": slug or variants[0].sku}),
-    )
-    apply_extra_product_fields(
-        product,
-        product_row,
-        known_headers=known_headers,
-        source_platform="squarespace",
     )
     add_csv_provenance(
         product,
