@@ -156,12 +156,12 @@ def _set_common_product_fields(
     row: dict[str, str],
     product: Product,
     *,
-    publish: bool,
+    is_visible: bool,
     include_descriptions: bool = True,
 ) -> None:
-    row["Published"] = "1" if publish else "0"
+    row["Published"] = "1" if is_visible else "0"
     row["Is featured?"] = "0"
-    row["Visibility in catalog"] = "visible"
+    row["Visibility in catalog"] = "visible" if is_visible else "hidden"
     if include_descriptions:
         row["Short description"] = _resolve_short_description(product)
         row["Description"] = product.description or ""
@@ -225,6 +225,7 @@ def product_to_woocommerce_rows(
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolve_weight_unit("woocommerce", weight_unit)
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
@@ -248,7 +249,7 @@ def product_to_woocommerce_rows(
     if not is_variable:
         variant = variants[0]
         row = _empty_row()
-        _set_common_product_fields(row, product, publish=publish)
+        _set_common_product_fields(row, product, is_visible=is_visible)
         row["Type"] = "simple"
         row["SKU"] = parent_sku
         row["Name"] = product.title or ""
@@ -268,7 +269,7 @@ def product_to_woocommerce_rows(
 
     rows: list[dict[str, str]] = []
     parent_row = _empty_row()
-    _set_common_product_fields(parent_row, product, publish=publish)
+    _set_common_product_fields(parent_row, product, is_visible=is_visible)
     parent_row["Type"] = "variable"
     parent_row["SKU"] = parent_sku
     parent_row["Name"] = product.title or ""
@@ -289,7 +290,7 @@ def product_to_woocommerce_rows(
         _set_common_product_fields(
             variant_row,
             product,
-            publish=publish,
+            is_visible=is_visible,
             include_descriptions=False,
         )
         variant_row["Type"] = "variation"

@@ -157,6 +157,7 @@ class Product:
     requires_shipping: bool = True
     track_quantity: bool = True
     is_digital: bool = False
+    visibility: bool | None = None
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
     unmapped_fields: dict[str, str] = field(default_factory=dict)
@@ -197,6 +198,7 @@ class Product:
             self.price = _price_from_payload(self.price)
 
         self.weight = _weight_from_payload(self.weight)
+        self.visibility = _normalize_optional_bool(self.visibility)
         self.media = _normalize_media_list(self.media)
 
         if isinstance(self.identifiers, dict):
@@ -245,6 +247,8 @@ class Product:
             "identifiers": {"values": dict(self.identifiers.values)},
             "provenance": dict(self.provenance),
         }
+        if self.visibility is not None:
+            data["visibility"] = self.visibility
         if self.unmapped_fields:
             data["unmapped_fields"] = dict(self.unmapped_fields)
         return data
@@ -307,6 +311,20 @@ def _normalize_url(value: Any) -> str | None:
     if stripped.startswith("//"):
         return f"https:{stripped}"
     return stripped
+
+
+def _normalize_optional_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value in {0, 1}:
+        return bool(int(value))
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "y"}:
+            return True
+        if lowered in {"0", "false", "no", "n"}:
+            return False
+    return None
 
 
 def _format_decimal(value: Decimal | None) -> str | None:

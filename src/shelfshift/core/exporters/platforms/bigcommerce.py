@@ -335,6 +335,7 @@ def _product_to_bigcommerce_legacy_rows(
     publish: bool,
     weight_unit: str,
 ) -> list[dict[str, str]]:
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -357,7 +358,7 @@ def _product_to_bigcommerce_legacy_rows(
         _resolve_product_weight_grams(product, variants), weight_unit=weight_unit, decimals=4
     )
     row["Allow Purchases"] = "Y"
-    row["Product Visible"] = "Y" if publish else "N"
+    row["Product Visible"] = "Y" if is_visible else "N"
     row["Product Inventoried"] = "Y" if inventory_mode != _INVENTORY_NONE else "N"
     row["Stock Level"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
     row["Low Stock Level"] = "0"
@@ -378,6 +379,7 @@ def _product_to_bigcommerce_modern_rows(
     publish: bool,
     weight_unit: str,
 ) -> list[dict[str, str]]:
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -412,7 +414,7 @@ def _product_to_bigcommerce_modern_rows(
     product_row["Search Keywords"] = keyword_value
     product_row["Meta Keywords"] = keyword_value
     product_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
-    product_row["Is Visible"] = "TRUE" if publish else "FALSE"
+    product_row["Is Visible"] = "TRUE" if is_visible else "FALSE"
     product_row["Is Featured"] = "FALSE"
     product_row["Tax Class"] = "0"
     product_row["Product Condition"] = "New"
@@ -430,7 +432,7 @@ def _product_to_bigcommerce_modern_rows(
             variant_row["Current Stock"] = _resolve_stock_for_variant_row(variant)
             variant_row["Low Stock"] = "0"
             variant_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
-            variant_row["Is Visible"] = "TRUE" if publish else "FALSE"
+            variant_row["Is Visible"] = "TRUE" if is_visible else "FALSE"
             variant_row["Show Product Condition"] = "FALSE"
             variant_row["Options"] = _build_variant_options_value(
                 variant,

@@ -178,6 +178,7 @@ def product_to_shopify_rows(
     weight_unit: str = "g",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("shopify", weight_unit)
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
@@ -228,8 +229,8 @@ def product_to_shopify_rows(
             row["Product category"] = utils.resolve_primary_category(product)
             row["Type"] = _resolve_type(product)
             row["Tags"] = _resolve_tags(product)
-            row["Published on online store"] = _format_bool(publish)
-            row["Status"] = "Active" if publish else "Draft"
+            row["Published on online store"] = _format_bool(is_visible)
+            row["Status"] = "Active" if is_visible else "Draft"
             row["SEO title"] = utils.resolve_seo_title(product)
             row["SEO description"] = utils.resolve_seo_description(product)
             if product_images:

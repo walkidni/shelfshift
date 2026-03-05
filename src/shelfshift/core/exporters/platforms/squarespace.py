@@ -107,6 +107,7 @@ def product_to_squarespace_rows(
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("squarespace", weight_unit)
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     hosted_image_urls = _resolve_hosted_image_urls(product)
@@ -140,7 +141,7 @@ def product_to_squarespace_rows(
             row["Categories"] = ""
             row["Tags"] = _resolve_tags(product)
             row["Weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
-            row["Visible"] = _format_bool(publish)
+            row["Visible"] = _format_bool(is_visible)
             row["Hosted Image URLs"] = hosted_image_urls
 
         rows.append(row)

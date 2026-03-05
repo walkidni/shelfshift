@@ -225,6 +225,7 @@ def product_to_wix_rows(
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("wix", weight_unit)
+    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
     handle = _resolve_handle(product)
     variants = utils.resolve_variants(product)
     images = utils.resolve_product_image_urls(product)
@@ -245,7 +246,7 @@ def product_to_wix_rows(
     product_row["handle"] = handle
     product_row["fieldType"] = "PRODUCT"
     product_row["name"] = _truncate(product.title, _MAX_WIX_NAME_LEN)
-    product_row["visible"] = _format_bool(publish)
+    product_row["visible"] = _format_bool(is_visible)
     product_row["plainDescription"] = _truncate(product.description, _MAX_WIX_PLAIN_DESCRIPTION_LEN)
     product_row["brand"] = product.vendor or product.brand or ""
     product_row["price"] = _resolve_price(product, first_variant)
@@ -277,7 +278,7 @@ def product_to_wix_rows(
         variant_row = _empty_row()
         variant_row["handle"] = handle
         variant_row["fieldType"] = "VARIANT"
-        variant_row["visible"] = _format_bool(publish)
+        variant_row["visible"] = _format_bool(is_visible)
         variant_row["price"] = _resolve_price(product, variant)
         variant_row["inventory"] = _resolve_variant_inventory(product, variant)
         variant_row["sku"] = str(variant.sku or variant.id or "")

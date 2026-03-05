@@ -219,6 +219,25 @@ def test_shopify_batch_unknown_fields_use_platform_namespaced_unmapped_fields() 
     assert variant.unmapped_fields["shopify:custom_variant"] == "V-1"
 
 
+def test_shopify_batch_maps_visibility_from_publish_and_status() -> None:
+    csv_text = "\n".join(
+        [
+            "Title,URL handle,Description,SKU,Price,Published on online store,Status",
+            "Alpha Product,alpha,Alpha description,ALPHA-1,10.00,TRUE,Active",
+            "Beta Product,beta,Beta description,BETA-1,12.00,,Draft",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="shopify",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 2
+    assert products[0].visibility is True
+    assert products[1].visibility is False
+
+
 # ---------------------------------------------------------------------------
 # Wix batch tests
 # ---------------------------------------------------------------------------
@@ -297,6 +316,26 @@ def test_wix_batch_provenance() -> None:
         assert prov["selection_policy"] == "batch_all"
 
 
+def test_wix_batch_maps_visibility() -> None:
+    csv_text = "\n".join(
+        [
+            "handle,fieldType,name,visible,price,sku,inventory,media,weight",
+            "alpha,PRODUCT,Alpha,TRUE,10,A1,1,,",
+            "beta,PRODUCT,Beta,FALSE,12,B1,2,,",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="wix",
+        csv_bytes=csv_text.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(products) == 2
+    assert products[0].visibility is True
+    assert products[1].visibility is False
+
+
 # ---------------------------------------------------------------------------
 # Squarespace batch tests
 # ---------------------------------------------------------------------------
@@ -321,6 +360,8 @@ def test_import_products_from_csv_squarespace_parses_multiple_products() -> None
     assert products[0].source.platform == "squarespace"
     assert products[0].title == "Alpha Product"
     assert products[1].title == "Beta Product"
+    assert products[0].visibility is False
+    assert products[1].visibility is False
 
 
 def test_squarespace_batch_multi_variant_product() -> None:
@@ -484,6 +525,27 @@ def test_woocommerce_batch_provenance() -> None:
         assert prov["selection_policy"] == "batch_all"
 
 
+def test_woocommerce_batch_maps_visibility() -> None:
+    csv_text = "\n".join(
+        [
+            "Type,SKU,Name,Regular price,Published,Visibility in catalog",
+            "simple,A1,Alpha,10,1,visible",
+            "simple,B1,Beta,12,0,visible",
+            "simple,C1,Gamma,15,,hidden",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="woocommerce",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 3
+    assert products[0].visibility is True
+    assert products[1].visibility is False
+    assert products[2].visibility is False
+
+
 # ---------------------------------------------------------------------------
 # BigCommerce batch tests
 # ---------------------------------------------------------------------------
@@ -607,3 +669,38 @@ def test_bigcommerce_batch_provenance_legacy() -> None:
         prov = product.provenance["csv_import"]
         assert prov["detected_product_count"] == 2
         assert prov["selection_policy"] == "batch_all"
+
+
+def test_bigcommerce_batch_maps_visibility() -> None:
+    modern_csv = "\n".join(
+        [
+            "Item,Name,Type,SKU,Price,Weight,Is Visible",
+            "Product,Alpha Product,physical,ALPHA-1,10.00,,TRUE",
+            "Product,Beta Product,physical,BETA-1,12.00,,FALSE",
+        ]
+    )
+    legacy_csv = "\n".join(
+        [
+            "Product Type,Code,Name,Calculated Price,Weight,Images,Product Visible",
+            "P,LEG-A,Legacy Alpha,10.00,,,Y",
+            "P,LEG-B,Legacy Beta,12.00,,,N",
+        ]
+    )
+
+    modern_products = import_products_from_csv(
+        source_platform="bigcommerce",
+        csv_bytes=modern_csv.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+    legacy_products = import_products_from_csv(
+        source_platform="bigcommerce",
+        csv_bytes=legacy_csv.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(modern_products) == 2
+    assert modern_products[0].visibility is True
+    assert modern_products[1].visibility is False
+    assert len(legacy_products) == 2
+    assert legacy_products[0].visibility is True
+    assert legacy_products[1].visibility is False

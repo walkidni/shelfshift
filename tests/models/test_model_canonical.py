@@ -62,3 +62,15 @@ def test_variant_inventory_serialization_includes_available() -> None:
         "available": True,
         "allow_backorder": False,
     }
+
+
+def test_product_visibility_normalization_and_serialization() -> None:
+    product = Product(
+        source=SourceRef(platform="shopify", id="p-1"),
+        visibility="TRUE",
+    )
+
+    payload = product.to_dict()
+
+    assert product.visibility is True
+    assert payload["visibility"] is True

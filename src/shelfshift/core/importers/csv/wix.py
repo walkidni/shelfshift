@@ -8,6 +8,7 @@ from .common import (
     make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
+    parse_bool,
     parse_float,
     parse_int,
     price_from_amount,
@@ -122,6 +123,7 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=True,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=False,
+        visibility=parse_bool(product_row.get("visible")),
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": selected_handle}),
     )
