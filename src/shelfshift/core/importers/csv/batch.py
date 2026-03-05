@@ -2,7 +2,7 @@ import csv
 import io
 
 from ...canonical import Product
-from .bigcommerce import parse_bigcommerce_csv
+from .bigcommerce import detect_bigcommerce_csv_format, parse_bigcommerce_csv
 from .common import (
     csv_rows,
     decode_csv_bytes,
@@ -168,8 +168,8 @@ def parse_woocommerce_csv_batch(csv_text: str) -> list[Product]:
 
 def parse_bigcommerce_csv_batch(csv_text: str, *, source_weight_unit: str) -> list[Product]:
     headers, rows = csv_rows(csv_text)
-    header_set = set(headers)
-    if {"Item", "SKU", "Name"}.issubset(header_set):
+    csv_format = detect_bigcommerce_csv_format(headers)
+    if csv_format == "modern":
         # Modern format: segment from each Product row to the next.
         product_indices = [
             index
@@ -188,18 +188,13 @@ def parse_bigcommerce_csv_batch(csv_text: str, *, source_weight_unit: str) -> li
         _patch_batch_provenance(products, detected_product_count=len(product_indices))
         return products
 
-    if {"Product Type", "Code", "Name"}.issubset(header_set):
-        # Legacy format: one row per product.
-        products: list[Product] = []
-        for row in rows:
-            segment_csv = _rows_to_csv_text(headers, [row])
-            products.append(
-                parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit)
-            )
-        _patch_batch_provenance(products, detected_product_count=len(rows))
-        return products
-
-    raise ValueError("Unable to detect BigCommerce CSV format from headers.")
+    # Legacy format: one row per product.
+    products: list[Product] = []
+    for row in rows:
+        segment_csv = _rows_to_csv_text(headers, [row])
+        products.append(parse_bigcommerce_csv(segment_csv, source_weight_unit=source_weight_unit))
+    _patch_batch_provenance(products, detected_product_count=len(rows))
+    return products
 
 
 __all__ = [

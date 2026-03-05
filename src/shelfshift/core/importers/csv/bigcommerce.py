@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from ...exporters.platforms.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
@@ -24,6 +25,10 @@ from .common import (
 _MODERN_REQUIRED_HEADERS = ("Item", "Name", "Type", "SKU", "Price")
 _LEGACY_REQUIRED_HEADERS = ("Product Type", "Code", "Name", "Calculated Price")
 _OPTION_RE = re.compile(r"\|Name=([^|]+)\|Value=([^|]+)$")
+_MODERN_DETECTION_HEADERS = {"Item", "SKU", "Name"}
+_LEGACY_DETECTION_HEADERS = {"Product Type", "Code", "Name"}
+
+BigCommerceCsvInputFormat = Literal["modern", "legacy"]
 
 
 def _parse_modern_options(value: str) -> dict[str, str]:
@@ -257,11 +262,21 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     return product
 
 
+def detect_bigcommerce_csv_format(headers: list[str]) -> BigCommerceCsvInputFormat:
+    header_set = set(headers)
+    if _MODERN_DETECTION_HEADERS.issubset(header_set):
+        return "modern"
+    if _LEGACY_DETECTION_HEADERS.issubset(header_set):
+        return "legacy"
+    raise ValueError("Unable to detect BigCommerce CSV format from headers.")
+
+
 def parse_bigcommerce_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, _rows = csv_rows(csv_text)
-    header_set = set(headers)
-    if {"Item", "SKU", "Name"}.issubset(header_set):
+    csv_format = detect_bigcommerce_csv_format(headers)
+    if csv_format == "modern":
         return _parse_modern(csv_text, source_weight_unit=source_weight_unit)
-    if {"Product Type", "Code", "Name"}.issubset(header_set):
-        return _parse_legacy(csv_text, source_weight_unit=source_weight_unit)
-    raise ValueError("Unable to detect BigCommerce CSV format from headers.")
+    return _parse_legacy(csv_text, source_weight_unit=source_weight_unit)
+
+
+__all__ = ["detect_bigcommerce_csv_format", "parse_bigcommerce_csv"]
