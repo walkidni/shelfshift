@@ -223,7 +223,7 @@ def test_shopify_batch_unknown_fields_use_platform_namespaced_unmapped_fields() 
     assert variant.unmapped_fields["shopify:custom_variant"] == "V-1"
 
 
-def test_shopify_batch_maps_visibility_from_publish_and_status() -> None:
+def test_shopify_batch_maps_is_published_from_publish_only() -> None:
     csv_text = "\n".join(
         [
             "Title,URL handle,Description,SKU,Price,Published on online store,Status",
@@ -238,8 +238,8 @@ def test_shopify_batch_maps_visibility_from_publish_and_status() -> None:
     )
 
     assert len(products) == 2
-    assert products[0].visibility is True
-    assert products[1].visibility is False
+    assert products[0].is_published is True
+    assert products[1].is_published is None
 
 
 # ---------------------------------------------------------------------------
@@ -338,8 +338,8 @@ def test_wix_batch_maps_visibility() -> None:
     )
 
     assert len(products) == 2
-    assert products[0].visibility is True
-    assert products[1].visibility is False
+    assert products[0].is_published is True
+    assert products[1].is_published is False
 
 
 # ---------------------------------------------------------------------------
@@ -368,8 +368,8 @@ def test_import_products_from_csv_squarespace_parses_multiple_products() -> None
     assert products[0].title == "Alpha Product"
     assert products[1].source.id is None
     assert products[1].title == "Beta Product"
-    assert products[0].visibility is False
-    assert products[1].visibility is False
+    assert products[0].is_published is False
+    assert products[1].is_published is False
 
 
 def test_import_products_from_csv_squarespace_uses_explicit_id_headers() -> None:
@@ -571,9 +571,9 @@ def test_woocommerce_batch_maps_visibility() -> None:
     )
 
     assert len(products) == 3
-    assert products[0].visibility is True
-    assert products[1].visibility is False
-    assert products[2].visibility is False
+    assert products[0].is_published is True
+    assert products[1].is_published is False
+    assert products[2].is_published is None
 
 
 # ---------------------------------------------------------------------------
@@ -773,8 +773,8 @@ def test_bigcommerce_batch_maps_visibility() -> None:
     )
 
     assert len(modern_products) == 2
-    assert modern_products[0].visibility is True
-    assert modern_products[1].visibility is False
+    assert modern_products[0].is_published is True
+    assert modern_products[1].is_published is False
     assert len(legacy_products) == 2
-    assert legacy_products[0].visibility is True
-    assert legacy_products[1].visibility is False
+    assert legacy_products[0].is_published is True
+    assert legacy_products[1].is_published is False

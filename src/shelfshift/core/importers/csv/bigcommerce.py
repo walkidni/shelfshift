@@ -133,7 +133,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     )
     type_value = str(product_row.get("Type") or "").strip().lower()
     is_digital = type_value == "digital"
-    visibility = parse_bool(product_row.get("Is Visible"))
+    is_published = parse_bool(product_row.get("Is Visible"))
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
@@ -156,7 +156,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=not is_digital,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
-        visibility=visibility,
+        is_published=is_published,
         media=media_from_urls(image_urls),
         identifiers=make_identifiers(
             values={
@@ -239,7 +239,7 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=True,
         track_quantity=(quantity is not None),
         is_digital=False,
-        visibility=parse_bool(product_row.get("Product Visible")),
+        is_published=parse_bool(product_row.get("Product Visible")),
         media=media_from_urls(_parse_legacy_images(str(product_row.get("Images") or ""))),
         identifiers=make_identifiers(
             values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}

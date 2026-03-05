@@ -227,7 +227,7 @@ def test_batch_exporters_prefer_explicit_publish_over_product_visibility() -> No
     product = Product(
         source={"platform": "shopify", "id": "1", "slug": "alpha"},
         title="Alpha Product",
-        visibility=True,
+        is_published=True,
         variants=[Variant(id="v1", sku="ALPHA-1", price_amount=10.0, inventory_quantity=3)],
         images=["https://cdn.example.com/alpha.jpg"],
     )
@@ -287,7 +287,7 @@ def test_batch_exporters_use_product_visibility_when_publish_is_none() -> None:
     product = Product(
         source={"platform": "shopify", "id": "1", "slug": "alpha"},
         title="Alpha Product",
-        visibility=True,
+        is_published=True,
         variants=[Variant(id="v1", sku="ALPHA-1", price_amount=10.0, inventory_quantity=3)],
         images=["https://cdn.example.com/alpha.jpg"],
     )

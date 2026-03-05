@@ -194,8 +194,8 @@ def resolve_primary_category(product: Product, *, separator: str = " > ") -> str
 def resolve_product_visibility(product: Product, *, publish_override: bool | None) -> bool:
     if publish_override is not None:
         return bool(publish_override)
-    if product.visibility is not None:
-        return bool(product.visibility)
+    if product.is_published is not None:
+        return bool(product.is_published)
     return False
 
 

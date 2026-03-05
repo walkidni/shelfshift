@@ -157,7 +157,7 @@ class Product:
     requires_shipping: bool = True
     track_quantity: bool = True
     is_digital: bool = False
-    visibility: bool | None = None
+    is_published: bool | None = None
     media: list[Media] = field(default_factory=list)
     identifiers: Identifiers = field(default_factory=Identifiers)
     unmapped_fields: dict[str, str] = field(default_factory=dict)
@@ -198,7 +198,7 @@ class Product:
             self.price = _price_from_payload(self.price)
 
         self.weight = _weight_from_payload(self.weight)
-        self.visibility = _normalize_optional_bool(self.visibility)
+        self.is_published = _normalize_optional_bool(self.is_published)
         self.media = _normalize_media_list(self.media)
 
         if isinstance(self.identifiers, dict):
@@ -247,8 +247,8 @@ class Product:
             "identifiers": {"values": dict(self.identifiers.values)},
             "provenance": dict(self.provenance),
         }
-        if self.visibility is not None:
-            data["visibility"] = self.visibility
+        if self.is_published is not None:
+            data["is_published"] = self.is_published
         if self.unmapped_fields:
             data["unmapped_fields"] = dict(self.unmapped_fields)
         return data

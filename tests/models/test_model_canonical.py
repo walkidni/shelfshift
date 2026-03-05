@@ -64,13 +64,13 @@ def test_variant_inventory_serialization_includes_available() -> None:
     }
 
 
-def test_product_visibility_normalization_and_serialization() -> None:
+def test_product_is_published_normalization_and_serialization() -> None:
     product = Product(
         source=SourceRef(platform="shopify", id="p-1"),
-        visibility="TRUE",
+        is_published="TRUE",
     )
 
     payload = product.to_dict()
 
-    assert product.visibility is True
-    assert payload["visibility"] is True
+    assert product.is_published is True
+    assert payload["is_published"] is True

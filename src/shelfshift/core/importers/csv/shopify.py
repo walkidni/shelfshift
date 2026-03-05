@@ -171,13 +171,12 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         _first_non_empty(product_row, "Variant Requires Shipping", "Requires shipping")
     )
     requires_shipping = True if requires_shipping_value is None else requires_shipping_value
-    visibility = parse_bool(_first_non_empty(product_row, "Published on online store", "Published"))
-    if visibility is None:
-        status = _first_non_empty(product_row, "Status").strip().lower()
-        if status == "active":
-            visibility = True
-        elif status in {"draft", "archived"}:
-            visibility = False
+    publish_header = (
+        "Published"
+        if _shopify_has_required_headers(headers, SHOPIFY_REQUIRED_HEADERS_OLD)
+        else "Published on online store"
+    )
+    is_published = parse_bool(product_row.get(publish_header))
 
     product = Product(
         source=SourceRef(platform="shopify", id=None, slug=selected_handle, url=None),
@@ -198,7 +197,7 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         requires_shipping=requires_shipping,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=not requires_shipping,
-        visibility=visibility,
+        is_published=is_published,
         media=media_from_urls(product_images),
         identifiers=make_identifiers(values={"source_product_id": selected_handle}),
     )

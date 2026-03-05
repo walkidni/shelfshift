@@ -123,7 +123,7 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=True,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=False,
-        visibility=parse_bool(product_row.get("visible")),
+        is_published=parse_bool(product_row.get("visible")),
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": selected_handle}),
     )

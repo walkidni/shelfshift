@@ -46,17 +46,8 @@ def _row_option_map(row: dict[str, str]) -> dict[str, str]:
     return out
 
 
-def _product_visibility_from_row(row: dict[str, str]) -> bool | None:
-    published = parse_bool(row.get("Published"))
-    if published is not None:
-        return published
-
-    catalog_visibility = str(row.get("Visibility in catalog") or "").strip().lower()
-    if catalog_visibility == "hidden":
-        return False
-    if catalog_visibility in {"visible", "search", "catalog"}:
-        return True
-    return None
+def _product_is_published_from_row(row: dict[str, str]) -> bool | None:
+    return parse_bool(row.get("Published"))
 
 
 def parse_woocommerce_csv(csv_text: str) -> Product:
@@ -149,7 +140,7 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         requires_shipping=not is_digital,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
-        visibility=_product_visibility_from_row(product_row),
+        is_published=_product_is_published_from_row(product_row),
         media=media_from_urls(product_images),
         identifiers=make_identifiers(
             values={"source_product_id": parent_sku or slug or "woocommerce-product"}

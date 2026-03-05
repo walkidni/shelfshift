@@ -112,7 +112,7 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=not is_digital,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
         is_digital=is_digital,
-        visibility=parse_bool(product_row.get("Visible")),
+        is_published=parse_bool(product_row.get("Visible")),
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": slug or variants[0].sku}),
     )
