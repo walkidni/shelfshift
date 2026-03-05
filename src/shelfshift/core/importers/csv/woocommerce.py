@@ -103,7 +103,7 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             inventory=Inventory(
                 track_quantity=(quantity is not None),
                 quantity=quantity,
-                available=(quantity > 0 if quantity is not None else in_stock),
+                available=in_stock,
             ),
             weight=weight_object(weight_grams),
             media=media_from_urls(image_urls, variant_sku=sku),

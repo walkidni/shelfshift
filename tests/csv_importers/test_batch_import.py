@@ -576,6 +576,27 @@ def test_woocommerce_batch_maps_visibility() -> None:
     assert products[2].is_published is None
 
 
+def test_woocommerce_batch_uses_in_stock_header_as_boolean_source_of_truth() -> None:
+    csv_text = "\n".join(
+        [
+            "Type,SKU,Name,Regular price,Stock,In stock?",
+            "simple,A1,Alpha,10,7,0",
+            "simple,B1,Beta,12,0,1",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="woocommerce",
+        csv_bytes=csv_text.encode("utf-8"),
+    )
+
+    assert len(products) == 2
+    assert products[0].variants[0].inventory.quantity == 7
+    assert products[0].variants[0].inventory.available is False
+    assert products[1].variants[0].inventory.quantity == 0
+    assert products[1].variants[0].inventory.available is True
+
+
 # ---------------------------------------------------------------------------
 # BigCommerce batch tests
 # ---------------------------------------------------------------------------

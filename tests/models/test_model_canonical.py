@@ -42,7 +42,7 @@ def test_weight_is_typed_and_serialized_as_object() -> None:
     assert payload["variants"][0]["weight"] == {"value": "250", "unit": "g"}
 
 
-def test_variant_inventory_serialization_includes_available() -> None:
+def test_variant_inventory_serialization_includes_in_stock() -> None:
     variant = Variant(
         id="v-1",
         inventory={
