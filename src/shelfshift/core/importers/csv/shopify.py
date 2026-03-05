@@ -180,7 +180,7 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
             visibility = False
 
     product = Product(
-        source=SourceRef(platform="shopify", id=selected_handle, slug=selected_handle, url=None),
+        source=SourceRef(platform="shopify", id=None, slug=selected_handle, url=None),
         title=_first_non_empty(product_row, "Title") or None,
         description=_first_non_empty(product_row, "Body (HTML)", "Description") or None,
         seo=Seo(

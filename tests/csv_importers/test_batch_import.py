@@ -82,8 +82,10 @@ def test_import_products_from_csv_shopify_parses_multiple_products() -> None:
 
     assert len(products) == 2
     assert products[0].source.platform == "shopify"
+    assert products[0].source.id is None
     assert products[0].source.slug == "alpha"
     assert products[0].title == "Alpha Product"
+    assert products[1].source.id is None
     assert products[1].source.slug == "beta"
     assert products[1].title == "Beta Product"
 
@@ -104,6 +106,7 @@ def test_import_products_from_csv_shopify_new_template_parses_multiple_products(
 
     assert len(products) == 2
     assert products[0].source.platform == "shopify"
+    assert products[0].source.id is None
     assert products[0].source.slug == "alpha"
     assert products[0].title == "Alpha Product"
     assert products[0].variants[0].sku == "ALPHA-1"
@@ -112,6 +115,7 @@ def test_import_products_from_csv_shopify_new_template_parses_multiple_products(
     assert products[0].taxonomy.primary == ["Apparel & Accessories", "Clothing", "Shirts"]
     assert products[0].unmapped_fields["shopify:type"] == "Graphic shirt"
     assert products[1].source.slug == "beta"
+    assert products[1].source.id is None
     assert products[1].title == "Beta Product"
     assert products[1].variants[0].sku == "BETA-1"
     assert products[1].taxonomy.primary == ["Home & Garden", "Kitchenware"]
@@ -260,7 +264,9 @@ def test_import_products_from_csv_wix_parses_multiple_products() -> None:
 
     assert len(products) == 2
     assert products[0].source.platform == "wix"
+    assert products[0].source.id is None
     assert products[0].source.slug == "alpha"
+    assert products[1].source.id is None
     assert products[1].source.slug == "beta"
 
 
@@ -358,10 +364,34 @@ def test_import_products_from_csv_squarespace_parses_multiple_products() -> None
 
     assert len(products) == 2
     assert products[0].source.platform == "squarespace"
+    assert products[0].source.id is None
     assert products[0].title == "Alpha Product"
+    assert products[1].source.id is None
     assert products[1].title == "Beta Product"
     assert products[0].visibility is False
     assert products[1].visibility is False
+
+
+def test_import_products_from_csv_squarespace_uses_explicit_id_headers() -> None:
+    csv_text = "\n".join(
+        [
+            "Product ID [Non Editable],Variant ID [Non Editable],Title,SKU,Price,Product Type [Non Editable],Visible,Product URL,Hosted Image URLs",
+            "P-101,V-101,Alpha Product,ALPHA-1,10.00,PHYSICAL,No,,",
+            "P-102,V-201,Beta Product,BETA-1,12.00,PHYSICAL,No,,",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="squarespace",
+        csv_bytes=csv_text.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(products) == 2
+    assert products[0].source.id == "P-101"
+    assert products[0].variants[0].identifiers.values["source_variant_id"] == "V-101"
+    assert products[1].source.id == "P-102"
+    assert products[1].variants[0].identifiers.values["source_variant_id"] == "V-201"
 
 
 def test_squarespace_batch_multi_variant_product() -> None:
@@ -423,9 +453,9 @@ def test_squarespace_batch_provenance() -> None:
 def test_import_products_from_csv_woocommerce_parses_multiple_products() -> None:
     csv_text = "\n".join(
         [
-            "Type,SKU,Name,Regular price,Images",
-            "simple,WC-ALPHA,Alpha Product,10.00,",
-            "simple,WC-BETA,Beta Product,12.00,",
+            "ID,Type,SKU,Name,Regular price,Images",
+            "101,simple,WC-ALPHA,Alpha Product,10.00,",
+            "102,simple,WC-BETA,Beta Product,12.00,",
         ]
     )
 
@@ -437,8 +467,8 @@ def test_import_products_from_csv_woocommerce_parses_multiple_products() -> None
 
     assert len(products) == 2
     assert products[0].source.platform == "woocommerce"
-    assert products[0].source.id == "WC-ALPHA"
-    assert products[1].source.id == "WC-BETA"
+    assert products[0].source.id == "101"
+    assert products[1].source.id == "102"
 
 
 def test_woocommerce_batch_variable_with_variations() -> None:
@@ -461,7 +491,7 @@ def test_woocommerce_batch_variable_with_variations() -> None:
 
     tshirt = products[0]
     assert tshirt.title == "V-Neck T-Shirt"
-    assert tshirt.source.id == "VNECK-TSHIRT"
+    assert tshirt.source.id is None
     assert len(tshirt.variants) == 2
     assert tshirt.variants[0].sku == "VNECK-TSHIRT-S"
     assert tshirt.variants[1].sku == "VNECK-TSHIRT-M"
@@ -568,8 +598,30 @@ def test_import_products_from_csv_bigcommerce_modern_parses_multiple_products() 
 
     assert len(products) == 2
     assert products[0].source.platform == "bigcommerce"
+    assert products[0].source.id is None
     assert products[0].title == "Alpha Product"
+    assert products[1].source.id is None
     assert products[1].title == "Beta Product"
+
+
+def test_import_products_from_csv_bigcommerce_modern_uses_explicit_id_header() -> None:
+    csv_text = "\n".join(
+        [
+            "Item,ID,Name,Type,SKU,Price,Weight",
+            "Product,1001,Alpha Product,physical,ALPHA-1,10.00,",
+            "Product,1002,Beta Product,physical,BETA-1,12.00,",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="bigcommerce",
+        csv_bytes=csv_text.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(products) == 2
+    assert products[0].source.id == "1001"
+    assert products[1].source.id == "1002"
 
 
 def test_import_products_from_csv_bigcommerce_legacy_parses_multiple_products() -> None:
@@ -589,8 +641,30 @@ def test_import_products_from_csv_bigcommerce_legacy_parses_multiple_products() 
 
     assert len(products) == 2
     assert products[0].source.platform == "bigcommerce"
+    assert products[0].source.id is None
     assert products[0].title == "Alpha Product"
+    assert products[1].source.id is None
     assert products[1].title == "Beta Product"
+
+
+def test_import_products_from_csv_bigcommerce_legacy_uses_explicit_product_id_header() -> None:
+    csv_text = "\n".join(
+        [
+            "Product ID,Product Type,Code,Name,Calculated Price,Weight,Images",
+            "2001,P,ALPHA-1,Alpha Product,10.00,,",
+            "2002,P,BETA-1,Beta Product,12.00,,",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="bigcommerce",
+        csv_bytes=csv_text.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(products) == 2
+    assert products[0].source.id == "2001"
+    assert products[1].source.id == "2002"
 
 
 def test_bigcommerce_modern_batch_with_variants_and_images() -> None:

@@ -107,7 +107,7 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
             media_urls.append(url)
 
     product = Product(
-        source=SourceRef(platform="wix", id=selected_handle, slug=selected_handle, url=None),
+        source=SourceRef(platform="wix", id=None, slug=selected_handle, url=None),
         title=str(product_row.get("name") or "").strip() or None,
         description=str(product_row.get("plainDescription") or "").strip() or None,
         seo=Seo(

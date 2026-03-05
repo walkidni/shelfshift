@@ -137,9 +137,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
-            id=str(product_row.get("ID") or "").strip()
-            or str(product_row.get("SKU") or "").strip()
-            or None,
+            id=str(product_row.get("ID") or "").strip() or None,
             slug=str(product_row.get("Product URL") or "").strip().strip("/") or None,
             url=None,
         ),
@@ -219,7 +217,7 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
-            id=str(product_row.get("Product ID") or "").strip() or sku,
+            id=str(product_row.get("Product ID") or "").strip() or None,
             slug=str(product_row.get("Product URL") or "").strip().strip("/") or None,
             url=None,
         ),

@@ -128,11 +128,12 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
 
     product_name = str(product_row.get("Name") or "").strip()
     slug = slugify(product_name) if product_name else None
+    source_id = str(product_row.get("ID") or "").strip() or None
     product_images = split_tokens(product_row.get("Images"), sep=",")
     tax_status = str(product_row.get("Tax status") or "").strip().lower()
     is_digital = tax_status == "none"
     product = Product(
-        source=SourceRef(platform="woocommerce", id=parent_sku or slug, slug=slug, url=None),
+        source=SourceRef(platform="woocommerce", id=source_id, slug=slug, url=None),
         title=product_name or None,
         description=str(product_row.get("Description") or "").strip() or None,
         seo=Seo(

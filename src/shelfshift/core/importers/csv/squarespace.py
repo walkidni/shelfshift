@@ -70,7 +70,13 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
                 available=(quantity > 0 if quantity is not None else True),
             ),
             weight=weight_object(weight_grams),
-            identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
+            identifiers=make_identifiers(
+                {
+                    "source_variant_id": str(row.get("Variant ID [Non Editable]") or "").strip()
+                    or str(index),
+                    "sku": sku,
+                }
+            ),
         )
         apply_extra_variant_fields(
             variant,
@@ -88,10 +94,9 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     product_type = str(product_row.get("Product Type [Non Editable]") or "").strip().upper()
     is_digital = product_type == "DIGITAL"
     media_urls = split_image_lines(product_row.get("Hosted Image URLs"))
+    source_id = str(product_row.get("Product ID [Non Editable]") or "").strip() or None
     product = Product(
-        source=SourceRef(
-            platform="squarespace", id=slug or variants[0].sku, slug=slug, url=product_url or None
-        ),
+        source=SourceRef(platform="squarespace", id=source_id, slug=slug, url=product_url or None),
         title=str(product_row.get("Title") or "").strip() or None,
         description=str(product_row.get("Description") or "").strip() or None,
         seo=Seo(
