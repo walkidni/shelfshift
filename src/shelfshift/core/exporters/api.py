@@ -13,7 +13,7 @@ def export_csv_for_target(
     product: Product,
     *,
     target_platform: str,
-    publish: bool = False,
+    publish: bool | None = None,
     weight_unit: str = "",
     bigcommerce_csv_format: str = "modern",
     squarespace_product_page: str = "",

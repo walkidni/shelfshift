@@ -174,11 +174,11 @@ def _resolve_shopify_product_images(images: list[str] | None) -> list[str]:
 def product_to_shopify_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "g",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("shopify", weight_unit)
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     handle = _resolve_handle(product)
     option_names = _resolve_option_names(product)
     image_alt_text = (product.title or "").strip()
@@ -254,7 +254,7 @@ def product_to_shopify_rows(
 def product_to_shopify_csv(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "g",
 ) -> tuple[str, str]:
     rows = product_to_shopify_rows(product, publish=publish, weight_unit=weight_unit)

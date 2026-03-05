@@ -221,11 +221,11 @@ def _is_variable_product(product: Product, variants: list[Variant]) -> bool:
 def product_to_woocommerce_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolve_weight_unit("woocommerce", weight_unit)
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     parent_sku = _resolve_parent_sku(product)
@@ -328,7 +328,7 @@ def product_to_woocommerce_rows(
 def product_to_woocommerce_csv(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     rows = product_to_woocommerce_rows(product, publish=publish, weight_unit=weight_unit)

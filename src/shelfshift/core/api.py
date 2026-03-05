@@ -121,7 +121,8 @@ def export_csv(
     normalized_target = str(target).strip().lower()
     opts = dict(options or {})
 
-    publish = bool(opts.get("publish", False))
+    raw_publish = opts.get("publish")
+    publish: bool | None = None if raw_publish is None else bool(raw_publish)
     weight_unit = str(opts.get("weight_unit", ""))
     bigcommerce_csv_format = str(opts.get("bigcommerce_csv_format", "modern"))
     squarespace_product_page = str(opts.get("squarespace_product_page", ""))

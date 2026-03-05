@@ -332,10 +332,10 @@ def _resolve_legacy_images(product: Product) -> str:
 def _product_to_bigcommerce_legacy_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str,
 ) -> list[dict[str, str]]:
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -376,10 +376,10 @@ def _product_to_bigcommerce_legacy_rows(
 def _product_to_bigcommerce_modern_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str,
 ) -> list[dict[str, str]]:
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     is_variable = _is_variable_product(product, variants, option_names)
@@ -474,7 +474,7 @@ def _product_to_bigcommerce_modern_rows(
 def product_to_bigcommerce_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     csv_format: BigCommerceCsvFormat = "modern",
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
@@ -497,7 +497,7 @@ def product_to_bigcommerce_rows(
 def product_to_bigcommerce_csv(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     csv_format: BigCommerceCsvFormat = "modern",
     weight_unit: str = "kg",
 ) -> tuple[str, str]:

@@ -35,7 +35,7 @@ def _require_unique(values: list[str], *, label: str) -> None:
 def products_to_shopify_csv(
     products: list[Product],
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "g",
 ) -> tuple[str, str]:
     _require_non_empty_products(products, label="Shopify batch export")
@@ -54,7 +54,7 @@ def products_to_shopify_csv(
 def products_to_bigcommerce_csv(
     products: list[Product],
     *,
-    publish: bool,
+    publish: bool | None = None,
     csv_format: BigCommerceCsvFormat = "modern",
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
@@ -88,7 +88,7 @@ def products_to_bigcommerce_csv(
 def products_to_wix_csv(
     products: list[Product],
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     _require_non_empty_products(products, label="Wix batch export")
@@ -108,7 +108,7 @@ def products_to_wix_csv(
 def products_to_squarespace_csv(
     products: list[Product],
     *,
-    publish: bool,
+    publish: bool | None = None,
     product_page: str = "",
     product_url: str = "",
     weight_unit: str = "kg",
@@ -134,7 +134,7 @@ def products_to_squarespace_csv(
 def products_to_woocommerce_csv(
     products: list[Product],
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     _require_non_empty_products(products, label="WooCommerce batch export")

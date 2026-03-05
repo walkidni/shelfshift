@@ -221,11 +221,11 @@ def _resolve_product_inventory(product: Product, variants: list[Variant]) -> str
 def product_to_wix_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("wix", weight_unit)
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     handle = _resolve_handle(product)
     variants = utils.resolve_variants(product)
     images = utils.resolve_product_image_urls(product)
@@ -310,7 +310,7 @@ def product_to_wix_rows(
 def product_to_wix_csv(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     weight_unit: str = "kg",
 ) -> tuple[str, str]:
     rows = product_to_wix_rows(product, publish=publish, weight_unit=weight_unit)

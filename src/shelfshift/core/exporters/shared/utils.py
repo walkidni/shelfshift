@@ -191,10 +191,12 @@ def resolve_primary_category(product: Product, *, separator: str = " > ") -> str
     return separator.join(paths[0])
 
 
-def resolve_product_visibility(product: Product, *, publish_fallback: bool) -> bool:
+def resolve_product_visibility(product: Product, *, publish_override: bool | None) -> bool:
+    if publish_override is not None:
+        return bool(publish_override)
     if product.visibility is not None:
         return bool(product.visibility)
-    return bool(publish_fallback)
+    return False
 
 
 def resolve_seo_title(product: Product) -> str:

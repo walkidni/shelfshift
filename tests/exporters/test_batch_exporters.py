@@ -223,7 +223,7 @@ def test_products_to_squarespace_csv_leaves_product_page_and_url_blank() -> None
     assert frame.loc[0, "Product URL"] == ""
 
 
-def test_batch_exporters_prefer_product_visibility_over_publish_flag() -> None:
+def test_batch_exporters_prefer_explicit_publish_over_product_visibility() -> None:
     product = Product(
         source={"platform": "shopify", "id": "1", "slug": "alpha"},
         title="Alpha Product",
@@ -234,8 +234,8 @@ def test_batch_exporters_prefer_product_visibility_over_publish_flag() -> None:
 
     shopify_csv, _ = products_to_shopify_csv([product], publish=False, weight_unit="g")
     shopify_frame = pd.read_csv(io.StringIO(shopify_csv), dtype=str, keep_default_na=False)
-    assert shopify_frame.loc[0, "Published on online store"] == "TRUE"
-    assert shopify_frame.loc[0, "Status"] == "Active"
+    assert shopify_frame.loc[0, "Published on online store"] == "FALSE"
+    assert shopify_frame.loc[0, "Status"] == "Draft"
 
     bigcommerce_modern_csv, _ = products_to_bigcommerce_csv(
         [product],
@@ -248,7 +248,7 @@ def test_batch_exporters_prefer_product_visibility_over_publish_flag() -> None:
         dtype=str,
         keep_default_na=False,
     )
-    assert bigcommerce_modern_frame.loc[0, "Is Visible"] == "TRUE"
+    assert bigcommerce_modern_frame.loc[0, "Is Visible"] == "FALSE"
 
     bigcommerce_legacy_csv, _ = products_to_bigcommerce_csv(
         [product],
@@ -261,11 +261,11 @@ def test_batch_exporters_prefer_product_visibility_over_publish_flag() -> None:
         dtype=str,
         keep_default_na=False,
     )
-    assert bigcommerce_legacy_frame.loc[0, "Product Visible"] == "Y"
+    assert bigcommerce_legacy_frame.loc[0, "Product Visible"] == "N"
 
     wix_csv, _ = products_to_wix_csv([product], publish=False, weight_unit="kg")
     wix_frame = pd.read_csv(io.StringIO(wix_csv), dtype=str, keep_default_na=False)
-    assert set(wix_frame["visible"]) == {"TRUE"}
+    assert set(wix_frame["visible"]) == {"FALSE"}
 
     squarespace_csv, _ = products_to_squarespace_csv(
         [product], publish=False, product_page="", product_url="", weight_unit="kg"
@@ -275,9 +275,24 @@ def test_batch_exporters_prefer_product_visibility_over_publish_flag() -> None:
         dtype=str,
         keep_default_na=False,
     )
-    assert squarespace_frame.loc[0, "Visible"] == "Yes"
+    assert squarespace_frame.loc[0, "Visible"] == "No"
 
     woocommerce_csv, _ = products_to_woocommerce_csv([product], publish=False, weight_unit="kg")
     woocommerce_frame = pd.read_csv(io.StringIO(woocommerce_csv), dtype=str, keep_default_na=False)
-    assert woocommerce_frame.loc[0, "Published"] == "1"
-    assert woocommerce_frame.loc[0, "Visibility in catalog"] == "visible"
+    assert woocommerce_frame.loc[0, "Published"] == "0"
+    assert woocommerce_frame.loc[0, "Visibility in catalog"] == "hidden"
+
+
+def test_batch_exporters_use_product_visibility_when_publish_is_none() -> None:
+    product = Product(
+        source={"platform": "shopify", "id": "1", "slug": "alpha"},
+        title="Alpha Product",
+        visibility=True,
+        variants=[Variant(id="v1", sku="ALPHA-1", price_amount=10.0, inventory_quantity=3)],
+        images=["https://cdn.example.com/alpha.jpg"],
+    )
+
+    shopify_csv, _ = products_to_shopify_csv([product], weight_unit="g")
+    shopify_frame = pd.read_csv(io.StringIO(shopify_csv), dtype=str, keep_default_na=False)
+    assert shopify_frame.loc[0, "Published on online store"] == "TRUE"
+    assert shopify_frame.loc[0, "Status"] == "Active"

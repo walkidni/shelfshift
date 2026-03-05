@@ -101,13 +101,13 @@ def _set_variant_option_fields(
 def product_to_squarespace_rows(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     product_page: str = "",
     product_url: str = "",
     weight_unit: str = "kg",
 ) -> list[dict[str, str]]:
     resolved_weight_unit = resolve_weight_unit("squarespace", weight_unit)
-    is_visible = utils.resolve_product_visibility(product, publish_fallback=publish)
+    is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
     hosted_image_urls = _resolve_hosted_image_urls(product)
@@ -152,7 +152,7 @@ def product_to_squarespace_rows(
 def product_to_squarespace_csv(
     product: Product,
     *,
-    publish: bool,
+    publish: bool | None = None,
     product_page: str = "",
     product_url: str = "",
     weight_unit: str = "kg",
