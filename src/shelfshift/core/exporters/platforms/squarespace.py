@@ -38,6 +38,33 @@ SQUARESPACE_COLUMNS: list[str] = [
 ]
 
 
+class _SquarespaceExportHeaders:
+    product_type = "Product Type [Non Editable]"
+    product_page = "Product Page"
+    product_url = "Product URL"
+    title = "Title"
+    description = "Description"
+    sku = "SKU"
+    price = "Price"
+    sale_price = "Sale Price"
+    on_sale = "On Sale"
+    stock = "Stock"
+    categories = "Categories"
+    tags = "Tags"
+    weight = "Weight"
+    visible = "Visible"
+    hosted_image_urls = "Hosted Image URLs"
+
+
+H = _SquarespaceExportHeaders()
+
+
+def _set_cell(row: dict[str, str], header: str, value: str) -> None:
+    if header not in row:
+        raise ValueError(f"Unknown Squarespace header assignment: {header}")
+    row[header] = value
+
+
 def _empty_row() -> dict[str, str]:
     return dict.fromkeys(SQUARESPACE_COLUMNS, "")
 
@@ -97,11 +124,11 @@ def _set_variant_option_fields(
     values_by_name: dict[str, str],
 ) -> None:
     for option_index, option_name in enumerate(option_names, start=1):
-        row[f"Option Name {option_index}"] = option_name
+        _set_cell(row, f"Option Name {option_index}", option_name)
         if option_name == "Option":
-            row[f"Option Value {option_index}"] = _fallback_option_value(variant, index)
+            _set_cell(row, f"Option Value {option_index}", _fallback_option_value(variant, index))
             continue
-        row[f"Option Value {option_index}"] = str(values_by_name.get(option_name) or "")
+        _set_cell(row, f"Option Value {option_index}", str(values_by_name.get(option_name) or ""))
 
 
 def product_to_squarespace_rows(
@@ -122,11 +149,11 @@ def product_to_squarespace_rows(
     for index, variant in enumerate(variants, start=1):
         row = _empty_row()
         variant_option_values = utils.resolve_variant_option_map(product, variant)
-        row["SKU"] = str(variant.sku or variant.id or "")
-        row["Price"] = _resolve_price(product, variant)
-        row["Sale Price"] = ""
-        row["On Sale"] = "No"
-        row["Stock"] = _resolve_stock(product, variant)
+        _set_cell(row, H.sku, str(variant.sku or variant.id or ""))
+        _set_cell(row, H.price, _resolve_price(product, variant))
+        _set_cell(row, H.sale_price, "")
+        _set_cell(row, H.on_sale, "No")
+        _set_cell(row, H.stock, _resolve_stock(product, variant))
         _set_variant_option_fields(
             row,
             option_names,
@@ -136,19 +163,21 @@ def product_to_squarespace_rows(
         )
 
         if index == 1:
-            row["Product Type [Non Editable]"] = "DIGITAL" if product.is_digital else "PHYSICAL"
-            row["Product Page"] = (product_page or "").strip()
-            row["Product URL"] = (product_url or "").strip()
-            row["Title"] = product.title or ""
-            row["Description"] = product.description or ""
+            _set_cell(row, H.product_type, "DIGITAL" if product.is_digital else "PHYSICAL")
+            _set_cell(row, H.product_page, (product_page or "").strip())
+            _set_cell(row, H.product_url, (product_url or "").strip())
+            _set_cell(row, H.title, product.title or "")
+            _set_cell(row, H.description, product.description or "")
             # Squarespace imports often fail with "Categories not assigned" when
             # the category label doesn't already exist in the destination site.
             # Keep Categories blank so users can assign categories post-import.
-            row["Categories"] = ""
-            row["Tags"] = _resolve_tags(product)
-            row["Weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
-            row["Visible"] = _format_bool(is_visible)
-            row["Hosted Image URLs"] = hosted_image_urls
+            _set_cell(row, H.categories, "")
+            _set_cell(row, H.tags, _resolve_tags(product))
+            _set_cell(
+                row, H.weight, _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
+            )
+            _set_cell(row, H.visible, _format_bool(is_visible))
+            _set_cell(row, H.hosted_image_urls, hosted_image_urls)
 
         rows.append(row)
 

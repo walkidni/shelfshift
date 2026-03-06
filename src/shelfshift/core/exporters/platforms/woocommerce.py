@@ -72,6 +72,30 @@ WOOCOMMERCE_COLUMNS: list[str] = [
     "Download 2 URL",
 ]
 
+
+class _WooCommerceExportHeaders:
+    type = "Type"
+    sku = "SKU"
+    name = "Name"
+    published = "Published"
+    is_featured = "Is featured?"
+    visibility_in_catalog = "Visibility in catalog"
+    short_description = "Short description"
+    description = "Description"
+    tax_status = "Tax status"
+    in_stock = "In stock?"
+    stock = "Stock"
+    backorders_allowed = "Backorders allowed?"
+    sold_individually = "Sold individually?"
+    regular_price = "Regular price"
+    categories = "Categories"
+    tags = "Tags"
+    images = "Images"
+    parent = "Parent"
+
+
+H = _WooCommerceExportHeaders()
+
 _PLATFORM_TOKEN = {
     "shopify": "SH",
     "amazon": "AMZ",
@@ -92,6 +116,12 @@ def woocommerce_columns_for_weight_unit(weight_unit: str | None = None) -> list[
 
 def _empty_row(columns: list[str]) -> dict[str, str]:
     return dict.fromkeys(columns, "")
+
+
+def _set_cell(row: dict[str, str], header: str, value: str) -> None:
+    if header not in row:
+        raise ValueError(f"Unknown WooCommerce header assignment: {header}")
+    row[header] = value
 
 
 def _slug(value: str | None) -> str:
@@ -196,17 +226,17 @@ def _set_common_product_fields(
     is_visible: bool,
     include_descriptions: bool = True,
 ) -> None:
-    row["Published"] = "1" if is_visible else "0"
-    row["Is featured?"] = "0"
-    row["Visibility in catalog"] = "visible" if is_visible else "hidden"
+    _set_cell(row, H.published, "1" if is_visible else "0")
+    _set_cell(row, H.is_featured, "0")
+    _set_cell(row, H.visibility_in_catalog, "visible" if is_visible else "hidden")
     if include_descriptions:
-        row["Short description"] = _resolve_short_description(product)
-        row["Description"] = product.description or ""
-    row["Tax status"] = "none" if product.is_digital else "taxable"
-    row["Backorders allowed?"] = "0"
-    row["Sold individually?"] = "0"
-    row["Categories"] = utils.resolve_primary_category(product)
-    row["Tags"] = _resolve_tags(product)
+        _set_cell(row, H.short_description, _resolve_short_description(product))
+        _set_cell(row, H.description, product.description or "")
+    _set_cell(row, H.tax_status, "none" if product.is_digital else "taxable")
+    _set_cell(row, H.backorders_allowed, "0")
+    _set_cell(row, H.sold_individually, "0")
+    _set_cell(row, H.categories, utils.resolve_primary_category(product))
+    _set_cell(row, H.tags, _resolve_tags(product))
 
 
 def _variant_in_stock(variant: Variant) -> bool:
@@ -223,14 +253,14 @@ def _apply_stock_fields(row: dict[str, str], variant: Variant) -> None:
     quantity = utils.resolve_variant_inventory_quantity(variant)
     if quantity is not None:
         qty = max(0, quantity)
-        row["Stock"] = str(qty)
-        row["In stock?"] = "1" if qty > 0 else "0"
+        _set_cell(row, H.stock, str(qty))
+        _set_cell(row, H.in_stock, "1" if qty > 0 else "0")
         return
     available = utils.resolve_variant_available(variant)
     if available is not None:
-        row["In stock?"] = "1" if available else "0"
+        _set_cell(row, H.in_stock, "1" if available else "0")
         return
-    row["In stock?"] = "1"
+    _set_cell(row, H.in_stock, "1")
 
 
 def _set_attributes(
@@ -240,10 +270,10 @@ def _set_attributes(
 ) -> None:
     for index, option_name in enumerate(option_names, start=1):
         value = values_by_option.get(option_name, "")
-        row[f"Attribute {index} name"] = option_name
-        row[f"Attribute {index} value(s)"] = value
-        row[f"Attribute {index} visible"] = "1"
-        row[f"Attribute {index} global"] = "0"
+        _set_cell(row, f"Attribute {index} name", option_name)
+        _set_cell(row, f"Attribute {index} value(s)", value)
+        _set_cell(row, f"Attribute {index} visible", "1")
+        _set_cell(row, f"Attribute {index} global", "0")
 
 
 def _is_variable_product(product: Product, variants: list[Variant]) -> bool:
@@ -289,16 +319,24 @@ def product_to_woocommerce_rows(
         variant = variants[0]
         row = _empty_row(resolved_columns)
         _set_common_product_fields(row, product, is_visible=is_visible)
-        row["Type"] = "simple"
-        row["SKU"] = parent_sku
-        row["Name"] = product.title or ""
-        row["Regular price"] = _resolve_price(product, variant)
-        row[resolved_weight_header] = _resolve_weight(
-            product,
-            variant,
-            unit=resolved_weight_unit,
+        _set_cell(row, H.type, "simple")
+        _set_cell(row, H.sku, parent_sku)
+        _set_cell(row, H.name, product.title or "")
+        _set_cell(row, H.regular_price, _resolve_price(product, variant))
+        _set_cell(
+            row,
+            resolved_weight_header,
+            _resolve_weight(
+                product,
+                variant,
+                unit=resolved_weight_unit,
+            ),
         )
-        row["Images"] = _resolve_images(images or [utils.resolve_variant_image_url(variant) or ""])
+        _set_cell(
+            row,
+            H.images,
+            _resolve_images(images or [utils.resolve_variant_image_url(variant) or ""]),
+        )
         _apply_stock_fields(row, variant)
         variant_option_values = variant_option_maps[0] if variant_option_maps else {}
         simple_values: dict[str, str] = {}
@@ -313,13 +351,15 @@ def product_to_woocommerce_rows(
     rows: list[dict[str, str]] = []
     parent_row = _empty_row(resolved_columns)
     _set_common_product_fields(parent_row, product, is_visible=is_visible)
-    parent_row["Type"] = "variable"
-    parent_row["SKU"] = parent_sku
-    parent_row["Name"] = product.title or ""
-    parent_row["Regular price"] = _resolve_price(product)
-    parent_row[resolved_weight_header] = _resolve_weight(product, unit=resolved_weight_unit)
-    parent_row["Images"] = _resolve_images(images)
-    parent_row["In stock?"] = "1" if any(_variant_in_stock(v) for v in variants) else "0"
+    _set_cell(parent_row, H.type, "variable")
+    _set_cell(parent_row, H.sku, parent_sku)
+    _set_cell(parent_row, H.name, product.title or "")
+    _set_cell(parent_row, H.regular_price, _resolve_price(product))
+    _set_cell(
+        parent_row, resolved_weight_header, _resolve_weight(product, unit=resolved_weight_unit)
+    )
+    _set_cell(parent_row, H.images, _resolve_images(images))
+    _set_cell(parent_row, H.in_stock, "1" if any(_variant_in_stock(v) for v in variants) else "0")
     _set_attributes(
         parent_row,
         option_names,
@@ -336,7 +376,7 @@ def product_to_woocommerce_rows(
             is_visible=is_visible,
             include_descriptions=False,
         )
-        variant_row["Type"] = "variation"
+        _set_cell(variant_row, H.type, "variation")
         variant_sku_base = f"{parent_sku}:{_resolve_variant_key(variant, index)}"
         variant_sku = variant_sku_base
         suffix = 2
@@ -345,17 +385,21 @@ def product_to_woocommerce_rows(
             suffix += 1
         seen_skus.add(variant_sku)
 
-        variant_row["SKU"] = variant_sku
-        variant_row["Regular price"] = _resolve_price(product, variant)
-        variant_row[resolved_weight_header] = _resolve_weight(
-            product,
-            variant,
-            unit=resolved_weight_unit,
+        _set_cell(variant_row, H.sku, variant_sku)
+        _set_cell(variant_row, H.regular_price, _resolve_price(product, variant))
+        _set_cell(
+            variant_row,
+            resolved_weight_header,
+            _resolve_weight(
+                product,
+                variant,
+                unit=resolved_weight_unit,
+            ),
         )
-        variant_row["Images"] = utils.resolve_variant_image_url(variant)
-        variant_row["Parent"] = parent_sku
-        variant_row["Categories"] = ""
-        variant_row["Tags"] = ""
+        _set_cell(variant_row, H.images, utils.resolve_variant_image_url(variant))
+        _set_cell(variant_row, H.parent, parent_sku)
+        _set_cell(variant_row, H.categories, "")
+        _set_cell(variant_row, H.tags, "")
 
         _apply_stock_fields(variant_row, variant)
 

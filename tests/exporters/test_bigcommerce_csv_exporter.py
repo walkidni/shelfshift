@@ -243,15 +243,13 @@ def test_bigcommerce_export_supports_legacy_format_opt_in() -> None:
     assert list(frame.columns) == BIGCOMMERCE_LEGACY_COLUMNS
     assert len(frame) == 1
     assert frame.loc[0, "Product Type"] == "P"
-    assert frame.loc[0, "Code"] == "MUG-001"
-    assert frame.loc[0, "Name"] == "Demo Mug"
-    assert frame.loc[0, "Calculated Price"] == "12"
-    assert frame.loc[0, "Product Visible"] == "Y"
+    assert frame.loc[0, "Product Code/SKU"] == "MUG-001"
+    assert frame.loc[0, "Product Name"] == "Demo Mug"
+    assert frame.loc[0, "Price"] == "12"
+    assert frame.loc[0, "Product Visible?"] == "Y"
     assert frame.loc[0, "Product URL"] == "/demo-mug/"
-    assert (
-        frame.loc[0, "Images"]
-        == "Product Image URL: https://cdn.example.com/mug-front.jpg|Product Image URL: https://cdn.example.com/mug-side.jpg"
-    )
+    assert frame.loc[0, "Product Image File - 1"] == "https://cdn.example.com/mug-front.jpg"
+    assert frame.loc[0, "Product Image File - 2"] == "https://cdn.example.com/mug-side.jpg"
 
 
 def test_bigcommerce_export_uses_modern_format_by_default() -> None:
@@ -347,10 +345,7 @@ def test_bigcommerce_legacy_prefers_typed_fields_when_present() -> None:
     frame = read_frame(csv_text)
 
     assert list(frame.columns) == BIGCOMMERCE_LEGACY_COLUMNS
-    assert frame.loc[0, "Calculated Price"] == "12"
-    assert frame.loc[0, "Stock Level"] == "5"
-    assert (
-        frame.loc[0, "Category Details"]
-        == "Category Name: Drinkware > Mugs, Category Path: Drinkware > Mugs"
-    )
-    assert frame.loc[0, "Images"] == "Product Image URL: https://cdn.example.com/typed-mug.jpg"
+    assert frame.loc[0, "Price"] == "12"
+    assert frame.loc[0, "Current Stock Level"] == "5"
+    assert frame.loc[0, "Category"] == "Drinkware > Mugs"
+    assert frame.loc[0, "Product Image File - 1"] == "https://cdn.example.com/typed-mug.jpg"

@@ -32,6 +32,30 @@ _MAX_WIX_NAME_LEN = 80
 _MAX_WIX_PLAIN_DESCRIPTION_LEN = 16000
 
 
+class _WixExportHeaders:
+    handle = "handle"
+    field_type = "fieldType"
+    name = "name"
+    visible = "visible"
+    plain_description = "plainDescription"
+    media = "media"
+    media_alt_text = "mediaAltText"
+    brand = "brand"
+    price = "price"
+    inventory = "inventory"
+    sku = "sku"
+    weight = "weight"
+
+
+H = _WixExportHeaders()
+
+
+def _set_cell(row: dict[str, str], header: str, value: str) -> None:
+    if header not in row:
+        raise ValueError(f"Unknown Wix header assignment: {header}")
+    row[header] = value
+
+
 def _empty_row() -> dict[str, str]:
     return dict.fromkeys(WIX_COLUMNS, "")
 
@@ -159,21 +183,29 @@ def _set_option_fields(
     index: int,
 ) -> None:
     for option_index, option_name in enumerate(option_names, start=1):
-        row[f"productOptionName{option_index}"] = option_name
-        row[f"productOptionType{option_index}"] = _DEFAULT_OPTION_TYPE
+        _set_cell(row, f"productOptionName{option_index}", option_name)
+        _set_cell(row, f"productOptionType{option_index}", _DEFAULT_OPTION_TYPE)
         if variant is None:
-            row[f"productOptionChoices{option_index}"] = _resolve_product_option_choices(
-                variants=variants,
-                variant_option_maps=variant_option_maps,
-                option_values_by_name=option_values_by_name,
-                option_name=option_name,
+            _set_cell(
+                row,
+                f"productOptionChoices{option_index}",
+                _resolve_product_option_choices(
+                    variants=variants,
+                    variant_option_maps=variant_option_maps,
+                    option_values_by_name=option_values_by_name,
+                    option_name=option_name,
+                ),
             )
         else:
-            row[f"productOptionChoices{option_index}"] = _resolve_variant_option_choice(
-                option_name,
-                variant,
-                index=index,
-                values_by_name=variant_option_values or {},
+            _set_cell(
+                row,
+                f"productOptionChoices{option_index}",
+                _resolve_variant_option_choice(
+                    option_name,
+                    variant,
+                    index=index,
+                    values_by_name=variant_option_values or {},
+                ),
             )
 
 
@@ -243,23 +275,31 @@ def product_to_wix_rows(
 
     first_variant = variants[0] if variants else None
     product_row = _empty_row()
-    product_row["handle"] = handle
-    product_row["fieldType"] = "PRODUCT"
-    product_row["name"] = _truncate(product.title, _MAX_WIX_NAME_LEN)
-    product_row["visible"] = _format_bool(is_visible)
-    product_row["plainDescription"] = _truncate(product.description, _MAX_WIX_PLAIN_DESCRIPTION_LEN)
-    product_row["brand"] = product.vendor or product.brand or ""
-    product_row["price"] = _resolve_price(product, first_variant)
-    product_row["inventory"] = _resolve_product_inventory(product, variants)
-    product_row["sku"] = str(
-        (first_variant.sku if first_variant else None) or product.source.id or ""
+    _set_cell(product_row, H.handle, handle)
+    _set_cell(product_row, H.field_type, "PRODUCT")
+    _set_cell(product_row, H.name, _truncate(product.title, _MAX_WIX_NAME_LEN))
+    _set_cell(product_row, H.visible, _format_bool(is_visible))
+    _set_cell(
+        product_row,
+        H.plain_description,
+        _truncate(product.description, _MAX_WIX_PLAIN_DESCRIPTION_LEN),
     )
-    product_row["weight"] = _resolve_weight(
-        product, first_variant, weight_unit=resolved_weight_unit
+    _set_cell(product_row, H.brand, product.vendor or product.brand or "")
+    _set_cell(product_row, H.price, _resolve_price(product, first_variant))
+    _set_cell(product_row, H.inventory, _resolve_product_inventory(product, variants))
+    _set_cell(
+        product_row,
+        H.sku,
+        str((first_variant.sku if first_variant else None) or product.source.id or ""),
+    )
+    _set_cell(
+        product_row,
+        H.weight,
+        _resolve_weight(product, first_variant, weight_unit=resolved_weight_unit),
     )
     if images:
-        product_row["media"] = images[0]
-        product_row["mediaAltText"] = (product.title or "").strip()
+        _set_cell(product_row, H.media, images[0])
+        _set_cell(product_row, H.media_alt_text, (product.title or "").strip())
 
     _set_option_fields(
         product_row,
@@ -276,13 +316,17 @@ def product_to_wix_rows(
     for index, variant in enumerate(variants, start=1):
         variant_option_values = variant_option_maps[index - 1]
         variant_row = _empty_row()
-        variant_row["handle"] = handle
-        variant_row["fieldType"] = "VARIANT"
-        variant_row["visible"] = _format_bool(is_visible)
-        variant_row["price"] = _resolve_price(product, variant)
-        variant_row["inventory"] = _resolve_variant_inventory(product, variant)
-        variant_row["sku"] = str(variant.sku or variant.id or "")
-        variant_row["weight"] = _resolve_weight(product, variant, weight_unit=resolved_weight_unit)
+        _set_cell(variant_row, H.handle, handle)
+        _set_cell(variant_row, H.field_type, "VARIANT")
+        _set_cell(variant_row, H.visible, _format_bool(is_visible))
+        _set_cell(variant_row, H.price, _resolve_price(product, variant))
+        _set_cell(variant_row, H.inventory, _resolve_variant_inventory(product, variant))
+        _set_cell(variant_row, H.sku, str(variant.sku or variant.id or ""))
+        _set_cell(
+            variant_row,
+            H.weight,
+            _resolve_weight(product, variant, weight_unit=resolved_weight_unit),
+        )
 
         _set_option_fields(
             variant_row,
@@ -298,10 +342,10 @@ def product_to_wix_rows(
 
     for image_url in images[1:]:
         media_row = _empty_row()
-        media_row["handle"] = handle
-        media_row["fieldType"] = "MEDIA"
-        media_row["media"] = image_url
-        media_row["mediaAltText"] = (product.title or "").strip()
+        _set_cell(media_row, H.handle, handle)
+        _set_cell(media_row, H.field_type, "MEDIA")
+        _set_cell(media_row, H.media, image_url)
+        _set_cell(media_row, H.media_alt_text, (product.title or "").strip())
         rows.append(media_row)
 
     return rows

@@ -107,6 +107,44 @@ SHOPIFY_DEFAULT_IMAGE_URL = (
 )
 
 
+class _ShopifyExportHeaders:
+    title = "Title"
+    url_handle = "URL handle"
+    description = "Description"
+    vendor = "Vendor"
+    product_category = "Product category"
+    type = "Type"
+    tags = "Tags"
+    published_on_online_store = "Published on online store"
+    status = "Status"
+    sku = "SKU"
+    price = "Price"
+    charge_tax = "Charge tax"
+    inventory_tracker = "Inventory tracker"
+    inventory_quantity = "Inventory quantity"
+    continue_selling = "Continue selling when out of stock"
+    weight_grams = "Weight value (grams)"
+    weight_unit = "Weight unit for display"
+    requires_shipping = "Requires shipping"
+    fulfillment_service = "Fulfillment service"
+    product_image_url = "Product image URL"
+    image_position = "Image position"
+    image_alt_text = "Image alt text"
+    variant_image_url = "Variant image URL"
+    gift_card = "Gift card"
+    seo_title = "SEO title"
+    seo_description = "SEO description"
+
+
+H = _ShopifyExportHeaders()
+
+
+def _set_cell(row: dict[str, str], header: str, value: str) -> None:
+    if header not in row:
+        raise ValueError(f"Unknown Shopify header assignment: {header}")
+    row[header] = value
+
+
 def _empty_row() -> dict[str, str]:
     return dict.fromkeys(SHOPIFY_COLUMNS, "")
 
@@ -220,29 +258,33 @@ def product_to_shopify_rows(
     for index, variant in enumerate(variants):
         row = _empty_row()
         variant_option_values = utils.resolve_variant_option_map(product, variant)
-        row["URL handle"] = handle
-        row["SKU"] = str(variant.sku or variant.id or "")
-        row["Price"] = _resolve_price(product, variant)
-        row["Continue selling when out of stock"] = "FALSE"
-        row["Fulfillment service"] = "manual"
-        row["Requires shipping"] = _format_bool(
-            bool(product.requires_shipping and not product.is_digital)
+        _set_cell(row, H.url_handle, handle)
+        _set_cell(row, H.sku, str(variant.sku or variant.id or ""))
+        _set_cell(row, H.price, _resolve_price(product, variant))
+        _set_cell(row, H.continue_selling, "FALSE")
+        _set_cell(row, H.fulfillment_service, "manual")
+        _set_cell(
+            row,
+            H.requires_shipping,
+            _format_bool(bool(product.requires_shipping and not product.is_digital)),
         )
-        row["Charge tax"] = _format_bool(not product.is_digital)
-        row["Variant image URL"] = _resolve_shopify_image_url(
-            utils.resolve_variant_image_url(variant)
+        _set_cell(row, H.charge_tax, _format_bool(not product.is_digital))
+        _set_cell(
+            row,
+            H.variant_image_url,
+            _resolve_shopify_image_url(utils.resolve_variant_image_url(variant)),
         )
-        row["Gift card"] = "FALSE"
+        _set_cell(row, H.gift_card, "FALSE")
 
         grams = _format_grams(utils.resolve_weight_grams(product, variant))
         if grams:
-            row["Weight value (grams)"] = grams
-            row["Weight unit for display"] = resolved_weight_unit
+            _set_cell(row, H.weight_grams, grams)
+            _set_cell(row, H.weight_unit, resolved_weight_unit)
 
         qty = _format_inventory_qty(utils.resolve_variant_inventory_quantity(variant))
         if qty:
-            row["Inventory tracker"] = "shopify"
-            row["Inventory quantity"] = qty
+            _set_cell(row, H.inventory_tracker, "shopify")
+            _set_cell(row, H.inventory_quantity, qty)
 
         for option_index, option_name in enumerate(option_names, start=1):
             option_value = ""
@@ -250,33 +292,33 @@ def product_to_shopify_rows(
                 option_value = "Default Title"
             else:
                 option_value = str(variant_option_values.get(option_name) or "")
-            row[f"Option{option_index} name"] = option_name
-            row[f"Option{option_index} value"] = option_value
+            _set_cell(row, f"Option{option_index} name", option_name)
+            _set_cell(row, f"Option{option_index} value", option_value)
 
         if index == 0:
-            row["Title"] = product.title or ""
-            row["Description"] = product.description or ""
-            row["Vendor"] = product.vendor or product.brand or ""
-            row["Product category"] = utils.resolve_primary_category(product)
-            row["Type"] = _resolve_type(product)
-            row["Tags"] = _resolve_tags(product)
-            row["Published on online store"] = _format_bool(is_visible)
-            row["Status"] = "Active" if is_visible else "Draft"
-            row["SEO title"] = utils.resolve_seo_title(product)
-            row["SEO description"] = utils.resolve_seo_description(product)
+            _set_cell(row, H.title, product.title or "")
+            _set_cell(row, H.description, product.description or "")
+            _set_cell(row, H.vendor, product.vendor or product.brand or "")
+            _set_cell(row, H.product_category, utils.resolve_primary_category(product))
+            _set_cell(row, H.type, _resolve_type(product))
+            _set_cell(row, H.tags, _resolve_tags(product))
+            _set_cell(row, H.published_on_online_store, _format_bool(is_visible))
+            _set_cell(row, H.status, "Active" if is_visible else "Draft")
+            _set_cell(row, H.seo_title, utils.resolve_seo_title(product))
+            _set_cell(row, H.seo_description, utils.resolve_seo_description(product))
             if product_images:
-                row["Product image URL"] = product_images[0]
-                row["Image position"] = "1"
-                row["Image alt text"] = image_alt_text
+                _set_cell(row, H.product_image_url, product_images[0])
+                _set_cell(row, H.image_position, "1")
+                _set_cell(row, H.image_alt_text, image_alt_text)
 
         rows.append(row)
 
     for image_position, image_url in enumerate(product_images[1:], start=2):
         row = _empty_row()
-        row["URL handle"] = handle
-        row["Product image URL"] = image_url
-        row["Image position"] = str(image_position)
-        row["Image alt text"] = image_alt_text
+        _set_cell(row, H.url_handle, handle)
+        _set_cell(row, H.product_image_url, image_url)
+        _set_cell(row, H.image_position, str(image_position))
+        _set_cell(row, H.image_alt_text, image_alt_text)
         rows.append(row)
 
     return rows

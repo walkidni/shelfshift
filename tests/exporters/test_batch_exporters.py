@@ -261,7 +261,7 @@ def test_batch_exporters_prefer_explicit_publish_over_product_visibility() -> No
         dtype=str,
         keep_default_na=False,
     )
-    assert bigcommerce_legacy_frame.loc[0, "Product Visible"] == "N"
+    assert bigcommerce_legacy_frame.loc[0, "Product Visible?"] == "N"
 
     wix_csv, _ = products_to_wix_csv([product], publish=False, weight_unit="kg")
     wix_frame = pd.read_csv(io.StringIO(wix_csv), dtype=str, keep_default_na=False)

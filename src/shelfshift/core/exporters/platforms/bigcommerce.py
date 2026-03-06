@@ -124,6 +124,69 @@ BIGCOMMERCE_LEGACY_COLUMNS: list[str] = [
     "Manufacturer Part Number",
 ]
 
+
+class _BigCommerceModernHeaders:
+    item = "Item"
+    type = "Type"
+    name = "Name"
+    description = "Description"
+    sku = "SKU"
+    price = "Price"
+    categories = "Categories"
+    weight = "Weight"
+    inventory_tracking = "Inventory Tracking"
+    current_stock = "Current Stock"
+    low_stock = "Low Stock"
+    product_url = "Product URL"
+    meta_description = "Meta Description"
+    search_keywords = "Search Keywords"
+    meta_keywords = "Meta Keywords"
+    free_shipping = "Free Shipping"
+    is_visible = "Is Visible"
+    is_featured = "Is Featured"
+    tax_class = "Tax Class"
+    product_condition = "Product Condition"
+    show_product_condition = "Show Product Condition"
+    sort_order = "Sort Order"
+    options = "Options"
+    variant_image_url = "Variant Image URL"
+    image_url_import = "Image URL (Import)"
+    image_is_thumbnail = "Image is Thumbnail"
+    image_sort_order = "Image Sort Order"
+
+
+class _BigCommerceLegacyHeaders:
+    item_type = "Item Type"
+    product_id = "Product ID"
+    product_type = "Product Type"
+    product_code_sku = "Product Code/SKU"
+    product_name = "Product Name"
+    brand_name = "Brand Name"
+    product_description = "Product Description"
+    price = "Price"
+    fixed_shipping_cost = "Fixed Shipping Cost"
+    free_shipping = "Free Shipping"
+    product_weight = "Product Weight"
+    allow_purchases = "Allow Purchases?"
+    product_visible = "Product Visible?"
+    track_inventory = "Track Inventory"
+    current_stock_level = "Current Stock Level"
+    low_stock_level = "Low Stock Level"
+    category = "Category"
+    product_image_file_1 = "Product Image File - 1"
+    product_image_file_2 = "Product Image File - 2"
+    search_keywords = "Search Keywords"
+    page_title = "Page Title"
+    meta_keywords = "Meta Keywords"
+    meta_description = "Meta Description"
+    product_condition = "Product Condition"
+    product_url = "Product URL"
+
+
+MH = _BigCommerceModernHeaders()
+LH = _BigCommerceLegacyHeaders()
+
+
 BigCommerceCsvFormat = Literal["modern", "legacy"]
 
 _PLATFORM_TOKEN = {
@@ -148,6 +211,12 @@ def _empty_row() -> dict[str, str]:
 
 def _empty_legacy_row() -> dict[str, str]:
     return dict.fromkeys(BIGCOMMERCE_LEGACY_COLUMNS, "")
+
+
+def _set_cell(row: dict[str, str], header: str, value: str, *, schema: str) -> None:
+    if header not in row:
+        raise ValueError(f"Unknown BigCommerce {schema} header assignment: {header}")
+    row[header] = value
 
 
 def _format_price(value: float | None) -> str:
@@ -341,8 +410,8 @@ def _resolve_modern_categories(product: Product) -> str:
     return ""
 
 
-def _resolve_legacy_images(product: Product) -> str:
-    urls = utils.ordered_unique(
+def _resolve_legacy_image_urls(product: Product) -> list[str]:
+    return utils.ordered_unique(
         [
             url
             for url in (
@@ -351,7 +420,6 @@ def _resolve_legacy_images(product: Product) -> str:
             if url
         ]
     )
-    return "|".join(f"Product Image URL: {url}" for url in urls)
 
 
 def _product_to_bigcommerce_legacy_rows(
@@ -370,31 +438,49 @@ def _product_to_bigcommerce_legacy_rows(
     first_variant = variants[0] if variants else None
 
     row = _empty_legacy_row()
-    row["Product ID"] = str(product.source.id or "")
-    row["Product Type"] = "P"
-    row["Code"] = parent_sku
-    row["Name"] = product.title or ""
-    row["Brand"] = product.brand or ""
-    row["Description"] = product.description or ""
-    row["Calculated Price"] = _resolve_price(product, first_variant)
-    row["Fixed Shipping Price"] = "0.0000"
-    row["Free Shipping"] = "Y" if not product.requires_shipping else "N"
-    row["Weight"] = _format_weight(
-        _resolve_product_weight_grams(product, variants), weight_unit=weight_unit, decimals=4
+    _set_cell(row, LH.item_type, "Product", schema="legacy")
+    _set_cell(row, LH.product_id, str(product.source.id or ""), schema="legacy")
+    _set_cell(row, LH.product_type, "P", schema="legacy")
+    _set_cell(row, LH.product_code_sku, parent_sku, schema="legacy")
+    _set_cell(row, LH.product_name, product.title or "", schema="legacy")
+    _set_cell(row, LH.brand_name, product.brand or "", schema="legacy")
+    _set_cell(row, LH.product_description, product.description or "", schema="legacy")
+    _set_cell(row, LH.price, _resolve_price(product, first_variant), schema="legacy")
+    _set_cell(row, LH.fixed_shipping_cost, "0.0000", schema="legacy")
+    _set_cell(row, LH.free_shipping, "Y" if not product.requires_shipping else "N", schema="legacy")
+    _set_cell(
+        row,
+        LH.product_weight,
+        _format_weight(
+            _resolve_product_weight_grams(product, variants), weight_unit=weight_unit, decimals=4
+        ),
+        schema="legacy",
     )
-    row["Allow Purchases"] = "Y"
-    row["Product Visible"] = "Y" if is_visible else "N"
-    row["Product Inventoried"] = "Y" if inventory_mode != _INVENTORY_NONE else "N"
-    row["Stock Level"] = _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode)
-    row["Low Stock Level"] = "0"
-    row["Category Details"] = _resolve_category_details(utils.resolve_primary_category(product))
-    row["Images"] = _resolve_legacy_images(product)
-    row["Page Title"] = utils.resolve_seo_title(product)
+    _set_cell(row, LH.allow_purchases, "Y", schema="legacy")
+    _set_cell(row, LH.product_visible, "Y" if is_visible else "N", schema="legacy")
+    _set_cell(
+        row, LH.track_inventory, "Y" if inventory_mode != _INVENTORY_NONE else "N", schema="legacy"
+    )
+    _set_cell(
+        row,
+        LH.current_stock_level,
+        _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode),
+        schema="legacy",
+    )
+    _set_cell(row, LH.low_stock_level, "0", schema="legacy")
+    _set_cell(row, LH.category, utils.resolve_primary_category(product), schema="legacy")
+    image_urls = _resolve_legacy_image_urls(product)
+    if image_urls:
+        _set_cell(row, LH.product_image_file_1, image_urls[0], schema="legacy")
+    if len(image_urls) > 1:
+        _set_cell(row, LH.product_image_file_2, image_urls[1], schema="legacy")
+    _set_cell(row, LH.page_title, utils.resolve_seo_title(product), schema="legacy")
     keyword_value = _resolve_keywords_from_tags(product.tags)
-    row["META Keywords"] = keyword_value
-    row["META Description"] = utils.resolve_seo_description(product)
-    row["Product Condition"] = "New"
-    row["Product URL"] = _resolve_product_url_slug(product)
+    _set_cell(row, LH.search_keywords, keyword_value, schema="legacy")
+    _set_cell(row, LH.meta_keywords, keyword_value, schema="legacy")
+    _set_cell(row, LH.meta_description, utils.resolve_seo_description(product), schema="legacy")
+    _set_cell(row, LH.product_condition, "New", schema="legacy")
+    _set_cell(row, LH.product_url, _resolve_product_url_slug(product), schema="legacy")
     return [row]
 
 
@@ -417,56 +503,98 @@ def _product_to_bigcommerce_modern_rows(
     first_variant = variants[0] if variants else None
     keyword_value = _resolve_keywords_from_tags(product.tags)
     product_row = _empty_row()
-    product_row["Item"] = "Product"
-    product_row["Type"] = "digital" if product.is_digital else "physical"
-    product_row["Name"] = product.title or ""
-    product_row["Description"] = product.description or ""
-    product_row["SKU"] = parent_sku
-    product_row["Price"] = _resolve_price(product, first_variant)
-    product_row["Categories"] = _resolve_modern_categories(product)
-    product_row["Weight"] = _require_weight(
-        _resolve_product_weight_grams(product, variants),
-        is_digital=product.is_digital,
-        weight_unit=weight_unit,
+    _set_cell(product_row, MH.item, "Product", schema="modern")
+    _set_cell(
+        product_row, MH.type, "digital" if product.is_digital else "physical", schema="modern"
     )
-    product_row["Inventory Tracking"] = inventory_mode
-    product_row["Current Stock"] = _resolve_stock_for_product_row(
-        variants, inventory_mode=inventory_mode
+    _set_cell(product_row, MH.name, product.title or "", schema="modern")
+    _set_cell(product_row, MH.description, product.description or "", schema="modern")
+    _set_cell(product_row, MH.sku, parent_sku, schema="modern")
+    _set_cell(product_row, MH.price, _resolve_price(product, first_variant), schema="modern")
+    _set_cell(product_row, MH.categories, _resolve_modern_categories(product), schema="modern")
+    _set_cell(
+        product_row,
+        MH.weight,
+        _require_weight(
+            _resolve_product_weight_grams(product, variants),
+            is_digital=product.is_digital,
+            weight_unit=weight_unit,
+        ),
+        schema="modern",
     )
-    product_row["Low Stock"] = "0"
-    product_row["Product URL"] = _resolve_product_url_slug(product)
-    product_row["Meta Description"] = utils.resolve_seo_description(product)
-    product_row["Search Keywords"] = keyword_value
-    product_row["Meta Keywords"] = keyword_value
-    product_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
-    product_row["Is Visible"] = "TRUE" if is_visible else "FALSE"
-    product_row["Is Featured"] = "FALSE"
-    product_row["Tax Class"] = "0"
-    product_row["Product Condition"] = "New"
-    product_row["Show Product Condition"] = "FALSE"
-    product_row["Sort Order"] = "0"
+    _set_cell(product_row, MH.inventory_tracking, inventory_mode, schema="modern")
+    _set_cell(
+        product_row,
+        MH.current_stock,
+        _resolve_stock_for_product_row(variants, inventory_mode=inventory_mode),
+        schema="modern",
+    )
+    _set_cell(product_row, MH.low_stock, "0", schema="modern")
+    _set_cell(product_row, MH.product_url, _resolve_product_url_slug(product), schema="modern")
+    _set_cell(
+        product_row, MH.meta_description, utils.resolve_seo_description(product), schema="modern"
+    )
+    _set_cell(product_row, MH.search_keywords, keyword_value, schema="modern")
+    _set_cell(product_row, MH.meta_keywords, keyword_value, schema="modern")
+    _set_cell(
+        product_row,
+        MH.free_shipping,
+        "TRUE" if not product.requires_shipping else "FALSE",
+        schema="modern",
+    )
+    _set_cell(product_row, MH.is_visible, "TRUE" if is_visible else "FALSE", schema="modern")
+    _set_cell(product_row, MH.is_featured, "FALSE", schema="modern")
+    _set_cell(product_row, MH.tax_class, "0", schema="modern")
+    _set_cell(product_row, MH.product_condition, "New", schema="modern")
+    _set_cell(product_row, MH.show_product_condition, "FALSE", schema="modern")
+    _set_cell(product_row, MH.sort_order, "0", schema="modern")
     rows.append(product_row)
 
     if is_variable:
         for index, variant in enumerate(variants, start=1):
             variant_row = _empty_row()
             variant_option_values = utils.resolve_variant_option_map(product, variant)
-            variant_row["Item"] = "Variant"
-            variant_row["SKU"] = _resolve_variant_sku(parent_sku, variant, index=index)
-            variant_row["Price"] = _resolve_price(product, variant)
-            variant_row["Current Stock"] = _resolve_stock_for_variant_row(variant)
-            variant_row["Low Stock"] = "0"
-            variant_row["Free Shipping"] = "TRUE" if not product.requires_shipping else "FALSE"
-            variant_row["Is Visible"] = "TRUE" if is_visible else "FALSE"
-            variant_row["Show Product Condition"] = "FALSE"
-            variant_row["Options"] = _build_variant_options_value(
-                variant,
-                option_names,
-                index=index,
-                values_by_name=variant_option_values,
+            _set_cell(variant_row, MH.item, "Variant", schema="modern")
+            _set_cell(
+                variant_row,
+                MH.sku,
+                _resolve_variant_sku(parent_sku, variant, index=index),
+                schema="modern",
             )
-            variant_row["Variant Image URL"] = _normalize_image_url(
-                utils.resolve_variant_image_url(variant)
+            _set_cell(variant_row, MH.price, _resolve_price(product, variant), schema="modern")
+            _set_cell(
+                variant_row,
+                MH.current_stock,
+                _resolve_stock_for_variant_row(variant),
+                schema="modern",
+            )
+            _set_cell(variant_row, MH.low_stock, "0", schema="modern")
+            _set_cell(
+                variant_row,
+                MH.free_shipping,
+                "TRUE" if not product.requires_shipping else "FALSE",
+                schema="modern",
+            )
+            _set_cell(
+                variant_row, MH.is_visible, "TRUE" if is_visible else "FALSE", schema="modern"
+            )
+            _set_cell(variant_row, MH.show_product_condition, "FALSE", schema="modern")
+            _set_cell(
+                variant_row,
+                MH.options,
+                _build_variant_options_value(
+                    variant,
+                    option_names,
+                    index=index,
+                    values_by_name=variant_option_values,
+                ),
+                schema="modern",
+            )
+            _set_cell(
+                variant_row,
+                MH.variant_image_url,
+                _normalize_image_url(utils.resolve_variant_image_url(variant)),
+                schema="modern",
             )
             rows.append(variant_row)
 
@@ -481,16 +609,24 @@ def _product_to_bigcommerce_modern_rows(
     )
     for image_index, image_url in enumerate(product_images, start=1):
         image_row = _empty_row()
-        image_row["Item"] = "Image"
-        image_row["Image URL (Import)"] = image_url
-        image_row["Image is Thumbnail"] = "TRUE" if image_index == 1 else "FALSE"
-        image_row["Image Sort Order"] = str(image_index - 1)
+        _set_cell(image_row, MH.item, "Image", schema="modern")
+        _set_cell(image_row, MH.image_url_import, image_url, schema="modern")
+        _set_cell(
+            image_row,
+            MH.image_is_thumbnail,
+            "TRUE" if image_index == 1 else "FALSE",
+            schema="modern",
+        )
+        _set_cell(image_row, MH.image_sort_order, str(image_index - 1), schema="modern")
         rows.append(image_row)
 
     if not is_variable and first_variant is not None:
         # For simple products with a variant-level image source, place it on Variant Image URL.
-        rows[0]["Variant Image URL"] = _normalize_image_url(
-            utils.resolve_variant_image_url(first_variant)
+        _set_cell(
+            rows[0],
+            MH.variant_image_url,
+            _normalize_image_url(utils.resolve_variant_image_url(first_variant)),
+            schema="modern",
         )
 
     return rows

@@ -77,7 +77,7 @@ def products_to_bigcommerce_csv(
                 product_keys.append(str(product_row.get("SKU") or "").strip())
         else:
             if product_rows:
-                product_keys.append(str(product_rows[0].get("Code") or "").strip())
+                product_keys.append(str(product_rows[0].get("Product Code/SKU") or "").strip())
         rows.extend(product_rows)
 
     _require_unique(
