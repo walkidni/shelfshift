@@ -266,6 +266,38 @@ def test_exporter_keeps_namespaced_aliexpress_sku_as_string() -> None:
     assert frame.loc[0, "Variant image URL"] == ""
 
 
+def test_shopify_export_replays_unmapped_fields_for_noncanonical_headers() -> None:
+    product = Product(
+        platform="shopify",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        images=[],
+        unmapped_fields={
+            "shopify:Status": "active",
+            "shopify:Type": "Graphic shirt",
+        },
+        variants=[
+            Variant(
+                id="v1",
+                sku="TEE-BLK-M",
+                price_amount=19.99,
+                unmapped_fields={"shopify:Barcode": "ABC-123"},
+            )
+        ],
+    )
+
+    csv_text, _ = product_to_shopify_csv(product, publish=False)
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Status"] == "active"
+    assert frame.loc[0, "Type"] == "Graphic shirt"
+    assert frame.loc[0, "Barcode"] == "ABC-123"
+    # canonical-backed header should still come from canonical mapping
+    assert frame.loc[0, "Published on online store"] == "FALSE"
+
+
 def test_invalid_image_urls_fallback_to_default_shopify_image() -> None:
     product = Product(
         platform="squarespace",

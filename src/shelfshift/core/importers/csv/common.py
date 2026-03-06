@@ -17,6 +17,7 @@ from ...canonical import (
 )
 from ...canonical.helpers import parse_decimal_money
 from ..identifiers import make_identifiers
+from ..unmapped_fields import set_unmapped_field
 
 
 def decode_csv_bytes(data: bytes) -> str:
@@ -173,6 +174,55 @@ def ensure_product_defaults(product: Product) -> Product:
     if product.unmapped_fields is None:
         product.unmapped_fields = {}
     return product
+
+
+def csv_unmapped_key(platform: str, header: str) -> str:
+    platform_token = str(platform or "").strip().lower() or "unknown"
+    return f"{platform_token}:{header}"
+
+
+def unmapped_headers_from_csv(
+    headers: list[str],
+    *,
+    mapped_headers: set[str],
+) -> list[str]:
+    mapped = {str(header or "") for header in mapped_headers}
+    return [header for header in headers if header not in mapped]
+
+
+def apply_row_unmapped_fields(
+    target: dict[str, str],
+    *,
+    platform: str,
+    row: dict[str, str],
+    headers: list[str],
+) -> None:
+    for header in headers:
+        set_unmapped_field(
+            target,
+            key=csv_unmapped_key(platform, header),
+            value=row.get(header),
+        )
+
+
+def apply_first_non_empty_unmapped_fields(
+    target: dict[str, str],
+    *,
+    platform: str,
+    rows: list[dict[str, str]],
+    headers: list[str],
+) -> None:
+    for header in headers:
+        for row in rows:
+            value = str(row.get(header) or "").strip()
+            if not value:
+                continue
+            set_unmapped_field(
+                target,
+                key=csv_unmapped_key(platform, header),
+                value=value,
+            )
+            break
 
 
 def add_csv_provenance(

@@ -123,6 +123,62 @@ BIGCOMMERCE_LEGACY_COLUMNS: list[str] = [
     "Global Trade Item Number",
     "Manufacturer Part Number",
 ]
+_BIGCOMMERCE_MODERN_CANONICAL_HEADERS: set[str] = {
+    "Item",
+    "Type",
+    "Name",
+    "Description",
+    "SKU",
+    "Price",
+    "Categories",
+    "Weight",
+    "Inventory Tracking",
+    "Current Stock",
+    "Low Stock",
+    "Product URL",
+    "Meta Description",
+    "Search Keywords",
+    "Meta Keywords",
+    "Free Shipping",
+    "Is Visible",
+    "Is Featured",
+    "Tax Class",
+    "Product Condition",
+    "Show Product Condition",
+    "Sort Order",
+    "Options",
+    "Variant Image URL",
+    "Image URL (Import)",
+    "Image is Thumbnail",
+    "Image Sort Order",
+}
+_BIGCOMMERCE_LEGACY_CANONICAL_HEADERS: set[str] = {
+    "Item Type",
+    "Product ID",
+    "Product Type",
+    "Product Code/SKU",
+    "Product Name",
+    "Brand Name",
+    "Product Description",
+    "Price",
+    "Fixed Shipping Cost",
+    "Free Shipping",
+    "Product Weight",
+    "Allow Purchases?",
+    "Product Visible?",
+    "Track Inventory",
+    "Current Stock Level",
+    "Low Stock Level",
+    "Category",
+    "Product Image File - 1",
+    "Product Image File - 2",
+    "Search Keywords",
+    "Page Title",
+    "Meta Keywords",
+    "Meta Description",
+    "Product Condition",
+    "Product URL",
+}
 
 
 class _BigCommerceModernHeaders:
@@ -481,6 +537,20 @@ def _product_to_bigcommerce_legacy_rows(
     _set_cell(row, LH.meta_description, utils.resolve_seo_description(product), schema="legacy")
     _set_cell(row, LH.product_condition, "New", schema="legacy")
     _set_cell(row, LH.product_url, _resolve_product_url_slug(product), schema="legacy")
+    utils.apply_platform_unmapped_fields_to_row(
+        row,
+        product,
+        platform="bigcommerce",
+        canonical_headers=_BIGCOMMERCE_LEGACY_CANONICAL_HEADERS,
+    )
+    if variants:
+        utils.apply_platform_unmapped_fields_to_row(
+            row,
+            product,
+            platform="bigcommerce",
+            canonical_headers=_BIGCOMMERCE_LEGACY_CANONICAL_HEADERS,
+            variant=variants[0],
+        )
     return [row]
 
 
@@ -548,6 +618,12 @@ def _product_to_bigcommerce_modern_rows(
     _set_cell(product_row, MH.product_condition, "New", schema="modern")
     _set_cell(product_row, MH.show_product_condition, "FALSE", schema="modern")
     _set_cell(product_row, MH.sort_order, "0", schema="modern")
+    utils.apply_platform_unmapped_fields_to_row(
+        product_row,
+        product,
+        platform="bigcommerce",
+        canonical_headers=_BIGCOMMERCE_MODERN_CANONICAL_HEADERS,
+    )
     rows.append(product_row)
 
     if is_variable:
@@ -595,6 +671,13 @@ def _product_to_bigcommerce_modern_rows(
                 MH.variant_image_url,
                 _normalize_image_url(utils.resolve_variant_image_url(variant)),
                 schema="modern",
+            )
+            utils.apply_platform_unmapped_fields_to_row(
+                variant_row,
+                product,
+                platform="bigcommerce",
+                canonical_headers=_BIGCOMMERCE_MODERN_CANONICAL_HEADERS,
+                variant=variant,
             )
             rows.append(variant_row)
 

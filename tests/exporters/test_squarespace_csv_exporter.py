@@ -252,3 +252,29 @@ def test_typed_fields_override_legacy_values_when_present() -> None:
         frame.loc[0, "Hosted Image URLs"]
         == "https://cdn.example.com/typed-main.jpg\nhttps://cdn.example.com/typed-gallery.jpg"
     )
+
+
+def test_squarespace_export_replays_unmapped_fields_for_noncanonical_headers() -> None:
+    product = Product(
+        platform="squarespace",
+        id="900",
+        title="Typed Tee",
+        description="Typed description",
+        price={"amount": 12.34, "currency": "USD"},
+        unmapped_fields={
+            "squarespace:Option Name 4": "Material",
+            "squarespace:Option Value 4": "Cotton",
+        },
+        variants=[Variant(id="v1", sku="SQ-TYPED-1", price_amount=12.34)],
+    )
+
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=True,
+        product_page="shop",
+        product_url="typed-tee",
+    )
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Option Name 4"] == "Material"
+    assert frame.loc[0, "Option Value 4"] == "Cotton"

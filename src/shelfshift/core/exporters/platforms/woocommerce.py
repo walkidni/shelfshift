@@ -71,6 +71,26 @@ WOOCOMMERCE_COLUMNS: list[str] = [
     "Download 2 name",
     "Download 2 URL",
 ]
+_WOOCOMMERCE_CANONICAL_HEADERS_BASE: set[str] = {
+    "SKU",
+    "Name",
+    "Published",
+    "Visibility in catalog",
+    "Short description",
+    "Description",
+    "Tax status",
+    "In stock?",
+    "Stock",
+    "Regular price",
+    "Categories",
+    "Tags",
+    "Images",
+    "Parent",
+    "Attribute 1 name",
+    "Attribute 1 value(s)",
+    "Attribute 2 name",
+    "Attribute 2 value(s)",
+}
 
 
 class _WooCommerceExportHeaders:
@@ -294,6 +314,8 @@ def product_to_woocommerce_rows(
     resolved_weight_unit = resolve_weight_unit("woocommerce", weight_unit)
     resolved_columns = woocommerce_columns_for_weight_unit(resolved_weight_unit)
     resolved_weight_header = WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT[resolved_weight_unit]
+    canonical_headers = set(_WOOCOMMERCE_CANONICAL_HEADERS_BASE)
+    canonical_headers.add(resolved_weight_header)
     is_visible = utils.resolve_product_visibility(product, publish_override=publish)
     variants = utils.resolve_variants(product)
     option_names = _resolve_option_names(product, variants)
@@ -346,6 +368,19 @@ def product_to_woocommerce_rows(
             else:
                 simple_values[option_name] = str(variant_option_values.get(option_name) or "")
         _set_attributes(row, option_names, simple_values)
+        utils.apply_platform_unmapped_fields_to_row(
+            row,
+            product,
+            platform="woocommerce",
+            canonical_headers=canonical_headers,
+        )
+        utils.apply_platform_unmapped_fields_to_row(
+            row,
+            product,
+            platform="woocommerce",
+            canonical_headers=canonical_headers,
+            variant=variant,
+        )
         return [row]
 
     rows: list[dict[str, str]] = []
@@ -364,6 +399,12 @@ def product_to_woocommerce_rows(
         parent_row,
         option_names,
         {name: ",".join(parent_attribute_values.get(name, [])) for name in option_names},
+    )
+    utils.apply_platform_unmapped_fields_to_row(
+        parent_row,
+        product,
+        platform="woocommerce",
+        canonical_headers=canonical_headers,
     )
     rows.append(parent_row)
 
@@ -411,6 +452,13 @@ def product_to_woocommerce_rows(
             else:
                 variant_values[option_name] = str(variant_option_values.get(option_name) or "")
         _set_attributes(variant_row, option_names, variant_values)
+        utils.apply_platform_unmapped_fields_to_row(
+            variant_row,
+            product,
+            platform="woocommerce",
+            canonical_headers=canonical_headers,
+            variant=variant,
+        )
         rows.append(variant_row)
 
     return rows

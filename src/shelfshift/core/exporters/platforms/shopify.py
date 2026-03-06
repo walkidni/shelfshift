@@ -105,6 +105,37 @@ SHOPIFY_DEFAULT_IMAGE_URL = (
     "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/"
     "1024px-No_image_available.svg.png"
 )
+_SHOPIFY_CANONICAL_HEADERS: set[str] = {
+    "Title",
+    "URL handle",
+    "Description",
+    "Vendor",
+    "Product category",
+    "Tags",
+    "Published on online store",
+    "SKU",
+    "Option1 name",
+    "Option1 value",
+    "Option2 name",
+    "Option2 value",
+    "Option3 name",
+    "Option3 value",
+    "Price",
+    "Charge tax",
+    "Inventory tracker",
+    "Inventory quantity",
+    "Continue selling when out of stock",
+    "Weight value (grams)",
+    "Weight unit for display",
+    "Requires shipping",
+    "Fulfillment service",
+    "Product image URL",
+    "Image position",
+    "Image alt text",
+    "Variant image URL",
+    "SEO title",
+    "SEO description",
+}
 
 
 class _ShopifyExportHeaders:
@@ -204,7 +235,7 @@ def _resolve_tags(product: Product) -> str:
 
 
 def _resolve_type(product: Product) -> str:
-    passthrough = utils.resolve_unmapped_field(product, "shopify:type")
+    passthrough = utils.resolve_unmapped_field(product, "shopify:Type")
     if passthrough:
         return passthrough
     return utils.resolve_primary_category(product)
@@ -310,6 +341,19 @@ def product_to_shopify_rows(
                 _set_cell(row, H.product_image_url, product_images[0])
                 _set_cell(row, H.image_position, "1")
                 _set_cell(row, H.image_alt_text, image_alt_text)
+            utils.apply_platform_unmapped_fields_to_row(
+                row,
+                product,
+                platform="shopify",
+                canonical_headers=_SHOPIFY_CANONICAL_HEADERS,
+            )
+        utils.apply_platform_unmapped_fields_to_row(
+            row,
+            product,
+            platform="shopify",
+            canonical_headers=_SHOPIFY_CANONICAL_HEADERS,
+            variant=variant,
+        )
 
         rows.append(row)
 

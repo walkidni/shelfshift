@@ -231,3 +231,30 @@ def test_wix_export_prefers_typed_fields_when_present() -> None:
     assert frame.loc[1, "productOptionChoices1"] == "Blue"
     assert frame.loc[2, "fieldType"] == "MEDIA"
     assert frame.loc[2, "media"] == "https://cdn.example.com/typed-product-2.jpg"
+
+
+def test_wix_export_replays_unmapped_fields_for_noncanonical_headers() -> None:
+    product = Product(
+        platform="wix",
+        id="101",
+        title="Guava Glow Set",
+        description="Glow kit",
+        price={"amount": 29.99, "currency": "USD"},
+        images=["https://example.com/img1.jpg"],
+        unmapped_fields={"wix:ribbon": "Bestseller"},
+        variants=[
+            Variant(
+                id="v1",
+                sku="GG-S",
+                price_amount=29.99,
+                inventory_quantity=10,
+                unmapped_fields={"wix:fieldType": "VARIANT"},
+            )
+        ],
+    )
+
+    csv_text, _ = product_to_wix_csv(product, publish=True)
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "ribbon"] == "Bestseller"
+    assert frame.loc[1, "fieldType"] == "VARIANT"

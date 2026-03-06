@@ -349,3 +349,35 @@ def test_bigcommerce_legacy_prefers_typed_fields_when_present() -> None:
     assert frame.loc[0, "Current Stock Level"] == "5"
     assert frame.loc[0, "Category"] == "Drinkware > Mugs"
     assert frame.loc[0, "Product Image File - 1"] == "https://cdn.example.com/typed-mug.jpg"
+
+
+def test_bigcommerce_export_replays_unmapped_fields_for_noncanonical_headers() -> None:
+    product = Product(
+        platform="bigcommerce",
+        id="101",
+        title="Classic Tee",
+        description="Soft cotton tee",
+        price={"amount": 19.99, "currency": "USD"},
+        unmapped_fields={"bigcommerce:Warranty": "2 years"},
+        variants=[
+            Variant(
+                id="v1",
+                sku="TEE-BLK-M",
+                price_amount=19.99,
+                inventory_quantity=4,
+                unmapped_fields={"bigcommerce:Cost Price": "8"},
+            ),
+            Variant(
+                id="v2",
+                sku="TEE-WHT-L",
+                price_amount=21.99,
+                inventory_quantity=2,
+            ),
+        ],
+    )
+
+    csv_text, _ = product_to_bigcommerce_csv(product, publish=False)
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Warranty"] == "2 years"
+    assert frame.loc[1, "Cost Price"] == "8"

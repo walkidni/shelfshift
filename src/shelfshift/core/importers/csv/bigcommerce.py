@@ -4,6 +4,8 @@ from typing import Literal
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from .common import (
     add_csv_provenance,
+    apply_first_non_empty_unmapped_fields,
+    apply_row_unmapped_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -15,6 +17,7 @@ from .common import (
     require_headers,
     split_tokens,
     taxonomy_from_primary,
+    unmapped_headers_from_csv,
     weight_object,
     weight_to_grams,
 )
@@ -24,6 +27,44 @@ _LEGACY_REQUIRED_HEADERS = ("Product Type", "Code", "Name", "Calculated Price")
 _OPTION_RE = re.compile(r"\|Name=([^|]+)\|Value=([^|]+)$")
 _MODERN_DETECTION_HEADERS = {"Item", "SKU", "Name"}
 _LEGACY_DETECTION_HEADERS = {"Product Type", "Code", "Name"}
+_MODERN_CANONICAL_MAPPED_HEADERS: set[str] = {
+    "ID",
+    "Product URL",
+    "Name",
+    "Description",
+    "Page Title",
+    "Meta Description",
+    "Search Keywords",
+    "Categories",
+    "Type",
+    "Is Visible",
+    "SKU",
+    "Price",
+    "Weight",
+    "Current Stock",
+    "Options",
+    "Variant Image URL",
+    "Image URL (Import)",
+}
+_LEGACY_CANONICAL_MAPPED_HEADERS: set[str] = {
+    "Product ID",
+    "Product URL",
+    "Name",
+    "Description",
+    "Page Title",
+    "META Description",
+    "Brand",
+    "META Keywords",
+    "Category Details",
+    "Code",
+    "Calculated Price",
+    "Sale Price",
+    "Retail Price",
+    "Stock Level",
+    "Weight",
+    "Product Visible",
+    "Images",
+}
 
 BigCommerceCsvInputFormat = Literal["modern", "legacy"]
 
@@ -60,6 +101,10 @@ def _parse_legacy_images(value: str) -> list[str]:
 def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _MODERN_REQUIRED_HEADERS)
+    unmapped_headers = unmapped_headers_from_csv(
+        headers,
+        mapped_headers=_MODERN_CANONICAL_MAPPED_HEADERS,
+    )
     product_indices = [
         index
         for index, row in enumerate(rows)
@@ -81,6 +126,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
 
     option_maps: list[dict[str, str]] = []
     variants: list[Variant] = []
+    variant_source_rows: list[dict[str, str]] = list(variant_rows)
     for index, row in enumerate(variant_rows, start=1):
         sku = str(row.get("SKU") or "").strip() or f"BC:{index}"
         option_map = _parse_modern_options(str(row.get("Options") or ""))
@@ -106,6 +152,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
 
     if not variants:
         fallback_sku = str(product_row.get("SKU") or "").strip() or "BC:product"
+        variant_source_rows = [product_row]
         variants = [
             Variant(
                 id="1",
@@ -153,6 +200,19 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
             }
         ),
     )
+    apply_first_non_empty_unmapped_fields(
+        product.unmapped_fields,
+        platform="bigcommerce",
+        rows=[product_row],
+        headers=unmapped_headers,
+    )
+    for variant, row in zip(variants, variant_source_rows, strict=False):
+        apply_row_unmapped_fields(
+            variant.unmapped_fields,
+            platform="bigcommerce",
+            row=row,
+            headers=unmapped_headers,
+        )
     add_csv_provenance(
         product,
         source_platform="bigcommerce",
@@ -166,6 +226,10 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
 def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _LEGACY_REQUIRED_HEADERS)
+    unmapped_headers = unmapped_headers_from_csv(
+        headers,
+        mapped_headers=_LEGACY_CANONICAL_MAPPED_HEADERS,
+    )
     product_row = rows[0]
 
     sku = str(product_row.get("Code") or "").strip() or "BC:legacy"
@@ -219,6 +283,18 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         identifiers=make_identifiers(
             values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
         ),
+    )
+    apply_first_non_empty_unmapped_fields(
+        product.unmapped_fields,
+        platform="bigcommerce",
+        rows=[product_row],
+        headers=unmapped_headers,
+    )
+    apply_row_unmapped_fields(
+        variant.unmapped_fields,
+        platform="bigcommerce",
+        row=product_row,
+        headers=unmapped_headers,
     )
     add_csv_provenance(
         product,

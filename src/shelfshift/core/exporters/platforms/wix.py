@@ -30,6 +30,31 @@ _MAX_OPTIONS = 6
 _DEFAULT_OPTION_TYPE = "TEXT_CHOICES"
 _MAX_WIX_NAME_LEN = 80
 _MAX_WIX_PLAIN_DESCRIPTION_LEN = 16000
+_WIX_CANONICAL_HEADERS: set[str] = {
+    "handle",
+    "name",
+    "visible",
+    "plainDescription",
+    "media",
+    "mediaAltText",
+    "brand",
+    "price",
+    "inventory",
+    "sku",
+    "weight",
+    "productOptionName1",
+    "productOptionChoices1",
+    "productOptionName2",
+    "productOptionChoices2",
+    "productOptionName3",
+    "productOptionChoices3",
+    "productOptionName4",
+    "productOptionChoices4",
+    "productOptionName5",
+    "productOptionChoices5",
+    "productOptionName6",
+    "productOptionChoices6",
+}
 
 
 class _WixExportHeaders:
@@ -311,6 +336,12 @@ def product_to_wix_rows(
         variant_option_values=None,
         index=0,
     )
+    utils.apply_platform_unmapped_fields_to_row(
+        product_row,
+        product,
+        platform="wix",
+        canonical_headers=_WIX_CANONICAL_HEADERS,
+    )
     rows.append(product_row)
 
     for index, variant in enumerate(variants, start=1):
@@ -337,6 +368,13 @@ def product_to_wix_rows(
             variant=variant,
             variant_option_values=variant_option_values,
             index=index,
+        )
+        utils.apply_platform_unmapped_fields_to_row(
+            variant_row,
+            product,
+            platform="wix",
+            canonical_headers=_WIX_CANONICAL_HEADERS,
+            variant=variant,
         )
         rows.append(variant_row)
 

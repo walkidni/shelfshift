@@ -36,6 +36,29 @@ SQUARESPACE_COLUMNS: list[str] = [
     "Visible",
     "Hosted Image URLs",
 ]
+_SQUARESPACE_CANONICAL_HEADERS: set[str] = {
+    "Product Type [Non Editable]",
+    "Product Page",
+    "Product URL",
+    "Title",
+    "Description",
+    "SKU",
+    "Option Name 1",
+    "Option Value 1",
+    "Option Name 2",
+    "Option Value 2",
+    "Option Name 3",
+    "Option Value 3",
+    "Price",
+    "Sale Price",
+    "On Sale",
+    "Stock",
+    "Categories",
+    "Tags",
+    "Weight",
+    "Visible",
+    "Hosted Image URLs",
+}
 
 
 class _SquarespaceExportHeaders:
@@ -178,6 +201,20 @@ def product_to_squarespace_rows(
             )
             _set_cell(row, H.visible, _format_bool(is_visible))
             _set_cell(row, H.hosted_image_urls, hosted_image_urls)
+            utils.apply_platform_unmapped_fields_to_row(
+                row,
+                product,
+                platform="squarespace",
+                canonical_headers=_SQUARESPACE_CANONICAL_HEADERS,
+            )
+
+        utils.apply_platform_unmapped_fields_to_row(
+            row,
+            product,
+            platform="squarespace",
+            canonical_headers=_SQUARESPACE_CANONICAL_HEADERS,
+            variant=variant,
+        )
 
         rows.append(row)
 

@@ -248,3 +248,32 @@ def test_woocommerce_export_uses_requested_weight_unit_header() -> None:
         assert list(frame.columns) == woocommerce_columns_for_weight_unit(unit)
         assert header in frame.columns
         assert frame.loc[0, header] == expected
+
+
+def test_woocommerce_export_replays_unmapped_fields_for_noncanonical_headers() -> None:
+    product = Product(
+        platform="woocommerce",
+        id="101",
+        title="Demo Mug",
+        description="Demo description",
+        price={"amount": 12.0, "currency": "USD"},
+        unmapped_fields={
+            "woocommerce:Is featured?": "1",
+            "woocommerce:Type": "simple",
+        },
+        variants=[
+            Variant(
+                id="v1",
+                sku="WC-DEMO-1",
+                price_amount=12.0,
+                unmapped_fields={"woocommerce:Sale price": "10"},
+            )
+        ],
+    )
+
+    csv_text, _ = product_to_woocommerce_csv(product, publish=False)
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Is featured?"] == "1"
+    assert frame.loc[0, "Type"] == "simple"
+    assert frame.loc[0, "Sale price"] == "10"

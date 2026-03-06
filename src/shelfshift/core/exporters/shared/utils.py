@@ -281,6 +281,54 @@ def resolve_unmapped_field(
     return values.get(cleaned_key)
 
 
+def resolve_platform_unmapped_fields(
+    product: Product,
+    *,
+    platform: str,
+    variant: Variant | None = None,
+) -> dict[str, str]:
+    target_platform = _clean_text(platform)
+    if not target_platform:
+        return {}
+    normalized_platform = target_platform.lower()
+    values = resolve_unmapped_fields(product, variant=variant)
+    out: dict[str, str] = {}
+    for key, value in values.items():
+        if ":" not in key:
+            continue
+        source_platform, raw_header = key.split(":", 1)
+        if _clean_text(source_platform or "").lower() != normalized_platform:
+            continue
+        header = raw_header
+        if not header:
+            continue
+        if header in out:
+            continue
+        out[header] = value
+    return out
+
+
+def apply_platform_unmapped_fields_to_row(
+    row: dict[str, str],
+    product: Product,
+    *,
+    platform: str,
+    canonical_headers: set[str],
+    variant: Variant | None = None,
+) -> None:
+    passthrough_values = resolve_platform_unmapped_fields(
+        product,
+        platform=platform,
+        variant=variant,
+    )
+    for header, value in passthrough_values.items():
+        if header in canonical_headers:
+            continue
+        if header not in row:
+            continue
+        row[header] = value
+
+
 def resolve_variants(product: Product) -> list[Variant]:
     variants = list(product.variants or [])
     if variants:

@@ -1,6 +1,8 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from .common import (
     add_csv_provenance,
+    apply_first_non_empty_unmapped_fields,
+    apply_row_unmapped_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -11,11 +13,36 @@ from .common import (
     price_from_amount,
     require_headers,
     split_tokens,
+    unmapped_headers_from_csv,
     weight_object,
     weight_to_grams,
 )
 
 _REQUIRED_HEADERS = ("handle", "fieldType", "name", "price", "sku")
+_WIX_CANONICAL_MAPPED_HEADERS: set[str] = {
+    "handle",
+    "name",
+    "visible",
+    "plainDescription",
+    "media",
+    "brand",
+    "price",
+    "inventory",
+    "sku",
+    "weight",
+    "productOptionName1",
+    "productOptionChoices1",
+    "productOptionName2",
+    "productOptionChoices2",
+    "productOptionName3",
+    "productOptionChoices3",
+    "productOptionName4",
+    "productOptionChoices4",
+    "productOptionName5",
+    "productOptionChoices5",
+    "productOptionName6",
+    "productOptionChoices6",
+}
 
 
 def _variant_inventory_from_wix(value: str) -> Inventory:
@@ -33,6 +60,10 @@ def _variant_inventory_from_wix(value: str) -> Inventory:
 def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
+    unmapped_headers = unmapped_headers_from_csv(
+        headers,
+        mapped_headers=_WIX_CANONICAL_MAPPED_HEADERS,
+    )
     handles: list[str] = []
     selected_handle = ""
     for row in rows:
@@ -116,6 +147,19 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": selected_handle}),
     )
+    apply_first_non_empty_unmapped_fields(
+        product.unmapped_fields,
+        platform="wix",
+        rows=[product_row],
+        headers=unmapped_headers,
+    )
+    for variant, row in zip(variants, source_rows, strict=False):
+        apply_row_unmapped_fields(
+            variant.unmapped_fields,
+            platform="wix",
+            row=row,
+            headers=unmapped_headers,
+        )
     add_csv_provenance(
         product,
         source_platform="wix",

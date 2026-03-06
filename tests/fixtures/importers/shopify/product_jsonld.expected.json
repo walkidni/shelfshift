@@ -114,7 +114,7 @@
     "values": {}
   },
   "unmapped_fields": {
-    "shopify:type": "Home"
+    "shopify:Type": "Home"
   },
   "provenance": {}
 }

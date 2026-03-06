@@ -190,7 +190,7 @@ class ShopifyClient(ProductClient):
         product.identifiers = make_identifiers({})
         set_unmapped_field(
             product.unmapped_fields,
-            key=platform_unmapped_key(self.platform, "type"),
+            key=platform_unmapped_key(self.platform, "Type"),
             value=product_ld.get("category"),
         )
         return product
@@ -417,7 +417,7 @@ class ShopifyClient(ProductClient):
         )
         set_unmapped_field(
             product.unmapped_fields,
-            key=platform_unmapped_key(self.platform, "type"),
+            key=platform_unmapped_key(self.platform, "Type"),
             value=category,
         )
         return finalize_product_typed_fields(product, source_url=url)

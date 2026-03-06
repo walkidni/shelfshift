@@ -1,7 +1,8 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
-from ..unmapped_fields import platform_unmapped_key, set_unmapped_field
 from .common import (
     add_csv_provenance,
+    apply_first_non_empty_unmapped_fields,
+    apply_row_unmapped_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -12,6 +13,7 @@ from .common import (
     price_from_amount,
     split_tokens,
     taxonomy_from_primary,
+    unmapped_headers_from_csv,
     weight_object,
 )
 
@@ -23,6 +25,44 @@ SHOPIFY_REQUIRED_HEADERS_OLD = (
     "Variant Price",
 )
 SHOPIFY_REQUIRED_HEADERS_NEW = ("URL handle", "Title", "Description", "SKU", "Price")
+_SHOPIFY_CANONICAL_MAPPED_HEADERS: set[str] = {
+    "Handle",
+    "URL handle",
+    "Title",
+    "Body (HTML)",
+    "Description",
+    "Vendor",
+    "Product category",
+    "Tags",
+    "Published",
+    "Published on online store",
+    "Variant SKU",
+    "SKU",
+    "Variant Price",
+    "Price",
+    "Variant Inventory Qty",
+    "Inventory quantity",
+    "Variant Grams",
+    "Weight value (grams)",
+    "Variant Image",
+    "Variant image URL",
+    "Image Src",
+    "Product image URL",
+    "Variant Requires Shipping",
+    "Requires shipping",
+    "Option1 Name",
+    "Option1 Value",
+    "Option2 Name",
+    "Option2 Value",
+    "Option3 Name",
+    "Option3 Value",
+    "Option1 name",
+    "Option1 value",
+    "Option2 name",
+    "Option2 value",
+    "Option3 name",
+    "Option3 value",
+}
 
 
 def _first_non_empty(row: dict[str, str], *keys: str) -> str:
@@ -67,6 +107,10 @@ def extract_shopify_handles(rows: list[dict[str, str]]) -> list[str]:
 def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Product:
     headers, rows = csv_rows(csv_text)
     require_shopify_headers(headers)
+    unmapped_headers = unmapped_headers_from_csv(
+        headers,
+        mapped_headers=_SHOPIFY_CANONICAL_MAPPED_HEADERS,
+    )
 
     handles = extract_shopify_handles(rows)
     if not handles:
@@ -78,6 +122,7 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
     product_images: list[str] = []
     variants: list[Variant] = []
     option_maps: list[dict[str, str]] = []
+    variant_source_rows: list[dict[str, str]] = []
 
     for index, row in enumerate(selected_rows, start=1):
         image_src = _first_non_empty(row, "Image Src", "Product image URL")
@@ -87,6 +132,7 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         sku = _first_non_empty(row, "Variant SKU", "SKU")
         if not sku:
             continue
+        variant_source_rows.append(row)
 
         option_map: dict[str, str] = {}
         for option_index in range(1, 4):
@@ -159,11 +205,19 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         media=media_from_urls(product_images),
         identifiers=make_identifiers(values={"source_product_id": selected_handle}),
     )
-    set_unmapped_field(
+    apply_first_non_empty_unmapped_fields(
         product.unmapped_fields,
-        key=platform_unmapped_key(source_platform, "type"),
-        value=_first_non_empty(product_row, "Type"),
+        platform=source_platform,
+        rows=[product_row],
+        headers=unmapped_headers,
     )
+    for variant, row in zip(variants, variant_source_rows, strict=False):
+        apply_row_unmapped_fields(
+            variant.unmapped_fields,
+            platform=source_platform,
+            row=row,
+            headers=unmapped_headers,
+        )
     add_csv_provenance(
         product,
         source_platform=source_platform,

@@ -113,13 +113,13 @@ def test_import_products_from_csv_shopify_new_template_parses_multiple_products(
     assert products[0].variants[0].inventory.quantity == 3
     assert str(products[0].variants[0].weight.value) == "200.0"
     assert products[0].taxonomy.primary == ["Apparel & Accessories", "Clothing", "Shirts"]
-    assert products[0].unmapped_fields["shopify:type"] == "Graphic shirt"
+    assert products[0].unmapped_fields["shopify:Type"] == "Graphic shirt"
     assert products[1].source.slug == "beta"
     assert products[1].source.id is None
     assert products[1].title == "Beta Product"
     assert products[1].variants[0].sku == "BETA-1"
     assert products[1].taxonomy.primary == ["Home & Garden", "Kitchenware"]
-    assert products[1].unmapped_fields["shopify:type"] == "Mug"
+    assert products[1].unmapped_fields["shopify:Type"] == "Mug"
 
 
 def test_import_products_from_csv_shopify_does_not_infer_taxonomy_from_type() -> None:
@@ -139,7 +139,7 @@ def test_import_products_from_csv_shopify_does_not_infer_taxonomy_from_type() ->
     assert products[0].title == "Alpha Product"
     assert products[0].taxonomy.primary is None
     assert products[0].taxonomy.paths == []
-    assert products[0].unmapped_fields["shopify:type"] == "Graphic shirt"
+    assert products[0].unmapped_fields["shopify:Type"] == "Graphic shirt"
 
 
 def test_shopify_batch_multi_variant_product() -> None:
@@ -201,7 +201,7 @@ def test_shopify_batch_provenance() -> None:
         assert prov["source_platform"] == "shopify"
 
 
-def test_shopify_batch_unknown_fields_are_ignored() -> None:
+def test_shopify_batch_unknown_fields_are_captured_as_unmapped() -> None:
     csv_text = "\n".join(
         [
             "Handle,Title,Body (HTML),Variant SKU,Variant Price,Custom Product,Custom Variant",
@@ -217,10 +217,10 @@ def test_shopify_batch_unknown_fields_are_ignored() -> None:
     assert len(products) == 1
     product = products[0]
     variant = product.variants[0]
-    assert "shopify:custom_product" not in product.unmapped_fields
-    assert "shopify:custom_variant" not in product.unmapped_fields
-    assert "shopify:custom_product" not in variant.unmapped_fields
-    assert "shopify:custom_variant" not in variant.unmapped_fields
+    assert product.unmapped_fields["shopify:Custom Product"] == "P-1"
+    assert product.unmapped_fields["shopify:Custom Variant"] == "V-1"
+    assert variant.unmapped_fields["shopify:Custom Product"] == "P-1"
+    assert variant.unmapped_fields["shopify:Custom Variant"] == "V-1"
 
 
 def test_shopify_batch_maps_is_published_from_publish_only() -> None:

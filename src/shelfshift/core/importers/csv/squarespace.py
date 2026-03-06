@@ -1,6 +1,8 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
 from .common import (
     add_csv_provenance,
+    apply_first_non_empty_unmapped_fields,
+    apply_row_unmapped_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -13,11 +15,34 @@ from .common import (
     split_image_lines,
     split_tokens,
     taxonomy_from_primary,
+    unmapped_headers_from_csv,
     weight_object,
     weight_to_grams,
 )
 
 _REQUIRED_HEADERS = ("Title", "SKU", "Price", "Product Type [Non Editable]", "Visible")
+_SQUARESPACE_CANONICAL_MAPPED_HEADERS: set[str] = {
+    "Product ID [Non Editable]",
+    "Variant ID [Non Editable]",
+    "Product Type [Non Editable]",
+    "Product URL",
+    "Title",
+    "Description",
+    "SKU",
+    "Option Name 1",
+    "Option Value 1",
+    "Option Name 2",
+    "Option Value 2",
+    "Option Name 3",
+    "Option Value 3",
+    "Price",
+    "Stock",
+    "Categories",
+    "Tags",
+    "Weight",
+    "Visible",
+    "Hosted Image URLs",
+}
 
 
 def _segment_rows(rows: list[dict[str, str]]) -> tuple[list[dict[str, str]], int]:
@@ -32,15 +57,21 @@ def _segment_rows(rows: list[dict[str, str]]) -> tuple[list[dict[str, str]], int
 def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
+    unmapped_headers = unmapped_headers_from_csv(
+        headers,
+        mapped_headers=_SQUARESPACE_CANONICAL_MAPPED_HEADERS,
+    )
     selected_rows, detected_product_count = _segment_rows(rows)
     product_row = selected_rows[0]
 
     variants: list[Variant] = []
     option_maps: list[dict[str, str]] = []
+    variant_source_rows: list[dict[str, str]] = []
     for index, row in enumerate(selected_rows, start=1):
         sku = str(row.get("SKU") or "").strip()
         if not sku:
             continue
+        variant_source_rows.append(row)
         option_map: dict[str, str] = {}
         for option_index in range(1, 4):
             name = str(row.get(f"Option Name {option_index}") or "").strip()
@@ -105,6 +136,19 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         media=media_from_urls(media_urls),
         identifiers=make_identifiers({"source_product_id": slug or variants[0].sku}),
     )
+    apply_first_non_empty_unmapped_fields(
+        product.unmapped_fields,
+        platform="squarespace",
+        rows=[product_row],
+        headers=unmapped_headers,
+    )
+    for variant, row in zip(variants, variant_source_rows, strict=False):
+        apply_row_unmapped_fields(
+            variant.unmapped_fields,
+            platform="squarespace",
+            row=row,
+            headers=unmapped_headers,
+        )
     add_csv_provenance(
         product,
         source_platform="squarespace",

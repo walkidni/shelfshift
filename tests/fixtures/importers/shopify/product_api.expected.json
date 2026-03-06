@@ -206,7 +206,7 @@
     }
   },
   "unmapped_fields": {
-    "shopify:type": "Shirts"
+    "shopify:Type": "Shirts"
   },
   "provenance": {}
 }

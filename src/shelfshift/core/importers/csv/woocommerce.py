@@ -3,6 +3,8 @@ from slugify import slugify
 from ...canonical import CategorySet, Inventory, Product, Seo, SourceRef, Variant
 from .common import (
     add_csv_provenance,
+    apply_first_non_empty_unmapped_fields,
+    apply_row_unmapped_fields,
     csv_rows,
     make_identifiers,
     media_from_urls,
@@ -13,6 +15,7 @@ from .common import (
     price_from_amount,
     require_headers,
     split_tokens,
+    unmapped_headers_from_csv,
     weight_object,
     weight_to_grams,
 )
@@ -23,6 +26,27 @@ _WEIGHT_UNIT_BY_HEADER = {
     "Weight (lbs)": "lb",
     "Weight (g)": "g",
     "Weight (oz)": "oz",
+}
+_WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE: set[str] = {
+    "ID",
+    "SKU",
+    "Name",
+    "Description",
+    "Short description",
+    "Tags",
+    "Categories",
+    "Regular price",
+    "Stock",
+    "In stock?",
+    "Tax status",
+    "Published",
+    "Images",
+    "Attribute 1 name",
+    "Attribute 1 value(s)",
+    "Attribute 2 name",
+    "Attribute 2 value(s)",
+    "Attribute 3 name",
+    "Attribute 3 value(s)",
 }
 
 
@@ -65,6 +89,10 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
     headers, rows = csv_rows(csv_text)
     require_headers(headers, _REQUIRED_HEADERS)
     weight_header, source_weight_unit = _detect_weight_header(headers)
+    mapped_headers = set(_WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE)
+    if weight_header:
+        mapped_headers.add(weight_header)
+    unmapped_headers = unmapped_headers_from_csv(headers, mapped_headers=mapped_headers)
     product_rows = [
         row for row in rows if str(row.get("Type") or "").strip().lower() in {"simple", "variable"}
     ]
@@ -155,6 +183,19 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
             values={"source_product_id": parent_sku or slug or "woocommerce-product"}
         ),
     )
+    apply_first_non_empty_unmapped_fields(
+        product.unmapped_fields,
+        platform="woocommerce",
+        rows=[product_row],
+        headers=unmapped_headers,
+    )
+    for variant, row in zip(variants, variant_rows, strict=False):
+        apply_row_unmapped_fields(
+            variant.unmapped_fields,
+            platform="woocommerce",
+            row=row,
+            headers=unmapped_headers,
+        )
     add_csv_provenance(
         product,
         source_platform="woocommerce",
