@@ -15,7 +15,7 @@ from shelfshift.core.canonical import (
     Price,
 )
 from shelfshift.core.exporters import product_to_woocommerce_csv
-from shelfshift.core.exporters.platforms.woocommerce import WOOCOMMERCE_COLUMNS
+from shelfshift.core.exporters.platforms.woocommerce import woocommerce_columns_for_weight_unit
 
 _FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "exporter" / "woocommerce"
 
@@ -23,7 +23,8 @@ _FIXTURES_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "exporter" /
 def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
     fixture_path = _FIXTURES_ROOT / "woocommerce_one_product_two_variations_full.csv"
     expected = read_fixture_frame(fixture_path)
-    assert list(expected.columns) == WOOCOMMERCE_COLUMNS
+    expected_columns = woocommerce_columns_for_weight_unit("kg")
+    assert list(expected.columns) == expected_columns
 
     product = Product(
         platform="shopify",
@@ -79,14 +80,15 @@ def test_woocommerce_csv_matches_golden_fixture_two_variations() -> None:
     assert filename == "woocommerce-20260208T000000Z.csv"
     actual = read_frame(csv_text)
 
-    assert list(actual.columns) == WOOCOMMERCE_COLUMNS
+    assert list(actual.columns) == expected_columns
     pd.testing.assert_frame_equal(actual, expected)
 
 
 def test_woocommerce_csv_matches_golden_fixture_simple_product() -> None:
     fixture_path = _FIXTURES_ROOT / "woocommerce_one_simple_product_full.csv"
     expected = read_fixture_frame(fixture_path)
-    assert list(expected.columns) == WOOCOMMERCE_COLUMNS
+    expected_columns = woocommerce_columns_for_weight_unit("kg")
+    assert list(expected.columns) == expected_columns
 
     product = Product(
         platform="amazon",
@@ -114,5 +116,5 @@ def test_woocommerce_csv_matches_golden_fixture_simple_product() -> None:
     assert filename == "woocommerce-20260208T000000Z.csv"
     actual = read_frame(csv_text)
 
-    assert list(actual.columns) == WOOCOMMERCE_COLUMNS
+    assert list(actual.columns) == expected_columns
     pd.testing.assert_frame_equal(actual, expected)
