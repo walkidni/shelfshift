@@ -125,6 +125,61 @@ def test_multi_variant_uses_first_row_for_product_fields() -> None:
     assert frame.loc[1, "Hosted Image URLs"] == ""
 
 
+def test_squarespace_export_maps_options_up_to_six() -> None:
+    product = Product(
+        platform="shopify",
+        id="101",
+        title="Complex Tee",
+        description="Many options",
+        price={"amount": 19.99, "currency": "USD"},
+        images=[],
+        variants=[
+            Variant(
+                id="v1",
+                sku="TEE-1",
+                price_amount=19.99,
+                option_values=[
+                    {"name": "Opt1", "value": "A1"},
+                    {"name": "Opt2", "value": "A2"},
+                    {"name": "Opt3", "value": "A3"},
+                    {"name": "Opt4", "value": "A4"},
+                    {"name": "Opt5", "value": "A5"},
+                    {"name": "Opt6", "value": "A6"},
+                ],
+            )
+        ],
+        options=[
+            {"name": "Opt1", "values": ["A1"]},
+            {"name": "Opt2", "values": ["A2"]},
+            {"name": "Opt3", "values": ["A3"]},
+            {"name": "Opt4", "values": ["A4"]},
+            {"name": "Opt5", "values": ["A5"]},
+            {"name": "Opt6", "values": ["A6"]},
+        ],
+    )
+
+    csv_text, _ = product_to_squarespace_csv(
+        product,
+        publish=True,
+        product_page="shop",
+        product_url="complex-tee",
+    )
+    frame = read_frame(csv_text)
+
+    assert frame.loc[0, "Option Name 1"] == "Opt1"
+    assert frame.loc[0, "Option Value 1"] == "A1"
+    assert frame.loc[0, "Option Name 2"] == "Opt2"
+    assert frame.loc[0, "Option Value 2"] == "A2"
+    assert frame.loc[0, "Option Name 3"] == "Opt3"
+    assert frame.loc[0, "Option Value 3"] == "A3"
+    assert frame.loc[0, "Option Name 4"] == "Opt4"
+    assert frame.loc[0, "Option Value 4"] == "A4"
+    assert frame.loc[0, "Option Name 5"] == "Opt5"
+    assert frame.loc[0, "Option Value 5"] == "A5"
+    assert frame.loc[0, "Option Name 6"] == "Opt6"
+    assert frame.loc[0, "Option Value 6"] == "A6"
+
+
 def test_multiple_variants_without_options_synthesizes_option_column() -> None:
     product = Product(
         platform="shopify",
@@ -262,8 +317,8 @@ def test_squarespace_export_replays_unmapped_fields_for_noncanonical_headers() -
         description="Typed description",
         price={"amount": 12.34, "currency": "USD"},
         unmapped_fields={
-            "squarespace:Option Name 4": "Material",
-            "squarespace:Option Value 4": "Cotton",
+            "squarespace:Length": "10",
+            "squarespace:Width": "20",
         },
         variants=[Variant(id="v1", sku="SQ-TYPED-1", price_amount=12.34)],
     )
@@ -276,5 +331,5 @@ def test_squarespace_export_replays_unmapped_fields_for_noncanonical_headers() -
     )
     frame = read_frame(csv_text)
 
-    assert frame.loc[0, "Option Name 4"] == "Material"
-    assert frame.loc[0, "Option Value 4"] == "Cotton"
+    assert frame.loc[0, "Length"] == "10"
+    assert frame.loc[0, "Width"] == "20"

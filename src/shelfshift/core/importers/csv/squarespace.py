@@ -35,6 +35,12 @@ _SQUARESPACE_CANONICAL_MAPPED_HEADERS: set[str] = {
     "Option Value 2",
     "Option Name 3",
     "Option Value 3",
+    "Option Name 4",
+    "Option Value 4",
+    "Option Name 5",
+    "Option Value 5",
+    "Option Name 6",
+    "Option Value 6",
     "Price",
     "Stock",
     "Categories",
@@ -73,7 +79,7 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
             continue
         variant_source_rows.append(row)
         option_map: dict[str, str] = {}
-        for option_index in range(1, 4):
+        for option_index in range(1, 7):
             name = str(row.get(f"Option Name {option_index}") or "").strip()
             value = str(row.get(f"Option Value {option_index}") or "").strip()
             if name and value:

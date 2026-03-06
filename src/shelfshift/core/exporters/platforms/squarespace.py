@@ -49,6 +49,12 @@ _SQUARESPACE_CANONICAL_HEADERS: set[str] = {
     "Option Value 2",
     "Option Name 3",
     "Option Value 3",
+    "Option Name 4",
+    "Option Value 4",
+    "Option Name 5",
+    "Option Value 5",
+    "Option Name 6",
+    "Option Value 6",
     "Price",
     "Sale Price",
     "On Sale",
@@ -100,7 +106,7 @@ def _resolve_option_names(product: Product, variants: list[Variant]) -> list[str
     option_names = [option.name for option in utils.resolve_option_defs(product) if option.name]
     if not option_names and len(variants) > 1:
         return ["Option"]
-    return option_names[:3]
+    return option_names[:6]
 
 
 def _resolve_price(product: Product, variant: Variant) -> str:

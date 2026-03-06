@@ -423,6 +423,37 @@ def test_squarespace_batch_multi_variant_product() -> None:
     assert len(mug.variants) == 1
 
 
+def test_squarespace_batch_maps_options_up_to_six() -> None:
+    csv_text = "\n".join(
+        [
+            "Title,Description,SKU,Option Name 1,Option Value 1,Option Name 2,Option Value 2,Option Name 3,Option Value 3,Option Name 4,Option Value 4,Option Name 5,Option Value 5,Option Name 6,Option Value 6,Price,Stock,Product Type [Non Editable],Visible,Product URL,Hosted Image URLs",
+            "V-Neck Tee,Soft cotton,SQ-TEE-S,Opt1,A1,Opt2,A2,Opt3,A3,Opt4,A4,Opt5,A5,Opt6,A6,20.00,35,PHYSICAL,No,,",
+        ]
+    )
+
+    products = import_products_from_csv(
+        source_platform="squarespace",
+        csv_bytes=csv_text.encode("utf-8"),
+        source_weight_unit="kg",
+    )
+
+    assert len(products) == 1
+    product = products[0]
+    assert len(product.options) == 6
+    assert [option.name for option in product.options] == [
+        "Opt1",
+        "Opt2",
+        "Opt3",
+        "Opt4",
+        "Opt5",
+        "Opt6",
+    ]
+    assert len(product.variants) == 1
+    assert len(product.variants[0].option_values) == 6
+    assert product.variants[0].option_values[5].name == "Opt6"
+    assert product.variants[0].option_values[5].value == "A6"
+
+
 def test_squarespace_batch_provenance() -> None:
     csv_text = "\n".join(
         [
