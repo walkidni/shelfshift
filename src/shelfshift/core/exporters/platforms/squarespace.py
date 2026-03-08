@@ -36,35 +36,6 @@ SQUARESPACE_COLUMNS: list[str] = [
     "Visible",
     "Hosted Image URLs",
 ]
-_SQUARESPACE_CANONICAL_HEADERS: set[str] = {
-    "Product Type [Non Editable]",
-    "Product Page",
-    "Product URL",
-    "Title",
-    "Description",
-    "SKU",
-    "Option Name 1",
-    "Option Value 1",
-    "Option Name 2",
-    "Option Value 2",
-    "Option Name 3",
-    "Option Value 3",
-    "Option Name 4",
-    "Option Value 4",
-    "Option Name 5",
-    "Option Value 5",
-    "Option Name 6",
-    "Option Value 6",
-    "Price",
-    "Sale Price",
-    "On Sale",
-    "Stock",
-    "Categories",
-    "Tags",
-    "Weight",
-    "Visible",
-    "Hosted Image URLs",
-}
 
 
 class _SquarespaceExportHeaders:
@@ -86,6 +57,10 @@ class _SquarespaceExportHeaders:
 
 
 H = _SquarespaceExportHeaders()
+_SQUARESPACE_CANONICAL_HEADERS: set[str] = utils.infer_export_canonical_headers(
+    export_headers=H,
+    indexed_header_families=[(("Option Name {i}", "Option Value {i}"), range(1, 7))],
+)
 
 
 def _set_cell(row: dict[str, str], header: str, value: str) -> None:

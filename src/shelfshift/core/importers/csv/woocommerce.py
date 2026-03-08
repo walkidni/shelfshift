@@ -6,6 +6,7 @@ from .common import (
     apply_first_non_empty_unmapped_fields,
     apply_row_unmapped_fields,
     csv_rows,
+    infer_mapped_headers,
     make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
@@ -27,27 +28,32 @@ _WEIGHT_UNIT_BY_HEADER = {
     "Weight (g)": "g",
     "Weight (oz)": "oz",
 }
-_WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE: set[str] = {
-    "ID",
-    "SKU",
-    "Name",
-    "Description",
-    "Short description",
-    "Tags",
-    "Categories",
-    "Regular price",
-    "Stock",
-    "In stock?",
-    "Tax status",
-    "Published",
-    "Images",
-    "Attribute 1 name",
-    "Attribute 1 value(s)",
-    "Attribute 2 name",
-    "Attribute 2 value(s)",
-    "Attribute 3 name",
-    "Attribute 3 value(s)",
+_WOOCOMMERCE_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
+    "id": ("ID",),
+    "sku": ("SKU",),
+    "name": ("Name",),
+    "description": ("Description",),
+    "short_description": ("Short description",),
+    "tags": ("Tags",),
+    "categories": ("Categories",),
+    "regular_price": ("Regular price",),
+    "stock": ("Stock",),
+    "in_stock": ("In stock?",),
+    "tax_status": ("Tax status",),
+    "published": ("Published",),
+    "images": ("Images",),
 }
+_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE = "Attribute {i} name"
+_WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE = "Attribute {i} value(s)"
+_WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE: set[str] = infer_mapped_headers(
+    alias_maps=[_WOOCOMMERCE_HEADER_ALIASES],
+    indexed_header_families=[
+        (
+            (_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE, _WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE),
+            range(1, 4),
+        )
+    ],
+)
 
 
 def _taxonomy_from_categories(value: str) -> CategorySet:
@@ -60,11 +66,27 @@ def _taxonomy_from_categories(value: str) -> CategorySet:
     return CategorySet(paths=[parts], primary=list(parts))
 
 
+def _first_non_empty(row: dict[str, str], *keys: str) -> str:
+    for key in keys:
+        value = str(row.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _field_value(row: dict[str, str], field: str) -> str:
+    return _first_non_empty(row, *_WOOCOMMERCE_HEADER_ALIASES[field])
+
+
 def _row_option_map(row: dict[str, str]) -> dict[str, str]:
     out: dict[str, str] = {}
     for index in range(1, 4):
-        name = str(row.get(f"Attribute {index} name") or "").strip()
-        value = str(row.get(f"Attribute {index} value(s)") or "").strip()
+        name = str(
+            row.get(_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE.replace("{i}", str(index))) or ""
+        ).strip()
+        value = str(
+            row.get(_WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE.replace("{i}", str(index))) or ""
+        ).strip()
         if not name or not value:
             continue
         first_value = split_tokens(value, sep=",")
@@ -74,7 +96,7 @@ def _row_option_map(row: dict[str, str]) -> dict[str, str]:
 
 
 def _product_is_published_from_row(row: dict[str, str]) -> bool | None:
-    return parse_bool(row.get("Published"))
+    return parse_bool(_field_value(row, "published"))
 
 
 def _detect_weight_header(headers: list[str]) -> tuple[str | None, str | None]:
@@ -103,7 +125,7 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
 
     product_row = product_rows[0]
     detected_product_count = len(product_rows)
-    parent_sku = str(product_row.get("SKU") or "").strip()
+    parent_sku = _field_value(product_row, "sku")
 
     product_type = str(product_row.get("Type") or "").strip().lower()
     selected_rows: list[dict[str, str]] = [product_row]
@@ -124,19 +146,19 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
     option_maps: list[dict[str, str]] = []
     variants: list[Variant] = []
     for index, row in enumerate(variant_rows, start=1):
-        sku = str(row.get("SKU") or "").strip() or f"{parent_sku}:{index}"
+        sku = _field_value(row, "sku") or f"{parent_sku}:{index}"
         option_map = _row_option_map(row)
         option_maps.append(option_map)
-        quantity = parse_int(row.get("Stock"))
-        in_stock = parse_bool(row.get("In stock?"))
-        price = parse_float(row.get("Regular price"))
+        quantity = parse_int(_field_value(row, "stock"))
+        in_stock = parse_bool(_field_value(row, "in_stock"))
+        price = parse_float(_field_value(row, "regular_price"))
         weight_raw = row.get(weight_header) if weight_header else None
         weight_grams = (
             weight_to_grams(weight_raw, source_weight_unit=source_weight_unit)
             if weight_header and source_weight_unit
             else None
         )
-        image_urls = split_tokens(row.get("Images"), sep=",")
+        image_urls = split_tokens(_field_value(row, "images"), sep=",")
         variant = Variant(
             id=str(index),
             sku=sku,
@@ -154,25 +176,25 @@ def parse_woocommerce_csv(csv_text: str) -> Product:
         )
         variants.append(variant)
 
-    product_name = str(product_row.get("Name") or "").strip()
+    product_name = _field_value(product_row, "name")
     slug = slugify(product_name) if product_name else None
-    source_id = str(product_row.get("ID") or "").strip() or None
-    product_images = split_tokens(product_row.get("Images"), sep=",")
-    tax_status = str(product_row.get("Tax status") or "").strip().lower()
+    source_id = _field_value(product_row, "id") or None
+    product_images = split_tokens(_field_value(product_row, "images"), sep=",")
+    tax_status = _field_value(product_row, "tax_status").lower()
     is_digital = tax_status == "none"
     product = Product(
         source=SourceRef(platform="woocommerce", id=source_id, slug=slug, url=None),
         title=product_name or None,
-        description=str(product_row.get("Description") or "").strip() or None,
+        description=_field_value(product_row, "description") or None,
         seo=Seo(
             title=product_name or None,
-            description=str(product_row.get("Short description") or "").strip() or None,
+            description=_field_value(product_row, "short_description") or None,
         ),
-        tags=split_tokens(product_row.get("Tags"), sep=","),
-        taxonomy=_taxonomy_from_categories(str(product_row.get("Categories") or "").strip()),
+        tags=split_tokens(_field_value(product_row, "tags"), sep=","),
+        taxonomy=_taxonomy_from_categories(_field_value(product_row, "categories")),
         options=option_defs_from_option_maps(option_maps),
         variants=variants,
-        price=price_from_amount(parse_float(product_row.get("Regular price"))),
+        price=price_from_amount(parse_float(_field_value(product_row, "regular_price"))),
         weight=variants[0].weight,
         requires_shipping=not is_digital,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),

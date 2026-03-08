@@ -71,26 +71,6 @@ WOOCOMMERCE_COLUMNS: list[str] = [
     "Download 2 name",
     "Download 2 URL",
 ]
-_WOOCOMMERCE_CANONICAL_HEADERS_BASE: set[str] = {
-    "SKU",
-    "Name",
-    "Published",
-    "Visibility in catalog",
-    "Short description",
-    "Description",
-    "Tax status",
-    "In stock?",
-    "Stock",
-    "Regular price",
-    "Categories",
-    "Tags",
-    "Images",
-    "Parent",
-    "Attribute 1 name",
-    "Attribute 1 value(s)",
-    "Attribute 2 name",
-    "Attribute 2 value(s)",
-}
 
 
 class _WooCommerceExportHeaders:
@@ -115,6 +95,27 @@ class _WooCommerceExportHeaders:
 
 
 H = _WooCommerceExportHeaders()
+_WOOCOMMERCE_CANONICAL_HEADER_ATTRS = (
+    "sku",
+    "name",
+    "published",
+    "visibility_in_catalog",
+    "short_description",
+    "description",
+    "tax_status",
+    "in_stock",
+    "stock",
+    "regular_price",
+    "categories",
+    "tags",
+    "images",
+    "parent",
+)
+_WOOCOMMERCE_CANONICAL_HEADERS_BASE: set[str] = utils.infer_export_canonical_headers(
+    export_headers=H,
+    include_attrs=_WOOCOMMERCE_CANONICAL_HEADER_ATTRS,
+    indexed_header_families=[(("Attribute {i} name", "Attribute {i} value(s)"), range(1, 3))],
+)
 
 _PLATFORM_TOKEN = {
     "shopify": "SH",

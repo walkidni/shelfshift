@@ -7,6 +7,7 @@ from .common import (
     apply_first_non_empty_unmapped_fields,
     apply_row_unmapped_fields,
     csv_rows,
+    infer_mapped_headers,
     make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
@@ -27,46 +28,70 @@ _LEGACY_REQUIRED_HEADERS = ("Product Type", "Code", "Name", "Calculated Price")
 _OPTION_RE = re.compile(r"\|Name=([^|]+)\|Value=([^|]+)$")
 _MODERN_DETECTION_HEADERS = {"Item", "SKU", "Name"}
 _LEGACY_DETECTION_HEADERS = {"Product Type", "Code", "Name"}
-_MODERN_CANONICAL_MAPPED_HEADERS: set[str] = {
-    "ID",
-    "Product URL",
-    "Name",
-    "Description",
-    "Page Title",
-    "Meta Description",
-    "Search Keywords",
-    "Categories",
-    "Type",
-    "Is Visible",
-    "SKU",
-    "Price",
-    "Weight",
-    "Current Stock",
-    "Options",
-    "Variant Image URL",
-    "Image URL (Import)",
+_MODERN_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
+    "item": ("Item",),
+    "id": ("ID",),
+    "product_url": ("Product URL",),
+    "name": ("Name",),
+    "description": ("Description",),
+    "page_title": ("Page Title",),
+    "meta_description": ("Meta Description",),
+    "search_keywords": ("Search Keywords",),
+    "categories": ("Categories",),
+    "type": ("Type",),
+    "is_visible": ("Is Visible",),
+    "sku": ("SKU",),
+    "price": ("Price",),
+    "weight": ("Weight",),
+    "current_stock": ("Current Stock",),
+    "options": ("Options",),
+    "variant_image_url": ("Variant Image URL",),
+    "image_url_import": ("Image URL (Import)",),
 }
-_LEGACY_CANONICAL_MAPPED_HEADERS: set[str] = {
-    "Product ID",
-    "Product URL",
-    "Name",
-    "Description",
-    "Page Title",
-    "META Description",
-    "Brand",
-    "META Keywords",
-    "Category Details",
-    "Code",
-    "Calculated Price",
-    "Sale Price",
-    "Retail Price",
-    "Stock Level",
-    "Weight",
-    "Product Visible",
-    "Images",
+_LEGACY_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
+    "product_id": ("Product ID",),
+    "product_url": ("Product URL",),
+    "name": ("Name", "Product Name"),
+    "description": ("Description", "Product Description"),
+    "page_title": ("Page Title",),
+    "meta_description": ("META Description", "Meta Description"),
+    "brand": ("Brand", "Brand Name"),
+    "meta_keywords": ("META Keywords", "Meta Keywords"),
+    "category_details": ("Category Details", "Category"),
+    "code": ("Code", "Product Code/SKU"),
+    "calculated_price": ("Calculated Price", "Price"),
+    "sale_price": ("Sale Price",),
+    "retail_price": ("Retail Price",),
+    "stock_level": ("Stock Level", "Current Stock Level"),
+    "weight": ("Weight", "Product Weight"),
+    "product_visible": ("Product Visible", "Product Visible?"),
+    "images": ("Images",),
 }
+_MODERN_CANONICAL_MAPPED_HEADERS: set[str] = infer_mapped_headers(
+    alias_maps=[_MODERN_HEADER_ALIASES]
+)
+_LEGACY_CANONICAL_MAPPED_HEADERS: set[str] = infer_mapped_headers(
+    alias_maps=[_LEGACY_HEADER_ALIASES]
+)
 
 BigCommerceCsvInputFormat = Literal["modern", "legacy"]
+
+
+def _first_non_empty(row: dict[str, str], *headers: str) -> str:
+    for header in headers:
+        value = str(row.get(header) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _field_value(
+    row: dict[str, str],
+    *,
+    aliases: dict[str, tuple[str, ...]],
+    field: str,
+) -> str:
+    return _first_non_empty(row, *aliases[field])
 
 
 def _parse_modern_options(value: str) -> dict[str, str]:
@@ -108,7 +133,7 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     product_indices = [
         index
         for index, row in enumerate(rows)
-        if str(row.get("Item") or "").strip().lower() == "product"
+        if str(row.get(_MODERN_HEADER_ALIASES["item"][0]) or "").strip().lower() == "product"
     ]
     if not product_indices:
         raise ValueError("BigCommerce modern CSV requires at least one Product row.")
@@ -118,76 +143,101 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
     product_row = selected_rows[0]
 
     variant_rows = [
-        row for row in selected_rows if str(row.get("Item") or "").strip().lower() == "variant"
+        row
+        for row in selected_rows
+        if str(row.get(_MODERN_HEADER_ALIASES["item"][0]) or "").strip().lower() == "variant"
     ]
     image_rows = [
-        row for row in selected_rows if str(row.get("Item") or "").strip().lower() == "image"
+        row
+        for row in selected_rows
+        if str(row.get(_MODERN_HEADER_ALIASES["item"][0]) or "").strip().lower() == "image"
     ]
 
     option_maps: list[dict[str, str]] = []
     variants: list[Variant] = []
     variant_source_rows: list[dict[str, str]] = list(variant_rows)
     for index, row in enumerate(variant_rows, start=1):
-        sku = str(row.get("SKU") or "").strip() or f"BC:{index}"
-        option_map = _parse_modern_options(str(row.get("Options") or ""))
+        sku = str(row.get(_MODERN_HEADER_ALIASES["sku"][0]) or "").strip() or f"BC:{index}"
+        option_map = _parse_modern_options(str(row.get(_MODERN_HEADER_ALIASES["options"][0]) or ""))
         option_maps.append(option_map)
-        quantity = parse_int(row.get("Current Stock"))
+        quantity = parse_int(row.get(_MODERN_HEADER_ALIASES["current_stock"][0]))
         variant = Variant(
             id=str(index),
             sku=sku,
             title=" / ".join(option_map.values()) or None,
             option_values=[{"name": key, "value": value} for key, value in option_map.items()],
-            price=price_from_amount(parse_float(row.get("Price"))),
+            price=price_from_amount(parse_float(row.get(_MODERN_HEADER_ALIASES["price"][0]))),
             inventory=Inventory(
                 track_quantity=(quantity is not None),
                 quantity=quantity,
                 available=(quantity > 0 if quantity is not None else True),
             ),
             media=media_from_urls(
-                [str(row.get("Variant Image URL") or "").strip()], variant_sku=sku
+                [str(row.get(_MODERN_HEADER_ALIASES["variant_image_url"][0]) or "").strip()],
+                variant_sku=sku,
             ),
             identifiers=make_identifiers({"source_variant_id": str(index), "sku": sku}),
         )
         variants.append(variant)
 
     if not variants:
-        fallback_sku = str(product_row.get("SKU") or "").strip() or "BC:product"
+        fallback_sku = (
+            str(product_row.get(_MODERN_HEADER_ALIASES["sku"][0]) or "").strip() or "BC:product"
+        )
         variant_source_rows = [product_row]
         variants = [
             Variant(
                 id="1",
                 sku=fallback_sku,
-                price=price_from_amount(parse_float(product_row.get("Price"))),
+                price=price_from_amount(
+                    parse_float(product_row.get(_MODERN_HEADER_ALIASES["price"][0]))
+                ),
                 inventory=Inventory(track_quantity=False, quantity=None, available=True),
                 identifiers=make_identifiers({"source_variant_id": "1", "sku": fallback_sku}),
             )
         ]
 
-    image_urls = [str(row.get("Image URL (Import)") or "").strip() for row in image_rows]
+    image_urls = [
+        str(row.get(_MODERN_HEADER_ALIASES["image_url_import"][0]) or "").strip()
+        for row in image_rows
+    ]
     weight = weight_object(
-        weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit)
+        weight_to_grams(
+            product_row.get(_MODERN_HEADER_ALIASES["weight"][0]),
+            source_weight_unit=source_weight_unit,
+        )
     )
-    type_value = str(product_row.get("Type") or "").strip().lower()
+    type_value = str(product_row.get(_MODERN_HEADER_ALIASES["type"][0]) or "").strip().lower()
     is_digital = type_value == "digital"
-    is_published = parse_bool(product_row.get("Is Visible"))
+    is_published = parse_bool(product_row.get(_MODERN_HEADER_ALIASES["is_visible"][0]))
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
-            id=str(product_row.get("ID") or "").strip() or None,
-            slug=str(product_row.get("Product URL") or "").strip().strip("/") or None,
+            id=str(product_row.get(_MODERN_HEADER_ALIASES["id"][0]) or "").strip() or None,
+            slug=str(product_row.get(_MODERN_HEADER_ALIASES["product_url"][0]) or "")
+            .strip()
+            .strip("/")
+            or None,
             url=None,
         ),
-        title=str(product_row.get("Name") or "").strip() or None,
-        description=str(product_row.get("Description") or "").strip() or None,
+        title=str(product_row.get(_MODERN_HEADER_ALIASES["name"][0]) or "").strip() or None,
+        description=str(product_row.get(_MODERN_HEADER_ALIASES["description"][0]) or "").strip()
+        or None,
         seo=Seo(
-            title=str(product_row.get("Page Title") or "").strip() or None,
-            description=str(product_row.get("Meta Description") or "").strip() or None,
+            title=str(product_row.get(_MODERN_HEADER_ALIASES["page_title"][0]) or "").strip()
+            or None,
+            description=str(
+                product_row.get(_MODERN_HEADER_ALIASES["meta_description"][0]) or ""
+            ).strip()
+            or None,
         ),
-        tags=split_tokens(product_row.get("Search Keywords"), sep=","),
-        taxonomy=taxonomy_from_primary(str(product_row.get("Categories") or "").strip() or None),
+        tags=split_tokens(product_row.get(_MODERN_HEADER_ALIASES["search_keywords"][0]), sep=","),
+        taxonomy=taxonomy_from_primary(
+            str(product_row.get(_MODERN_HEADER_ALIASES["categories"][0]) or "").strip() or None
+        ),
         variants=variants,
         options=option_defs_from_option_maps(option_maps),
-        price=price_from_amount(parse_float(product_row.get("Price"))),
+        price=price_from_amount(parse_float(product_row.get(_MODERN_HEADER_ALIASES["price"][0]))),
         weight=weight,
         requires_shipping=not is_digital,
         track_quantity=any(variant.inventory.track_quantity for variant in variants),
@@ -196,7 +246,10 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         media=media_from_urls(image_urls),
         identifiers=make_identifiers(
             values={
-                "source_product_id": str(product_row.get("ID") or "").strip() or variants[0].sku
+                "source_product_id": str(
+                    product_row.get(_MODERN_HEADER_ALIASES["id"][0]) or ""
+                ).strip()
+                or variants[0].sku
             }
         ),
     )
@@ -217,8 +270,8 @@ def _parse_modern(csv_text: str, *, source_weight_unit: str) -> Product:
         product,
         source_platform="bigcommerce",
         detected_product_count=len(product_indices),
-        selected_product_key=str(product_row.get("SKU") or "").strip()
-        or str(product_row.get("Name") or "").strip(),
+        selected_product_key=str(product_row.get(_MODERN_HEADER_ALIASES["sku"][0]) or "").strip()
+        or str(product_row.get(_MODERN_HEADER_ALIASES["name"][0]) or "").strip(),
     )
     return product
 
@@ -232,18 +285,29 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     )
     product_row = rows[0]
 
-    sku = str(product_row.get("Code") or "").strip() or "BC:legacy"
-    quantity = parse_int(product_row.get("Stock Level"))
+    sku = _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="code") or "BC:legacy"
+    quantity = parse_int(
+        _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="stock_level")
+    )
     weight = weight_object(
-        weight_to_grams(product_row.get("Weight"), source_weight_unit=source_weight_unit)
+        weight_to_grams(
+            _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="weight"),
+            source_weight_unit=source_weight_unit,
+        )
     )
     variant = Variant(
         id="1",
         sku=sku,
         price=price_from_amount(
-            parse_float(product_row.get("Calculated Price"))
-            or parse_float(product_row.get("Sale Price"))
-            or parse_float(product_row.get("Retail Price"))
+            parse_float(
+                _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="calculated_price")
+            )
+            or parse_float(
+                _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="sale_price")
+            )
+            or parse_float(
+                _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="retail_price")
+            )
         ),
         inventory=Inventory(
             track_quantity=(quantity is not None),
@@ -256,21 +320,36 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
     product = Product(
         source=SourceRef(
             platform="bigcommerce",
-            id=str(product_row.get("Product ID") or "").strip() or None,
-            slug=str(product_row.get("Product URL") or "").strip().strip("/") or None,
+            id=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="product_id")
+            or None,
+            slug=_field_value(
+                product_row, aliases=_LEGACY_HEADER_ALIASES, field="product_url"
+            ).strip("/")
+            or None,
             url=None,
         ),
-        title=str(product_row.get("Name") or "").strip() or None,
-        description=str(product_row.get("Description") or "").strip() or None,
+        title=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="name") or None,
+        description=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="description")
+        or None,
         seo=Seo(
-            title=str(product_row.get("Page Title") or "").strip() or None,
-            description=str(product_row.get("META Description") or "").strip() or None,
+            title=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="page_title")
+            or None,
+            description=_field_value(
+                product_row,
+                aliases=_LEGACY_HEADER_ALIASES,
+                field="meta_description",
+            )
+            or None,
         ),
-        brand=str(product_row.get("Brand") or "").strip() or None,
-        vendor=str(product_row.get("Brand") or "").strip() or None,
-        tags=split_tokens(product_row.get("META Keywords"), sep=","),
+        brand=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="brand") or None,
+        vendor=_field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="brand") or None,
+        tags=split_tokens(
+            _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="meta_keywords"),
+            sep=",",
+        ),
         taxonomy=taxonomy_from_primary(
-            str(product_row.get("Category Details") or "").strip() or None
+            _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="category_details")
+            or None
         ),
         variants=[variant],
         price=variant.price,
@@ -278,10 +357,21 @@ def _parse_legacy(csv_text: str, *, source_weight_unit: str) -> Product:
         requires_shipping=True,
         track_quantity=(quantity is not None),
         is_digital=False,
-        is_published=parse_bool(product_row.get("Product Visible")),
-        media=media_from_urls(_parse_legacy_images(str(product_row.get("Images") or ""))),
+        is_published=parse_bool(
+            _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="product_visible")
+        ),
+        media=media_from_urls(
+            _parse_legacy_images(
+                _field_value(product_row, aliases=_LEGACY_HEADER_ALIASES, field="images")
+            )
+        ),
         identifiers=make_identifiers(
-            values={"source_product_id": str(product_row.get("Product ID") or "").strip() or sku}
+            values={
+                "source_product_id": _field_value(
+                    product_row, aliases=_LEGACY_HEADER_ALIASES, field="product_id"
+                )
+                or sku
+            }
         ),
     )
     apply_first_non_empty_unmapped_fields(

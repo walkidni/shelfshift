@@ -4,6 +4,7 @@ from .common import (
     apply_first_non_empty_unmapped_fields,
     apply_row_unmapped_fields,
     csv_rows,
+    infer_mapped_headers,
     make_identifiers,
     media_from_urls,
     option_defs_from_option_maps,
@@ -25,44 +26,31 @@ SHOPIFY_REQUIRED_HEADERS_OLD = (
     "Variant Price",
 )
 SHOPIFY_REQUIRED_HEADERS_NEW = ("URL handle", "Title", "Description", "SKU", "Price")
-_SHOPIFY_CANONICAL_MAPPED_HEADERS: set[str] = {
-    "Handle",
-    "URL handle",
-    "Title",
-    "Body (HTML)",
-    "Description",
-    "Vendor",
-    "Product category",
-    "Tags",
-    "Published",
-    "Published on online store",
-    "Variant SKU",
-    "SKU",
-    "Variant Price",
-    "Price",
-    "Variant Inventory Qty",
-    "Inventory quantity",
-    "Variant Grams",
-    "Weight value (grams)",
-    "Variant Image",
-    "Variant image URL",
-    "Image Src",
-    "Product image URL",
-    "Variant Requires Shipping",
-    "Requires shipping",
-    "Option1 Name",
-    "Option1 Value",
-    "Option2 Name",
-    "Option2 Value",
-    "Option3 Name",
-    "Option3 Value",
-    "Option1 name",
-    "Option1 value",
-    "Option2 name",
-    "Option2 value",
-    "Option3 name",
-    "Option3 value",
+_SHOPIFY_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
+    "handle": ("Handle", "URL handle"),
+    "title": ("Title",),
+    "description": ("Body (HTML)", "Description"),
+    "vendor": ("Vendor",),
+    "product_category": ("Product category",),
+    "tags": ("Tags",),
+    "published": ("Published", "Published on online store"),
+    "variant_sku": ("Variant SKU", "SKU"),
+    "variant_price": ("Variant Price", "Price"),
+    "variant_inventory_qty": ("Variant Inventory Qty", "Inventory quantity"),
+    "variant_weight_grams": ("Variant Grams", "Weight value (grams)"),
+    "variant_image": ("Variant Image", "Variant image URL"),
+    "product_image": ("Image Src", "Product image URL"),
+    "requires_shipping": ("Variant Requires Shipping", "Requires shipping"),
 }
+_SHOPIFY_OPTION_NAME_TEMPLATES: tuple[str, ...] = ("Option{i} Name", "Option{i} name")
+_SHOPIFY_OPTION_VALUE_TEMPLATES: tuple[str, ...] = ("Option{i} Value", "Option{i} value")
+_SHOPIFY_CANONICAL_MAPPED_HEADERS: set[str] = infer_mapped_headers(
+    alias_maps=[_SHOPIFY_HEADER_ALIASES],
+    indexed_header_families=[
+        (_SHOPIFY_OPTION_NAME_TEMPLATES, range(1, 4)),
+        (_SHOPIFY_OPTION_VALUE_TEMPLATES, range(1, 4)),
+    ],
+)
 
 
 def _first_non_empty(row: dict[str, str], *keys: str) -> str:
@@ -90,7 +78,7 @@ def require_shopify_headers(headers: list[str]) -> None:
 
 
 def shopify_row_handle(row: dict[str, str]) -> str:
-    return _first_non_empty(row, "Handle", "URL handle")
+    return _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["handle"])
 
 
 def extract_shopify_handles(rows: list[dict[str, str]]) -> list[str]:
@@ -125,11 +113,11 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
     variant_source_rows: list[dict[str, str]] = []
 
     for index, row in enumerate(selected_rows, start=1):
-        image_src = _first_non_empty(row, "Image Src", "Product image URL")
+        image_src = _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["product_image"])
         if image_src and image_src not in product_images:
             product_images.append(image_src)
 
-        sku = _first_non_empty(row, "Variant SKU", "SKU")
+        sku = _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["variant_sku"])
         if not sku:
             continue
         variant_source_rows.append(row)
@@ -137,24 +125,38 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         option_map: dict[str, str] = {}
         for option_index in range(1, 4):
             option_name = _first_non_empty(
-                row, f"Option{option_index} Name", f"Option{option_index} name"
+                row,
+                *(
+                    template.replace("{i}", str(option_index))
+                    for template in _SHOPIFY_OPTION_NAME_TEMPLATES
+                ),
             )
             option_value = _first_non_empty(
-                row, f"Option{option_index} Value", f"Option{option_index} value"
+                row,
+                *(
+                    template.replace("{i}", str(option_index))
+                    for template in _SHOPIFY_OPTION_VALUE_TEMPLATES
+                ),
             )
             if option_name and option_value:
                 option_map[option_name] = option_value
         option_maps.append(option_map)
 
-        quantity = parse_int(_first_non_empty(row, "Variant Inventory Qty", "Inventory quantity"))
-        weight_grams = parse_float(_first_non_empty(row, "Variant Grams", "Weight value (grams)"))
-        variant_image = _first_non_empty(row, "Variant Image", "Variant image URL")
+        quantity = parse_int(
+            _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["variant_inventory_qty"])
+        )
+        weight_grams = parse_float(
+            _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["variant_weight_grams"])
+        )
+        variant_image = _first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["variant_image"])
         variant = Variant(
             id=str(index),
             sku=sku,
             title=" / ".join(option_map.values()) or None,
             option_values=[{"name": key, "value": value} for key, value in option_map.items()],
-            price=price_from_amount(parse_float(_first_non_empty(row, "Variant Price", "Price"))),
+            price=price_from_amount(
+                parse_float(_first_non_empty(row, *_SHOPIFY_HEADER_ALIASES["variant_price"]))
+            ),
             inventory=Inventory(
                 track_quantity=(quantity is not None),
                 quantity=quantity,
@@ -172,7 +174,7 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
         )
 
     requires_shipping_value = parse_bool(
-        _first_non_empty(product_row, "Variant Requires Shipping", "Requires shipping")
+        _first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["requires_shipping"])
     )
     requires_shipping = True if requires_shipping_value is None else requires_shipping_value
     publish_header = (
@@ -184,16 +186,19 @@ def parse_shopify_csv(csv_text: str, *, source_platform: str = "shopify") -> Pro
 
     product = Product(
         source=SourceRef(platform="shopify", id=None, slug=selected_handle, url=None),
-        title=_first_non_empty(product_row, "Title") or None,
-        description=_first_non_empty(product_row, "Body (HTML)", "Description") or None,
+        title=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["title"]) or None,
+        description=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["description"]) or None,
         seo=Seo(
-            title=_first_non_empty(product_row, "Title") or None,
-            description=_first_non_empty(product_row, "Body (HTML)", "Description") or None,
+            title=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["title"]) or None,
+            description=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["description"])
+            or None,
         ),
-        vendor=_first_non_empty(product_row, "Vendor") or None,
-        brand=_first_non_empty(product_row, "Vendor") or None,
-        taxonomy=taxonomy_from_primary(_first_non_empty(product_row, "Product category") or None),
-        tags=split_tokens(product_row.get("Tags"), sep=","),
+        vendor=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["vendor"]) or None,
+        brand=_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["vendor"]) or None,
+        taxonomy=taxonomy_from_primary(
+            _first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["product_category"]) or None
+        ),
+        tags=split_tokens(_first_non_empty(product_row, *_SHOPIFY_HEADER_ALIASES["tags"]), sep=","),
         options=option_defs_from_option_maps(option_maps),
         variants=variants,
         price=variants[0].price,

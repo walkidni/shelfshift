@@ -123,62 +123,6 @@ BIGCOMMERCE_LEGACY_COLUMNS: list[str] = [
     "Global Trade Item Number",
     "Manufacturer Part Number",
 ]
-_BIGCOMMERCE_MODERN_CANONICAL_HEADERS: set[str] = {
-    "Item",
-    "Type",
-    "Name",
-    "Description",
-    "SKU",
-    "Price",
-    "Categories",
-    "Weight",
-    "Inventory Tracking",
-    "Current Stock",
-    "Low Stock",
-    "Product URL",
-    "Meta Description",
-    "Search Keywords",
-    "Meta Keywords",
-    "Free Shipping",
-    "Is Visible",
-    "Is Featured",
-    "Tax Class",
-    "Product Condition",
-    "Show Product Condition",
-    "Sort Order",
-    "Options",
-    "Variant Image URL",
-    "Image URL (Import)",
-    "Image is Thumbnail",
-    "Image Sort Order",
-}
-_BIGCOMMERCE_LEGACY_CANONICAL_HEADERS: set[str] = {
-    "Item Type",
-    "Product ID",
-    "Product Type",
-    "Product Code/SKU",
-    "Product Name",
-    "Brand Name",
-    "Product Description",
-    "Price",
-    "Fixed Shipping Cost",
-    "Free Shipping",
-    "Product Weight",
-    "Allow Purchases?",
-    "Product Visible?",
-    "Track Inventory",
-    "Current Stock Level",
-    "Low Stock Level",
-    "Category",
-    "Product Image File - 1",
-    "Product Image File - 2",
-    "Search Keywords",
-    "Page Title",
-    "Meta Keywords",
-    "Meta Description",
-    "Product Condition",
-    "Product URL",
-}
 
 
 class _BigCommerceModernHeaders:
@@ -241,6 +185,12 @@ class _BigCommerceLegacyHeaders:
 
 MH = _BigCommerceModernHeaders()
 LH = _BigCommerceLegacyHeaders()
+_BIGCOMMERCE_MODERN_CANONICAL_HEADERS: set[str] = utils.infer_export_canonical_headers(
+    export_headers=MH
+)
+_BIGCOMMERCE_LEGACY_CANONICAL_HEADERS: set[str] = utils.infer_export_canonical_headers(
+    export_headers=LH
+)
 
 
 BigCommerceCsvFormat = Literal["modern", "legacy"]

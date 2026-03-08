@@ -105,37 +105,6 @@ SHOPIFY_DEFAULT_IMAGE_URL = (
     "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/"
     "1024px-No_image_available.svg.png"
 )
-_SHOPIFY_CANONICAL_HEADERS: set[str] = {
-    "Title",
-    "URL handle",
-    "Description",
-    "Vendor",
-    "Product category",
-    "Tags",
-    "Published on online store",
-    "SKU",
-    "Option1 name",
-    "Option1 value",
-    "Option2 name",
-    "Option2 value",
-    "Option3 name",
-    "Option3 value",
-    "Price",
-    "Charge tax",
-    "Inventory tracker",
-    "Inventory quantity",
-    "Continue selling when out of stock",
-    "Weight value (grams)",
-    "Weight unit for display",
-    "Requires shipping",
-    "Fulfillment service",
-    "Product image URL",
-    "Image position",
-    "Image alt text",
-    "Variant image URL",
-    "SEO title",
-    "SEO description",
-}
 
 
 class _ShopifyExportHeaders:
@@ -168,6 +137,11 @@ class _ShopifyExportHeaders:
 
 
 H = _ShopifyExportHeaders()
+_SHOPIFY_CANONICAL_HEADERS: set[str] = utils.infer_export_canonical_headers(
+    export_headers=H,
+    exclude_attrs=("type", "status", "gift_card"),
+    indexed_header_families=[(("Option{i} name", "Option{i} value"), range(1, 4))],
+)
 
 
 def _set_cell(row: dict[str, str], header: str, value: str) -> None:

@@ -181,6 +181,40 @@ def csv_unmapped_key(platform: str, header: str) -> str:
     return f"{platform_token}:{header}"
 
 
+def infer_mapped_headers(
+    *,
+    static_headers: Iterable[str] = (),
+    alias_maps: Iterable[dict[str, tuple[str, ...]]] = (),
+    indexed_headers: Iterable[str] = (),
+    indexed_header_families: Iterable[tuple[tuple[str, ...], range]] = (),
+) -> set[str]:
+    out = {str(header or "") for header in static_headers if str(header or "")}
+    for alias_map in alias_maps:
+        for headers in alias_map.values():
+            for header in headers:
+                header_text = str(header or "")
+                if not header_text:
+                    continue
+                out.add(header_text)
+    for header in indexed_headers:
+        header_text = str(header or "")
+        if not header_text:
+            continue
+        out.add(header_text)
+    for templates, index_range in indexed_header_families:
+        for index in index_range:
+            for template in templates:
+                header_text = str(template or "")
+                if not header_text:
+                    continue
+                expanded = (
+                    header_text.replace("{i}", str(index)).replace("{index}", str(index)).strip()
+                )
+                if expanded:
+                    out.add(expanded)
+    return out
+
+
 def unmapped_headers_from_csv(
     headers: list[str],
     *,

@@ -79,6 +79,54 @@ def _clean_text(value: object) -> str:
     return str(value or "").strip()
 
 
+def infer_export_canonical_headers(
+    *,
+    export_headers: object,
+    exclude_attrs: Iterable[str] = (),
+    include_attrs: Iterable[str] | None = None,
+    dynamic_headers: Iterable[str] = (),
+    indexed_header_families: Iterable[tuple[tuple[str, ...], range]] = (),
+) -> set[str]:
+    excluded = {_clean_text(attr) for attr in exclude_attrs if _clean_text(attr)}
+    includes = (
+        {_clean_text(attr) for attr in include_attrs if _clean_text(attr)}
+        if include_attrs is not None
+        else None
+    )
+    out: set[str] = set()
+    for attr_name in dir(export_headers):
+        if attr_name.startswith("_"):
+            continue
+        if includes is not None and attr_name not in includes:
+            continue
+        if attr_name in excluded:
+            continue
+        value = getattr(export_headers, attr_name, None)
+        if callable(value):
+            continue
+        header = _clean_text(value)
+        if header:
+            out.add(header)
+
+    for header in dynamic_headers:
+        header_text = _clean_text(header)
+        if header_text:
+            out.add(header_text)
+
+    for templates, index_range in indexed_header_families:
+        for index in index_range:
+            for template in templates:
+                template_text = _clean_text(template)
+                if not template_text:
+                    continue
+                expanded = (
+                    template_text.replace("{i}", str(index)).replace("{index}", str(index)).strip()
+                )
+                if expanded:
+                    out.add(expanded)
+    return out
+
+
 def _coerce_non_negative_int(value: object) -> int | None:
     if value is None:
         return None
