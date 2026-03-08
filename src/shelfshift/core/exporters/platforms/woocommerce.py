@@ -4,73 +4,12 @@ from collections.abc import Iterable
 from slugify import slugify
 
 from ...canonical import Product, Variant
+from ...csv_schemas.woocommerce import (
+    WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT,
+    woocommerce_columns_for_weight_unit,
+)
 from ..shared import utils
 from ..shared.weight_units import resolve_weight_unit
-
-WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER = "__WEIGHT_HEADER__"
-WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT: dict[str, str] = {
-    "lb": "Weight (lbs)",
-    "kg": "Weight (kg)",
-    "g": "Weight (g)",
-    "oz": "Weight (oz)",
-}
-WOOCOMMERCE_WEIGHT_UNIT_BY_HEADER: dict[str, str] = {
-    header: unit for unit, header in WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT.items()
-}
-
-WOOCOMMERCE_COLUMNS: list[str] = [
-    "ID",
-    "Type",
-    "SKU",
-    "Name",
-    "Published",
-    "Is featured?",
-    "Visibility in catalog",
-    "Short description",
-    "Description",
-    "Date sale price starts",
-    "Date sale price ends",
-    "Tax status",
-    "Tax class",
-    "In stock?",
-    "Stock",
-    "Backorders allowed?",
-    "Sold individually?",
-    WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER,
-    "Length (in)",
-    "Width (in)",
-    "Height (in)",
-    "Allow customer reviews?",
-    "Purchase note",
-    "Sale price",
-    "Regular price",
-    "Categories",
-    "Tags",
-    "Shipping class",
-    "Images",
-    "Download limit",
-    "Download expiry days",
-    "Parent",
-    "Grouped products",
-    "Upsells",
-    "Cross-sells",
-    "External URL",
-    "Button text",
-    "Position",
-    "Attribute 1 name",
-    "Attribute 1 value(s)",
-    "Attribute 1 visible",
-    "Attribute 1 global",
-    "Attribute 2 name",
-    "Attribute 2 value(s)",
-    "Attribute 2 visible",
-    "Attribute 2 global",
-    "Meta: _wpcom_is_markdown",
-    "Download 1 name",
-    "Download 1 URL",
-    "Download 2 name",
-    "Download 2 URL",
-]
 
 
 class _WooCommerceExportHeaders:
@@ -124,15 +63,6 @@ _PLATFORM_TOKEN = {
 }
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
-
-
-def woocommerce_columns_for_weight_unit(weight_unit: str | None = None) -> list[str]:
-    resolved_weight_unit = resolve_weight_unit("woocommerce", weight_unit)
-    weight_header = WOOCOMMERCE_WEIGHT_HEADER_BY_UNIT[resolved_weight_unit]
-    return [
-        weight_header if column == WOOCOMMERCE_WEIGHT_HEADER_PLACEHOLDER else column
-        for column in WOOCOMMERCE_COLUMNS
-    ]
 
 
 def _empty_row(columns: list[str]) -> dict[str, str]:

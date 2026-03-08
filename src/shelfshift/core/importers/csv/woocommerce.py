@@ -1,6 +1,13 @@
 from slugify import slugify
 
 from ...canonical import CategorySet, Inventory, Product, Seo, SourceRef, Variant
+from ...csv_schemas.woocommerce import (
+    WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE,
+    WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE,
+    WOOCOMMERCE_HEADER_ALIASES,
+    WOOCOMMERCE_REQUIRED_HEADERS,
+    WOOCOMMERCE_WEIGHT_UNIT_BY_HEADER,
+)
 from .common import (
     add_csv_provenance,
     apply_first_non_empty_unmapped_fields,
@@ -21,35 +28,11 @@ from .common import (
     weight_to_grams,
 )
 
-_REQUIRED_HEADERS = ("Type", "SKU", "Name", "Regular price")
-_WEIGHT_UNIT_BY_HEADER = {
-    "Weight (kg)": "kg",
-    "Weight (lbs)": "lb",
-    "Weight (g)": "g",
-    "Weight (oz)": "oz",
-}
-_WOOCOMMERCE_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
-    "id": ("ID",),
-    "sku": ("SKU",),
-    "name": ("Name",),
-    "description": ("Description",),
-    "short_description": ("Short description",),
-    "tags": ("Tags",),
-    "categories": ("Categories",),
-    "regular_price": ("Regular price",),
-    "stock": ("Stock",),
-    "in_stock": ("In stock?",),
-    "tax_status": ("Tax status",),
-    "published": ("Published",),
-    "images": ("Images",),
-}
-_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE = "Attribute {i} name"
-_WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE = "Attribute {i} value(s)"
 _WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE: set[str] = infer_mapped_headers(
-    alias_maps=[_WOOCOMMERCE_HEADER_ALIASES],
+    alias_maps=[WOOCOMMERCE_HEADER_ALIASES],
     indexed_header_families=[
         (
-            (_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE, _WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE),
+            (WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE, WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE),
             range(1, 4),
         )
     ],
@@ -75,17 +58,17 @@ def _first_non_empty(row: dict[str, str], *keys: str) -> str:
 
 
 def _field_value(row: dict[str, str], field: str) -> str:
-    return _first_non_empty(row, *_WOOCOMMERCE_HEADER_ALIASES[field])
+    return _first_non_empty(row, *WOOCOMMERCE_HEADER_ALIASES[field])
 
 
 def _row_option_map(row: dict[str, str]) -> dict[str, str]:
     out: dict[str, str] = {}
     for index in range(1, 4):
         name = str(
-            row.get(_WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE.replace("{i}", str(index))) or ""
+            row.get(WOOCOMMERCE_ATTRIBUTE_NAME_TEMPLATE.replace("{i}", str(index))) or ""
         ).strip()
         value = str(
-            row.get(_WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE.replace("{i}", str(index))) or ""
+            row.get(WOOCOMMERCE_ATTRIBUTE_VALUES_TEMPLATE.replace("{i}", str(index))) or ""
         ).strip()
         if not name or not value:
             continue
@@ -101,7 +84,7 @@ def _product_is_published_from_row(row: dict[str, str]) -> bool | None:
 
 def _detect_weight_header(headers: list[str]) -> tuple[str | None, str | None]:
     for header in headers:
-        unit = _WEIGHT_UNIT_BY_HEADER.get(header)
+        unit = WOOCOMMERCE_WEIGHT_UNIT_BY_HEADER.get(header)
         if unit:
             return header, unit
     return None, None
@@ -109,7 +92,7 @@ def _detect_weight_header(headers: list[str]) -> tuple[str | None, str | None]:
 
 def parse_woocommerce_csv(csv_text: str) -> Product:
     headers, rows = csv_rows(csv_text)
-    require_headers(headers, _REQUIRED_HEADERS)
+    require_headers(headers, WOOCOMMERCE_REQUIRED_HEADERS)
     weight_header, source_weight_unit = _detect_weight_header(headers)
     mapped_headers = set(_WOOCOMMERCE_CANONICAL_MAPPED_HEADERS_BASE)
     if weight_header:

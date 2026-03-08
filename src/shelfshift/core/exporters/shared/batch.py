@@ -1,17 +1,17 @@
 from ...canonical import Product
+from ...csv_schemas.bigcommerce import BIGCOMMERCE_COLUMNS, BIGCOMMERCE_LEGACY_COLUMNS
+from ...csv_schemas.shopify import SHOPIFY_COLUMNS
+from ...csv_schemas.squarespace import SQUARESPACE_COLUMNS
+from ...csv_schemas.wix import WIX_COLUMNS
+from ...csv_schemas.woocommerce import woocommerce_columns_for_weight_unit
 from ..platforms.bigcommerce import (
-    BIGCOMMERCE_COLUMNS,
-    BIGCOMMERCE_LEGACY_COLUMNS,
     BigCommerceCsvFormat,
     product_to_bigcommerce_rows,
 )
-from ..platforms.shopify import SHOPIFY_COLUMNS, product_to_shopify_rows
-from ..platforms.squarespace import SQUARESPACE_COLUMNS, product_to_squarespace_rows
-from ..platforms.wix import WIX_COLUMNS, product_to_wix_rows
-from ..platforms.woocommerce import (
-    product_to_woocommerce_rows,
-    woocommerce_columns_for_weight_unit,
-)
+from ..platforms.shopify import product_to_shopify_rows
+from ..platforms.squarespace import product_to_squarespace_rows
+from ..platforms.wix import product_to_wix_rows
+from ..platforms.woocommerce import product_to_woocommerce_rows
 from . import utils
 
 

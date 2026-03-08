@@ -1,4 +1,10 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
+from ...csv_schemas.wix import (
+    WIX_HEADER_ALIASES,
+    WIX_OPTION_CHOICES_TEMPLATE,
+    WIX_OPTION_NAME_TEMPLATE,
+    WIX_REQUIRED_HEADERS,
+)
 from .common import (
     add_csv_provenance,
     apply_first_non_empty_unmapped_fields,
@@ -19,25 +25,10 @@ from .common import (
     weight_to_grams,
 )
 
-_REQUIRED_HEADERS = ("handle", "fieldType", "name", "price", "sku")
-_WIX_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
-    "handle": ("handle",),
-    "name": ("name",),
-    "visible": ("visible",),
-    "plain_description": ("plainDescription",),
-    "media": ("media",),
-    "brand": ("brand",),
-    "price": ("price",),
-    "inventory": ("inventory",),
-    "sku": ("sku",),
-    "weight": ("weight",),
-}
-_WIX_OPTION_NAME_TEMPLATE = "productOptionName{i}"
-_WIX_OPTION_CHOICES_TEMPLATE = "productOptionChoices{i}"
 _WIX_CANONICAL_MAPPED_HEADERS: set[str] = infer_mapped_headers(
-    alias_maps=[_WIX_HEADER_ALIASES],
+    alias_maps=[WIX_HEADER_ALIASES],
     indexed_header_families=[
-        ((_WIX_OPTION_NAME_TEMPLATE, _WIX_OPTION_CHOICES_TEMPLATE), range(1, 7))
+        ((WIX_OPTION_NAME_TEMPLATE, WIX_OPTION_CHOICES_TEMPLATE), range(1, 7))
     ],
 )
 
@@ -63,12 +54,12 @@ def _first_non_empty(row: dict[str, str], *keys: str) -> str:
 
 
 def _field_value(row: dict[str, str], field: str) -> str:
-    return _first_non_empty(row, *_WIX_HEADER_ALIASES[field])
+    return _first_non_empty(row, *WIX_HEADER_ALIASES[field])
 
 
 def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
-    require_headers(headers, _REQUIRED_HEADERS)
+    require_headers(headers, WIX_REQUIRED_HEADERS)
     unmapped_headers = unmapped_headers_from_csv(
         headers,
         mapped_headers=_WIX_CANONICAL_MAPPED_HEADERS,
@@ -106,10 +97,10 @@ def parse_wix_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         option_map: dict[str, str] = {}
         for option_index in range(1, 7):
             name = str(
-                row.get(_WIX_OPTION_NAME_TEMPLATE.replace("{i}", str(option_index))) or ""
+                row.get(WIX_OPTION_NAME_TEMPLATE.replace("{i}", str(option_index))) or ""
             ).strip()
             value = str(
-                row.get(_WIX_OPTION_CHOICES_TEMPLATE.replace("{i}", str(option_index))) or ""
+                row.get(WIX_OPTION_CHOICES_TEMPLATE.replace("{i}", str(option_index))) or ""
             ).strip()
             if name and value:
                 selected = split_tokens(value, sep=";")

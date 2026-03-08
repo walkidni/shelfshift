@@ -1,4 +1,10 @@
 from ...canonical import Inventory, Product, Seo, SourceRef, Variant
+from ...csv_schemas.squarespace import (
+    SQUARESPACE_HEADER_ALIASES,
+    SQUARESPACE_OPTION_NAME_TEMPLATE,
+    SQUARESPACE_OPTION_VALUE_TEMPLATE,
+    SQUARESPACE_REQUIRED_HEADERS,
+)
 from .common import (
     add_csv_provenance,
     apply_first_non_empty_unmapped_fields,
@@ -21,29 +27,10 @@ from .common import (
     weight_to_grams,
 )
 
-_REQUIRED_HEADERS = ("Title", "SKU", "Price", "Product Type [Non Editable]", "Visible")
-_SQUARESPACE_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
-    "product_id": ("Product ID [Non Editable]",),
-    "variant_id": ("Variant ID [Non Editable]",),
-    "product_type": ("Product Type [Non Editable]",),
-    "product_url": ("Product URL",),
-    "title": ("Title",),
-    "description": ("Description",),
-    "sku": ("SKU",),
-    "price": ("Price",),
-    "stock": ("Stock",),
-    "categories": ("Categories",),
-    "tags": ("Tags",),
-    "weight": ("Weight",),
-    "visible": ("Visible",),
-    "hosted_image_urls": ("Hosted Image URLs",),
-}
-_SQUARESPACE_OPTION_NAME_TEMPLATE = "Option Name {i}"
-_SQUARESPACE_OPTION_VALUE_TEMPLATE = "Option Value {i}"
 _SQUARESPACE_CANONICAL_MAPPED_HEADERS: set[str] = infer_mapped_headers(
-    alias_maps=[_SQUARESPACE_HEADER_ALIASES],
+    alias_maps=[SQUARESPACE_HEADER_ALIASES],
     indexed_header_families=[
-        ((_SQUARESPACE_OPTION_NAME_TEMPLATE, _SQUARESPACE_OPTION_VALUE_TEMPLATE), range(1, 7))
+        ((SQUARESPACE_OPTION_NAME_TEMPLATE, SQUARESPACE_OPTION_VALUE_TEMPLATE), range(1, 7))
     ],
 )
 
@@ -66,12 +53,12 @@ def _first_non_empty(row: dict[str, str], *keys: str) -> str:
 
 
 def _field_value(row: dict[str, str], field: str) -> str:
-    return _first_non_empty(row, *_SQUARESPACE_HEADER_ALIASES[field])
+    return _first_non_empty(row, *SQUARESPACE_HEADER_ALIASES[field])
 
 
 def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
     headers, rows = csv_rows(csv_text)
-    require_headers(headers, _REQUIRED_HEADERS)
+    require_headers(headers, SQUARESPACE_REQUIRED_HEADERS)
     unmapped_headers = unmapped_headers_from_csv(
         headers,
         mapped_headers=_SQUARESPACE_CANONICAL_MAPPED_HEADERS,
@@ -90,10 +77,10 @@ def parse_squarespace_csv(csv_text: str, *, source_weight_unit: str) -> Product:
         option_map: dict[str, str] = {}
         for option_index in range(1, 7):
             name = str(
-                row.get(_SQUARESPACE_OPTION_NAME_TEMPLATE.replace("{i}", str(option_index))) or ""
+                row.get(SQUARESPACE_OPTION_NAME_TEMPLATE.replace("{i}", str(option_index))) or ""
             ).strip()
             value = str(
-                row.get(_SQUARESPACE_OPTION_VALUE_TEMPLATE.replace("{i}", str(option_index))) or ""
+                row.get(SQUARESPACE_OPTION_VALUE_TEMPLATE.replace("{i}", str(option_index))) or ""
             ).strip()
             if name and value:
                 option_map[name] = value

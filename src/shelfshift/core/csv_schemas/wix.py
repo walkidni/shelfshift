@@ -1,0 +1,33 @@
+_WIX_HEADER = (
+    "handle,fieldType,name,visible,plainDescription,media,mediaAltText,ribbon,brand,price,strikethroughPrice,"
+    "baseUnit,baseUnitMeasurement,totalUnits,totalUnitsMeasurement,cost,inventory,preOrderEnabled,preOrderMessage,"
+    "preOrderLimit,sku,barcode,weight,productOptionName1,productOptionType1,productOptionChoices1,productOptionName2,"
+    "productOptionType2,productOptionChoices2,productOptionName3,productOptionType3,productOptionChoices3,"
+    "productOptionName4,productOptionType4,productOptionChoices4,productOptionName5,productOptionType5,"
+    "productOptionChoices5,productOptionName6,productOptionType6,productOptionChoices6,modifierName1,modifierType1,"
+    "modifierCharLimit1,modifierMandatory1,modifierDescription1,modifierName2,modifierType2,modifierCharLimit2,"
+    "modifierMandatory2,modifierDescription2,modifierName3,modifierType3,modifierCharLimit3,modifierMandatory3,"
+    "modifierDescription3,modifierName4,modifierType4,modifierCharLimit4,modifierMandatory4,modifierDescription4,"
+    "modifierName5,modifierType5,modifierCharLimit5,modifierMandatory5,modifierDescription5,modifierName6,"
+    "modifierType6,modifierCharLimit6,modifierMandatory6,modifierDescription6,modifierName7,modifierType7,"
+    "modifierCharLimit7,modifierMandatory7,modifierDescription7,modifierName8,modifierType8,modifierCharLimit8,"
+    "modifierMandatory8,modifierDescription8,modifierName9,modifierType9,modifierCharLimit9,modifierMandatory9,"
+    "modifierDescription9,modifierName10,modifierType10,modifierCharLimit10,modifierMandatory10,modifierDescription10"
+)
+
+WIX_COLUMNS: list[str] = _WIX_HEADER.split(",")
+WIX_REQUIRED_HEADERS = ("handle", "fieldType", "name", "price", "sku")
+WIX_HEADER_ALIASES: dict[str, tuple[str, ...]] = {
+    "handle": ("handle",),
+    "name": ("name",),
+    "visible": ("visible",),
+    "plain_description": ("plainDescription",),
+    "media": ("media",),
+    "brand": ("brand",),
+    "price": ("price",),
+    "inventory": ("inventory",),
+    "sku": ("sku",),
+    "weight": ("weight",),
+}
+WIX_OPTION_NAME_TEMPLATE = "productOptionName{i}"
+WIX_OPTION_CHOICES_TEMPLATE = "productOptionChoices{i}"

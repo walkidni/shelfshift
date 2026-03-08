@@ -1,41 +1,7 @@
 from ...canonical import Product, Variant
+from ...csv_schemas.squarespace import SQUARESPACE_COLUMNS
 from ..shared import utils
 from ..shared.weight_units import resolve_weight_unit
-
-SQUARESPACE_COLUMNS: list[str] = [
-    "Product ID [Non Editable]",
-    "Variant ID [Non Editable]",
-    "Product Type [Non Editable]",
-    "Product Page",
-    "Product URL",
-    "Title",
-    "Description",
-    "SKU",
-    "Option Name 1",
-    "Option Value 1",
-    "Option Name 2",
-    "Option Value 2",
-    "Option Name 3",
-    "Option Value 3",
-    "Option Name 4",
-    "Option Value 4",
-    "Option Name 5",
-    "Option Value 5",
-    "Option Name 6",
-    "Option Value 6",
-    "Price",
-    "Sale Price",
-    "On Sale",
-    "Stock",
-    "Categories",
-    "Tags",
-    "Weight",
-    "Length",
-    "Width",
-    "Height",
-    "Visible",
-    "Hosted Image URLs",
-]
 
 
 class _SquarespaceExportHeaders:
